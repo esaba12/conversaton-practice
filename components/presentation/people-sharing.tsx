@@ -76,7 +76,7 @@ export function KnowsAboutYou({ personName, facts, sharedIds, onToggle, disabled
   }
 
   return (
-    <section className={setup.card} aria-labelledby={`${id}-title`}>
+    <section className={`${setup.card} ${styles.shareCard}`} aria-labelledby={`${id}-title`}>
       <div className={setup.cardTop}><h2 id={`${id}-title`} className={styles.sectionTitle}>What {personName} knows about you</h2><Link className={styles.textLink} href="/practice/about-me">Edit About me</Link></div>
       <p id={`${id}-hint`} className={setup.hint}>Nothing is shared by default. Click a fact to move it to the other column, or drag it there. Shared facts are sent to the video call provider as part of this character’s setup when you practice.</p>
       {disabledReason && <p id={`${id}-reason`} className={setup.status}>{disabledReason}</p>}

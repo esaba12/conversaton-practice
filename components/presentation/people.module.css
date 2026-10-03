@@ -1,6 +1,15 @@
-.page { display: grid; gap: 28px; max-width: 960px; margin: 0 auto; padding: 40px 32px 80px; color: var(--ink); overflow-wrap: anywhere; }
+.page { display: grid; gap: 28px; max-width: 1120px; margin: 0 auto; padding: 40px 32px 80px; color: var(--ink); overflow-wrap: anywhere; }
 .backLink { justify-self: start; font-size: 13px; color: var(--sage); text-underline-offset: 4px; }
-.heading { display: grid; gap: 10px; }
+.heading { display: grid; gap: 10px; grid-column: 1 / -1; }
+.titleRow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
+.titleRow h1 { margin: 12px 0 0; }
+.personLayout { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 20px; align-items: start; }
+.shareCard { grid-column: 1; grid-row: 2; }
+.editor { grid-column: 2; grid-row: 2; }
+.more { display: grid; gap: 16px; margin: 0; padding-top: 4px; border-top: 1px solid var(--border); }
+.more summary { display: flex; align-items: center; min-height: 44px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.more summary:focus { outline: none; }
+.more summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 .heading h1 { margin: 12px 0 0; font-size: clamp(34px, 4.5vw, 48px); font-weight: 500; line-height: 1.1; letter-spacing: -2px; }
 .heading h1:focus { outline: none; }
 .heading h1:focus-visible { outline: 3px solid var(--focus); outline-offset: 6px; }
@@ -11,9 +20,19 @@
 .sectionTitle:focus { outline: none; }
 .sectionTitle:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
 
-.home { max-width: 1120px; margin: 0 auto; padding: 40px 32px 0; color: var(--ink); overflow-wrap: anywhere; }
-.homeHead { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px; margin-bottom: 16px; }
-.homeLinks { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 4px; }
+.navLink { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; color: var(--muted); font-size: 13px; font-weight: 500; text-decoration: none; border-radius: 8px; }
+.navLink:hover { color: var(--ink); }
+.navLink[aria-current="page"] { color: var(--sage); }
+.navLink:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+.shortcuts { margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--border); }
+.shortcutTitle { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0; }
+.shortcutList { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 10px; }
+.shortcut { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.shortcut h3 { margin: 0; font-size: 15px; font-weight: 600; }
+.shortcut p { margin: 2px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.homeHead { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
 .textLink { display: inline-flex; align-items: center; min-height: 44px; color: var(--sage); font-size: 13px; font-weight: 500; text-underline-offset: 4px; }
 .empty { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
 .peopleGrid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
@@ -66,9 +85,16 @@
 .savePanel h2 { margin: 0; font-size: 18px; }
 .savePanel p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
 
+@media (max-width: 900px) {
+  .personLayout { grid-template-columns: 1fr; }
+  .shareCard, .editor { grid-column: 1; grid-row: auto; }
+  .shareCard { order: 1; }
+  .editor { order: 2; }
+}
 @media (max-width: 760px) {
   .page { padding: 24px 20px 48px; gap: 22px; }
-  .home { padding: 24px 20px 0; }
+  .nav { width: 100%; justify-content: flex-start; }
+  .navLink { padding: 0 10px; }
   .shareGrid { grid-template-columns: 1fr; }
   .traitRow { grid-template-columns: 1fr; gap: 6px; }
 }

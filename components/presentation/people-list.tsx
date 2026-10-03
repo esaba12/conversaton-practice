@@ -10,9 +10,7 @@ export function formatUpdated(iso: string) {
   return Number.isNaN(date.getTime()) ? iso : new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
-export function PeopleHeader() {
-  return <header className="site-header"><Link className="wordmark" href="/">Conversation practice<span className="mark" aria-hidden="true">↗</span></Link><Link className="button secondary" href="/practice">Practice</Link></header>;
-}
+export { WorkspaceHeader as PeopleHeader } from "./workspace-header";
 
 export type MyPeopleProps = {
   people: Person[];
@@ -24,23 +22,21 @@ export type MyPeopleProps = {
 
 export function MyPeople({ people, status, onPractice, onRetry, disabled = false }: MyPeopleProps) {
   const id = useId();
+  if (status === "ready" && people.length === 0) return null;
   return (
-    <section className={styles.home} aria-labelledby={`${id}-title`} aria-busy={status === "loading"}>
+    <section className={styles.shortcuts} aria-labelledby={`${id}-title`} aria-busy={status === "loading"}>
       <div className={styles.homeHead}>
-        <h2 id={`${id}-title`} className={styles.sectionTitle}>My people</h2>
-        <div className={styles.homeLinks}>
-          <Link className={styles.textLink} href="/practice/about-me">About me</Link>
-          <Link className={styles.textLink} href="/practice/people/new">Add a person</Link>
-        </div>
+        <h2 id={`${id}-title`} className={styles.shortcutTitle}>Or someone you’ve saved</h2>
+        <Link className={styles.textLink} href="/practice/people/new">Add a person</Link>
       </div>
       {status === "loading" && people.length === 0 && <p className={styles.empty} role="status">Loading your people…</p>}
       {status === "error" && <p className={styles.empty} role="alert">We couldn’t load your people. <button type="button" className={styles.textLink} onClick={onRetry}>Try again</button></p>}
-      {status === "ready" && people.length === 0 && <p className={styles.empty}>No saved people yet. Practice a new conversation below and save the person when it ends, or add one yourself.</p>}
-      {people.length > 0 && <ul className={styles.peopleGrid}>
-        {people.map((person) => <li key={person.id} className={styles.personCard}>
-          <h3>{person.name}</h3>
-          <p>{person.relationship}</p>
-          <p>Updated {formatUpdated(person.updatedAt)}</p>
+      {people.length > 0 && <ul className={styles.shortcutList}>
+        {people.map((person) => <li key={person.id} className={styles.shortcut}>
+          <div>
+            <h3>{person.name}</h3>
+            <p>{person.relationship}</p>
+          </div>
           <div className={styles.cardActions}>
             <button type="button" className={styles.smallButton} disabled={disabled} onClick={() => onPractice(person)}>Practice with {person.name}</button>
             <Link className={styles.textLink} href={`/practice/people/${person.id}`} aria-label={`Edit ${person.name}`}>Edit</Link>

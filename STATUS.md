@@ -1,11 +1,11 @@
 # Project status
 
-Updated October 3, 2026, 19:30 EDT. **G1 and G2 passed** (human live calls). **G3, G4 and G5 accepted on automated evidence (live not verified)** under the 19:00 decision. G5 merged via [PR #26](https://github.com/esaba12/conversaton-practice/pull/26) (`c191b39`). Demo/submission pack: [DEMO-01](docs/tasks/DEMO-01-submission-prep.md). **Next: human records the backup demo and submits Devpost by 11:30 AM America/Detroit October 4.** Do not wait for live checks.
+Updated October 3, 2026, 19:35 EDT. **G1 and G2 passed** (human live calls). **G3–G5 accepted on automated evidence (live not verified)**. Human: product is not demo-ready yet — polish the workspace before any pitch/Devpost. Demo pack exists as [DEMO-01](docs/tasks/DEMO-01-submission-prep.md) and is not the next task.
 
 ## G5 merged (19:26 EDT)
 [PR #26](https://github.com/esaba12/conversaton-practice/pull/26) CI [verify SUCCESS](https://github.com/esaba12/conversaton-practice/actions/runs/37161341412). Issues #22–#25 closed. Draft rate limit, test-media seam (dev only), no duplicate save, a11y/mobile, `--g5-ui` real-Auth checks. Evidence: [G5-04](docs/tasks/G5-04-integration.md), docs/09 G5 coverage table. Deferred: session `person_id` attribution. Dependencies frozen (do not upgrade).
 
-**History below this line is G4/G3-era notes.** Current next action is demo/submission (DEMO-01). Fresh coordinator context after G5: STATUS top + [DEMO-01](docs/tasks/DEMO-01-submission-prep.md) + [docs/11](docs/11-DEMO-AND-SUBMISSION.md).
+**History below this line is G4/G3-era notes.** Do not start demo/submission until the human says the product is good enough.
 
 ## User decision (19:00 EDT): automated verification, live later
 "Do it as automated or unit testing where you can … I'll verify myself when I want to." Gates now advance on automated evidence and are labelled "live not verified" (AGENTS.md "Verification"). **G3 and G4 accepted on automated evidence; neither is live-verified.** G4 adds a real reflection call (live OpenAI, coordinator-run, pass) and a G3 real-Auth UI regression on the G4 branch (pass); see [G4-04](docs/tasks/G4-04-integration.md). PR #20 and PR #21 merged to `main`. **Next: G5** per docs/28, then demo/submission prep.

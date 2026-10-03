@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { DataOverview, type DataInventory } from "@/components/presentation/data-overview";
-import { PeopleHeader } from "@/components/presentation/people-list";
+import { WorkspaceHeader } from "@/components/presentation/workspace-header";
 import styles from "@/components/presentation/people.module.css";
 import { createBrowserAuthClient } from "@/lib/auth/browser";
 import { getPrivatePrep, listFacts, listPeople } from "@/lib/people/api-client";
@@ -76,7 +76,7 @@ export function DataWorkspace() {
     } finally { setDeleting(false); }
   }
 
-  return <><PeopleHeader />
+  return <><WorkspaceHeader page="data" />
     <main id="main"><div className={styles.page}>
       <DataOverview inventory={inventory} sessions={sessions} retrying={retrying} deleting={deleting} result={result}
         onRetryCleanup={(id) => void retry(id)} onDeleteAll={removeAll} onReload={reload} statusMessage={message.status} errorMessage={message.error} />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 import styles from "./setup.module.css";
 
 export const SITUATION_MAX = 1000;
@@ -23,9 +23,10 @@ export type SetupDescribeProps = {
   disabled?: boolean;
   error?: SetupDescribeError | null;
   focusHeading?: boolean;
+  people?: ReactNode;
 };
 
-export function SetupDescribe({ situation, goal, privateNotes, onSituationChange, onGoalChange, onPrivateNotesChange, onGenerate, onManual, onUseExample, generating = false, disabled = false, error, focusHeading = false }: SetupDescribeProps) {
+export function SetupDescribe({ situation, goal, privateNotes, onSituationChange, onGoalChange, onPrivateNotesChange, onGenerate, onManual, onUseExample, generating = false, disabled = false, error, focusHeading = false, people }: SetupDescribeProps) {
   const id = useId();
   const headingRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => { if (focusHeading) headingRef.current?.focus(); }, [focusHeading]);
@@ -39,6 +40,7 @@ export function SetupDescribe({ situation, goal, privateNotes, onSituationChange
         <h1 id={`${id}-title`} ref={headingRef} tabIndex={-1} className={styles.title}>What conversation<br /><span>is on your mind?</span></h1>
         <p className={styles.lede}>Describe it in your own words. We’ll draft a fictional character and an opening you can review and edit before you start.</p>
         <p className={styles.fine}>Practice with a fictional character. Real conversations may unfold differently.</p>
+        {people}
       </div>
 
       <form className={styles.card} onSubmit={(event) => { event.preventDefault(); if (canGenerate) onGenerate(); }} noValidate>

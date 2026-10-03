@@ -1,11 +1,10 @@
 "use client";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { MyPeople } from "@/components/presentation/people-list";
+import { WorkspaceHeader } from "@/components/presentation/workspace-header";
 import { SaveAfterEnd } from "@/components/presentation/people-save";
 import { SavedPersonStart } from "@/components/presentation/people-start";
-import peopleStyles from "@/components/presentation/people.module.css";
 import { PracticeCall, type PracticeCallProps } from "@/components/presentation/practice";
 import { ReflectionPanel } from "@/components/presentation/reflection-panel";
 import { SetupDescribe, type SetupDescribeError } from "@/components/presentation/setup-describe";
@@ -569,14 +568,13 @@ export function PracticeWorkspace() {
   const statusMessage = [callMessage, cameraNote, phase === "ended" || phase === "interrupted" ? cleanupMessage(cleanup) : ""].filter(Boolean).join(" ");
   const canRetryCleanup = !!cleanupTarget && !!cleanup && cleanup.state !== "closing" && !(cleanup.state === "closed" && cleanup.cleanup === "confirmed");
 
-  return <><header className="site-header"><Link className="wordmark" href="/">Conversation practice<span className="mark" aria-hidden="true">↗</span></Link>
-    <div className="actions"><Link className={peopleStyles.textLink} href="/practice/about-me">About me</Link><Link className={peopleStyles.textLink} href="/practice/data">Your data</Link><button type="button" className="button secondary" disabled={signingOut} onClick={() => void signOut()}>{signingOut ? "Signing out…" : "Sign out"}</button></div></header>
+  return <><WorkspaceHeader page="practice" signingOut={signingOut} onSignOut={() => void signOut()} quiet={view === "call"} />
     <main id="main">
       {headerMessage && <p role="status" className="notice">{headerMessage}</p>}
       {view === "setup" ? (step === "describe"
-        ? <><MyPeople people={people} status={peopleStatus} onPractice={(person) => choosePerson(person)} onRetry={() => void loadPeople()} disabled={signingOut || generating} />
-          <SetupDescribe situation={situation} goal={intent} privateNotes={privateNotes} onSituationChange={setSituation} onGoalChange={setIntent} onPrivateNotesChange={setPrivateNotes}
-            onGenerate={() => void generate()} onManual={setUpManually} onUseExample={applyExample} generating={generating} disabled={signingOut} error={generateError} focusHeading={moveFocus} /></>
+        ? <SetupDescribe situation={situation} goal={intent} privateNotes={privateNotes} onSituationChange={setSituation} onGoalChange={setIntent} onPrivateNotesChange={setPrivateNotes}
+            onGenerate={() => void generate()} onManual={setUpManually} onUseExample={applyExample} generating={generating} disabled={signingOut} error={generateError} focusHeading={moveFocus}
+            people={<MyPeople people={people} status={peopleStatus} onPractice={(person) => choosePerson(person)} onRetry={() => void loadPeople()} disabled={signingOut || generating} />} />
         : step === "person" && savedPerson
         ? <SavedPersonStart person={savedPerson} onStart={startPerson} onBack={leavePerson} disabled={starting || signingOut} startDisabled={endingPrevious || !!previousSessionId} focusHeading={moveFocus}
             statusMessage={starting ? "Starting your practice…" : setupMessage || undefined}

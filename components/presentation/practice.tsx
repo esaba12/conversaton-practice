@@ -94,7 +94,7 @@ export function PracticeCall({ counterpartName, goal, phase, muted, cameraEnable
 
   return (
     <section className={styles.call} aria-labelledby={`${id}-title`}>
-      <header className={styles.callHeader}><div><p className={styles.eyebrow}>A little space to practice</p><h1 id={`${id}-title`}>In conversation with <span>{counterpartName}</span></h1></div><div className={styles.timer} role="timer" aria-label={`${formatTime(elapsedSeconds)} elapsed, ${formatTime(durationSeconds)} planned`}><span>{formatTime(elapsedSeconds)}</span><span aria-hidden="true"> / {formatTime(durationSeconds)}</span></div></header>
+      <header className={styles.callHeader}><h1 id={`${id}-title`}>In conversation with <span>{counterpartName}</span></h1><div className={styles.timer} role="timer" aria-label={`${formatTime(elapsedSeconds)} elapsed, ${formatTime(durationSeconds)} planned`}><span>{formatTime(elapsedSeconds)}</span><span aria-hidden="true"> / {formatTime(durationSeconds)}</span></div></header>
       {isMock && <p className={styles.mockBanner}>UI preview — no live call</p>}
       {testMedia && <p className={styles.mockBanner}>Test media — no live call</p>}
       <div className={styles.videoStage}>

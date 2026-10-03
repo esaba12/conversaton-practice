@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { PersonEditor, emptyPerson, parsePersonDraft } from "@/components/presentation/people-editor";
-import { PeopleHeader } from "@/components/presentation/people-list";
+import { WorkspaceHeader } from "@/components/presentation/workspace-header";
 import { KnowsAboutYou, NeverShared } from "@/components/presentation/people-sharing";
 import styles from "@/components/presentation/people.module.css";
 import { createBrowserAuthClient } from "@/lib/auth/browser";
@@ -128,7 +128,7 @@ export function PersonWorkspace({ personId }: { personId: string | null }) {
     }
   }
 
-  return <><PeopleHeader />
+  return <><WorkspaceHeader page="practice" />
     <main id="main"><div className={styles.page}>
       {loadState === "loading" && <p className={styles.meta} role="status">Loading this person…</p>}
       {(loadState === "missing" || loadState === "error") && <div className={styles.heading} role="alert">
@@ -139,12 +139,14 @@ export function PersonWorkspace({ personId }: { personId: string | null }) {
         </div>
       </div>}
       {loadState === "ready" && <>
-        <PersonEditor fields={fields} onChange={setFields} isNew={isNew} savedName={person?.name} version={person?.version} updatedAt={person?.updatedAt}
-          dirty={dirty} saving={saving} busy={sharing} onSave={() => void save()} onDelete={person ? () => void remove() : undefined} deleting={deleting}
-          conflict={message.conflict} onReload={() => void reload()} statusMessage={message.status} errorMessage={message.error}
-          practiceHref={person ? `/practice?person=${person.id}` : undefined} />
-        <KnowsAboutYou personName={name} facts={facts} sharedIds={person?.sharedFactIds ?? []} onToggle={(factId, share) => void toggleShare(factId, share)}
-          disabled={!person || deleting} disabledReason={!person ? "Save this person first, then choose what they know about you." : factsError || undefined} announcement={announcement} />
+        <div className={styles.personLayout}>
+          <PersonEditor fields={fields} onChange={setFields} isNew={isNew} savedName={person?.name} version={person?.version} updatedAt={person?.updatedAt}
+            dirty={dirty} saving={saving} busy={sharing} onSave={() => void save()} onDelete={person ? () => void remove() : undefined} deleting={deleting}
+            conflict={message.conflict} onReload={() => void reload()} statusMessage={message.status} errorMessage={message.error}
+            practiceHref={person ? `/practice?person=${person.id}` : undefined} />
+          <KnowsAboutYou personName={name} facts={facts} sharedIds={person?.sharedFactIds ?? []} onToggle={(factId, share) => void toggleShare(factId, share)}
+            disabled={!person || deleting} disabledReason={!person ? "Save this person first, then choose what they know about you." : factsError || undefined} announcement={announcement} />
+        </div>
         <NeverShared notes={notes} onChange={setNotes} onSave={() => void saveNotes()} saving={notesSaving} dirty={notes.trim() !== savedNotes} statusMessage={notesMessage.status} errorMessage={notesMessage.error} />
       </>}
     </div></main></>;

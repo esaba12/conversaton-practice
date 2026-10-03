@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AboutMeEditor } from "@/components/presentation/people-about-me";
-import { PeopleHeader } from "@/components/presentation/people-list";
+import { WorkspaceHeader } from "@/components/presentation/workspace-header";
 import styles from "@/components/presentation/people.module.css";
 import { createBrowserAuthClient } from "@/lib/auth/browser";
 import { SessionClientError, createFact, deleteFact, listFacts, updateFact } from "@/lib/people/api-client";
@@ -48,7 +48,7 @@ export function AboutMeWorkspace() {
   const edit = (factId: string, text: string) => run(async () => { const fact = await updateFact(factId, text); setFacts((list) => list.map((item) => (item.id === factId ? fact : item))); setMessage({ status: "Fact updated. People you shared it with see the new wording next time." }); }, "We couldn’t update that fact. Please try again.");
   const remove = (factId: string) => void run(async () => { await deleteFact(factId); setFacts((list) => list.filter((item) => item.id !== factId)); setMessage({ status: "Fact deleted. No one knows it anymore." }); }, "We couldn’t delete that fact. Please try again.");
 
-  return <><PeopleHeader />
+  return <><WorkspaceHeader page="about-me" />
     <main id="main"><div className={styles.page}>
       <AboutMeEditor facts={facts} loading={loading} busy={busy} onAdd={add} onEdit={edit} onDelete={remove} statusMessage={message.status} errorMessage={message.error} />
     </div></main></>;

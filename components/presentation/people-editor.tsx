@@ -52,6 +52,7 @@ export function PersonEditor({ fields, onChange, isNew, savedName, version, upda
   const headingRef = useRef<HTMLHeadingElement>(null);
   const deleteRef = useRef<HTMLButtonElement>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(() => fields.style.trim().length === 0 || fields.publicContext.trim().length === 0 || fields.opening.trim().length === 0);
   useEffect(() => { headingRef.current?.focus(); }, []);
   const valid = parsePersonDraft(fields) !== null;
   const missing = requiredFields.filter(({ key }) => fields[key].trim().length === 0).map(({ label }) => label);
@@ -82,12 +83,15 @@ export function PersonEditor({ fields, onChange, isNew, savedName, version, upda
   return <>
     <div className={styles.heading}>
       <Link className={styles.backLink} href="/practice">Back to practice</Link>
-      <h1 ref={headingRef} tabIndex={-1}>{isNew ? <>Add a <span>person.</span></> : <>{displayName}</>}</h1>
-      {!isNew && version !== undefined && updatedAt && <p className={styles.meta}>Version {version} · Last updated {formatUpdated(updatedAt)}</p>}
-      <p className={styles.lede}>A fictional counterpart shaped by your choices. It never claims to be, or predict, the real person.</p>
+      <div className={styles.titleRow}>
+        <h1 ref={headingRef} tabIndex={-1}>{isNew ? <>Add a <span>person.</span></> : <>{displayName}</>}</h1>
+        {practiceHref && <Link className={styles.smallButton} href={practiceHref}>Practice with {displayName}</Link>}
+      </div>
+      {!isNew && updatedAt && <p className={styles.meta}>Updated {formatUpdated(updatedAt)}</p>}
+      <p className={styles.lede}>A fictional counterpart. It does not predict the real person.</p>
     </div>
 
-    <form className={setup.card} aria-label={isNew ? "New person" : `${displayName} details`} onSubmit={(event) => { event.preventDefault(); if (valid && !disabled) onSave(); }} noValidate>
+    <form className={`${setup.card} ${styles.editor}`} aria-label={isNew ? "New person" : `${displayName} details`} onSubmit={(event) => { event.preventDefault(); if (valid && !disabled) onSave(); }} noValidate>
       <div className={setup.cardTop}><p className={setup.eyebrow}>The character</p><span className={setup.fictionalTag}>Fictional AI counterpart</span></div>
       <div className={setup.pair}>{textField("name", "Name")}{textField("relationship", "Relationship")}</div>
 
@@ -112,29 +116,28 @@ export function PersonEditor({ fields, onChange, isNew, savedName, version, upda
         </fieldset>
       </div>
 
-      {areaField("style", "How they talk", 3)}
-      {areaField("publicContext", "What they know about the situation", 4, "Shared with the character.")}
-      {areaField("opening", "Opening line", 2, "The first thing they say.")}
-
-      <fieldset className={setup.fieldset} disabled={disabled}>
-        <legend>Things to keep in mind <span className={setup.optional}>Up to {MAX_CONSTRAINTS}</span></legend>
-        {fields.constraints.map((item, index) => <div key={index} className={setup.constraintRow}>
-          <label className="sr-only" htmlFor={`${id}-constraint-${index}`}>Constraint {index + 1}</label>
-          <input id={`${id}-constraint-${index}`} type="text" maxLength={limits.constraint} value={item} onChange={(event) => setConstraint(index, event.target.value)} />
-          <button type="button" className={setup.removeButton} aria-label={`Remove constraint ${index + 1}`} onClick={() => set("constraints", fields.constraints.filter((_, i) => i !== index))}>Remove</button>
-        </div>)}
-        {fields.constraints.length < MAX_CONSTRAINTS && <button type="button" className={setup.linkButton} onClick={() => set("constraints", [...fields.constraints, ""])}>Add constraint</button>}
-      </fieldset>
+      <details className={styles.more} open={moreOpen} onToggle={(event) => setMoreOpen(event.currentTarget.open)}>
+        <summary>More about how they talk</summary>
+        {areaField("style", "How they talk", 3)}
+        {areaField("publicContext", "What they know about the situation", 4, "Shared with the character.")}
+        {areaField("opening", "Opening line", 2, "The first thing they say.")}
+        <fieldset className={setup.fieldset} disabled={disabled}>
+          <legend>Things to keep in mind <span className={setup.optional}>Up to {MAX_CONSTRAINTS}</span></legend>
+          {fields.constraints.map((item, index) => <div key={index} className={setup.constraintRow}>
+            <label className="sr-only" htmlFor={`${id}-constraint-${index}`}>Constraint {index + 1}</label>
+            <input id={`${id}-constraint-${index}`} type="text" maxLength={limits.constraint} value={item} onChange={(event) => setConstraint(index, event.target.value)} />
+            <button type="button" className={setup.removeButton} aria-label={`Remove constraint ${index + 1}`} onClick={() => set("constraints", fields.constraints.filter((_, i) => i !== index))}>Remove</button>
+          </div>)}
+          {fields.constraints.length < MAX_CONSTRAINTS && <button type="button" className={setup.linkButton} onClick={() => set("constraints", [...fields.constraints, ""])}>Add constraint</button>}
+        </fieldset>
+      </details>
 
       <div className={setup.startArea}>
         {!valid && <p id={`${id}-missing`} className={setup.hint}>{missing.length > 0 ? `Still needed: ${missing.join(", ")}.` : "Check that every field is within its limit."}</p>}
         {statusMessage && <p className={setup.status} role="status">{statusMessage}</p>}
         {errorMessage && <div className={setup.error} role="alert"><p>{errorMessage}</p>{conflict && onReload && <button type="button" className={setup.secondaryButton} onClick={onReload}>Load latest version</button>}</div>}
         <button type="submit" className={setup.primaryButton} disabled={!valid || disabled || (!dirty && !isNew)} aria-busy={saving} aria-describedby={!valid ? `${id}-missing` : undefined}>{saving ? "Saving…" : isNew ? "Save person" : "Save"}</button>
-        {practiceHref && <>
-          <Link className={setup.secondaryButton} href={practiceHref}>Practice with {displayName}</Link>
-          {dirty && <p className={setup.hint}>Practice uses the last saved version. Save your edits first to use them.</p>}
-        </>}
+        {practiceHref && dirty && <p className={setup.hint}>Practice uses the last saved version. Save your edits first to use them.</p>}
         {onDelete && <div className={styles.dangerZone}>
           {!confirmDelete
             ? <button type="button" ref={deleteRef} className={styles.dangerButton} disabled={disabled} onClick={() => setConfirmDelete(true)}>Delete {displayName}</button>
