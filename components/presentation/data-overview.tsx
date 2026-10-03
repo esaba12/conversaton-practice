@@ -107,7 +107,7 @@ export function DataOverview({ inventory, sessions, retrying, deleting, result, 
             <td>{statusLabels[session.status]}</td>
             <td><span className={data.cleanup} data-cleanup={session.cleanup}>{inProgress(session) ? "In progress" : cleanupLabels[session.cleanup]}</span></td>
             <td>{canRetryCleanup(session) && <button type="button" className={setup.secondaryButton} data-retry={session.id} disabled={retrying !== null || deleting} aria-busy={retrying === session.id}
-              onClick={() => onRetryCleanup(session.id)} aria-label={`Retry provider cleanup for the session started ${when(session.createdAt)}`}>{retrying === session.id ? "Retrying…" : "Retry cleanup"}</button>}</td>
+              onClick={() => onRetryCleanup(session.id)} aria-label={`Retry cleanup for the session started ${when(session.createdAt)}`}>{retrying === session.id ? "Retrying…" : "Retry cleanup"}</button>}</td>
           </tr>)}</tbody>
         </table>}
     </section>

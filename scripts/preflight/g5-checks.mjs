@@ -223,7 +223,7 @@ export async function runG5({ chromium, credentials, clients, rpc, assert }) {
     await dataPage.route("**/api/sessions/*/end", async route => { retried = route.request().url().split("/").at(-2); await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ session: { id: retried, status: "ended", expiresAt: iso(-600_000), cleanup: "confirmed" } }) }); });
     await dataPage.goto(`${base}/practice/data`);
     for (const label of ["Deleted at provider", "Provider cleanup pending", "Provider cleanup not confirmed", "No provider call"]) await dataPage.getByText(label, { exact: true }).first().waitFor({ timeout: 10_000 });
-    const retryButtons = dataPage.getByRole("button", { name: /^Retry provider cleanup for the session started/ });
+    const retryButtons = dataPage.getByRole("button", { name: /^Retry cleanup for the session started/ });
     assert(await retryButtons.count() === 2, "Retry offered only for pending and unresolved");
     await retryButtons.first().click();
     await waitFor(async () => retried !== null, "Retry cleanup calls End");
