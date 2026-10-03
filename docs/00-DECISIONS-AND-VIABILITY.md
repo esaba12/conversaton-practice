@@ -17,6 +17,13 @@ The founder's experience is specific: a therapist played the other person so he 
 - Sign-in is required before all persona/conversation design and practice. This supersedes anonymous sign-in and guest-first entry.
 - Visual direction: warm and minimal, with crisp, modern typography, spacing, and controls.
 
+## Appearance presets, October 3, 17:23 EDT
+Decided, not built. A closer face and voice make practice more useful, so a saved person should be able to look and sound like that relationship. For now the user picks from a short preset catalog: stock Tavus faces and premade ElevenLabs voices. There is no photo upload, no generated likeness, and no voice cloning. The counterpart stays fictional; a preset does not make them the real person and does not change traits or which About-me facts they know.
+
+This is not part of the in-progress G3 gate. Do not add a picker, person fields, or extra provider characters while G3 is open. Current calls keep the one configured face and voice.
+
+When it is scheduled: the face is already chosen per call. The voice is fixed on the immutable PAL, so each distinct premade voice needs its own PAL with the same roleplay settings (docs/06). The person stores a preset id; the server maps it to provider ids. The browser does not send those ids. Do not create the extra PALs until that work starts. If demo time is short, drop the catalog before cutting generation, live video, or G3 sharing (docs/10).
+
 ## Research direction
 NICE recommends disorder-specific CBT that includes behavioral experiments or graduated exposure, depending on the model, with practice beyond treatment sessions (S05). CCI's assertiveness materials cover expressing needs, saying no, responding to criticism, and progressively practicing chosen challenges (S39). These sources support focusing practice on a concrete action followed by an optional real-world step; they do not establish this AI app as treatment.
 

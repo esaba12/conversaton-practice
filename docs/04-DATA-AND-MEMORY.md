@@ -30,7 +30,7 @@ Owner repositories use a request-scoped Supabase client carrying the verified us
 Implement lease acquisition/expiry, version-checked approval, and approved-memory removal as transactional PostgreSQL functions exposed through narrowly granted RPCs. Lock/check the relevant rows and enforce idempotency in the database; separate JavaScript requests do not form a transaction. Prefer invoker rights. Where exclusive function writes are needed, a reviewed restricted definer function must validate identity/ownership, fix its search path, qualify relations, and prevent direct-grant bypass. Preserve RLS on underlying owner data and restrict trusted provider metadata mutations. Test two owners, duplicate starts, concurrent approvals, stale versions, and rollback. [Function security](https://supabase.com/docs/guides/database/functions).
 
 ## Allowed persona fields
-Alias, role, formality, directness, talkativeness, familiarity, selected voice, allowlisted stock avatar, constraints. Start with one avatar; do not generate a real person's likeness. Avatar choice is presentation, not a fact about a real counterpart.
+Alias, role, formality, directness, talkativeness, familiarity, selected voice, allowlisted stock avatar, constraints. G3 stores no face or voice; every call uses the one configured pair. A later preset is an allowlisted stock face and premade voice, stored as a preset id and mapped to provider ids on the server (docs/00). Do not generate a real person's likeness. Appearance is presentation, not a fact about a real counterpart.
 No fields for inferred real-person thoughts, diagnoses, hostility probability, or approval probability.
 
 ## Allowed profile fields
