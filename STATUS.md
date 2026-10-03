@@ -1,6 +1,17 @@
 # Project status
 
-Updated October 3, 2026, 17:02 EDT. **G1 passed** (`a8211af`, [G1-04](docs/tasks/G1-04-integration.md)). **G2 passed** (human-reported live call on `d42f53d`, [G2-04](docs/tasks/G2-04-integration.md)). G3 approved memory is next.
+Updated October 3, 2026, 17:25 EDT. **G1 passed** (`a8211af`, [G1-04](docs/tasks/G1-04-integration.md)). **G2 passed** (human-reported live call on `d42f53d`, [G2-04](docs/tasks/G2-04-integration.md)). **G3 in progress** on `build/g3-people`.
+
+## G3 build (17:25 EDT)
+Contracts frozen at `7bb796b`: `lib/schemas/people.ts` (About-me facts, people with trait chips + version, shared facts, private prep, HTTP contract), `traitChipsSchema`/`roleExtrasSchema` and `buildRoleContext(role, { traits, knownAboutUser })` in `lib/schemas/role-context.ts`, saved-person start branch `{ idempotencyKey, personId, expectedVersion, durationSeconds }`, `NOT_FOUND` error code, `lib/data/rpc.ts` marker mapping. Migration `20261003211000_people_sharing.sql` **applied** to linked project `rcktybngebovyopregnt` (`supabase db push --linked --yes`, Docker catalog-cache warning only). `supabase/tests/people_sharing.sql` **pass** (two owners, cross-owner read/edit/share/context denied, stale version → `VERSION_CONFLICT` with no partial write, private prep absent from `person_context`, caps, direct DML denied, privilege shape); negative control confirmed failures surface; no fixtures persisted; G1 `session_foundation.sql` re-run pass.
+
+| Task | Issue | Writer | Owned paths |
+| --- | --- | --- | --- |
+| [G3-01](docs/tasks/G3-01-people-data-routes.md) data + routes | [#17](https://github.com/esaba12/conversaton-practice/issues/17) | background subagent | `lib/data/people.ts`, `app/api/about-me/**`, `app/api/people/**`, `app/api/private-prep/route.ts`, `tests/unit/people-routes.test.ts` |
+| [G3-02](docs/tasks/G3-02-start-saved-person.md) saved-person start | [#18](https://github.com/esaba12/conversaton-practice/issues/18) | background subagent | `lib/data/person-context.ts`, `lib/session/server.ts`, `lib/media/tavus.ts`, session/tavus/person-context tests |
+| [G3-03](docs/tasks/G3-03-people-ui.md) UI | [#19](https://github.com/esaba12/conversaton-practice/issues/19) | background subagent | `app/practice/practice-workspace.tsx`, `app/practice/people/**`, `app/practice/about-me/**`, `components/presentation/people-*`, `lib/people/api-client.ts`, `lib/session/api-client.ts`, client tests |
+
+Coordinator owns schemas, migration, `scripts/preflight/**`, STATUS and numbered specs; integrates one worker at a time, runs the verification recipe and the two-user check, opens the PR, then asks the human for the live G3 call.
 
 ## G3 redefined by user (17:05 EDT)
 G3 = saved people with a chip editor, an About-me profile, per-person drag-and-drop sharing of what each person knows about you (keyboard path required), a separate never-shareable private section, and an explicit "Save this person / Update" after End. Reflection-generated memory proposals move to G4 or later. Design, acceptance and the paste-ready G3 coordinator prompt: [docs/26](docs/26-PEOPLE-AND-SHARING.md). docs/01, 02, 04, 05, 09 (new T16), 10 and AGENTS.md point there. docs/25 Prompt A is superseded; Prompt B (demo prep) still applies.

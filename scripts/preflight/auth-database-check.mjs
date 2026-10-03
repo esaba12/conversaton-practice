@@ -39,7 +39,39 @@ try {
     credentials.push({ email, password });
   }
   console.log("PASS: two real Auth password sign-ins and verified nonanonymous identities (fictional fixtures; no email sent).");
-  if (process.argv.includes("--ui-only")) {
+  if (process.argv.includes("--g3")) {
+    const [first, second] = clients;
+    const marker = { shared: "g3 shared fixture fact", unshared: "g3 unshared fixture fact", prep: "g3 private prep fixture" };
+    const person = { p_name: "Dana", p_relationship: "Your fictional manager", p_traits: { formality: "formal" }, p_style: "Calm.", p_public_context: "You manage a small team.", p_opening: "Hi, you wanted to talk?", p_constraints: [], p_challenge: "neutral", p_pace: "patient" };
+    const shared = await first.rpc("about_me_create", { p_text: marker.shared });
+    const unshared = await first.rpc("about_me_create", { p_text: marker.unshared });
+    const prep = await first.rpc("private_prep_put", { p_notes: marker.prep });
+    const dana = await first.rpc("person_create", person);
+    assert(!shared.error && !unshared.error && !prep.error && !dana.error && dana.data.version === 1, "owner A creates facts, private prep and a person");
+    const linked = await first.rpc("person_set_shared_facts", { p_id: dana.data.id, p_expected_version: 1, p_fact_ids: [shared.data.id] });
+    assert(!linked.error && linked.data.version === 2, "owner A shares one fact");
+    const context = await first.rpc("person_context", { p_id: dana.data.id, p_expected_version: 2 });
+    const contextText = JSON.stringify(context.data);
+    assert(!context.error && contextText.includes(marker.shared) && !contextText.includes(marker.unshared) && !contextText.includes(marker.prep), "context holds only the shared fact");
+    const stale = await first.rpc("person_update", { p_id: dana.data.id, p_expected_version: 1, ...person, p_name: "Stale" });
+    const after = await first.from("people").select("name, version").eq("id", dana.data.id).single();
+    assert(stale.error?.message === "VERSION_CONFLICT" && after.data?.name === "Dana" && after.data.version === 2, "stale version rejected without partial write");
+    for (const table of ["people", "about_me_facts", "person_shared_facts", "private_prep"]) {
+      const read = await second.from(table).select("*");
+      assert(!read.error && read.data.length === 0, `owner B cannot list ${table}`);
+    }
+    const foreignContext = await second.rpc("person_context", { p_id: dana.data.id, p_expected_version: 2 });
+    const foreignEdit = await second.rpc("person_update", { p_id: dana.data.id, p_expected_version: 2, ...person, p_name: "Hijack" });
+    const foreignShare = await second.rpc("person_set_shared_facts", { p_id: dana.data.id, p_expected_version: 2, p_fact_ids: [] });
+    const foreignDelete = await second.rpc("person_delete", { p_id: dana.data.id });
+    assert([foreignContext, foreignEdit, foreignShare, foreignDelete].every(result => result.error?.message === "NOT_FOUND"), "owner B cannot read context, edit, share into or delete A's person");
+    const own = await second.rpc("person_create", { ...person, p_name: "Sam" });
+    const crossShare = await second.rpc("person_set_shared_facts", { p_id: own.data?.id, p_expected_version: 1, p_fact_ids: [shared.data.id] });
+    assert(!own.error && crossShare.error?.message === "INVALID_INPUT", "owner B cannot share A's fact into B's person");
+    const direct = await first.from("person_shared_facts").insert({ owner_id: fixtures[0], person_id: dana.data.id, fact_id: unshared.data.id });
+    assert(direct.error, "direct sharing writes denied");
+    console.log("PASS: G3 real-JWT owner isolation, cross-owner sharing denied, stale version conflict, private prep and unshared facts absent from context.");
+  } else if (process.argv.includes("--ui-only")) {
     const { chromium } = await import("@playwright/test");
     const browser = await chromium.launch();
     try {
@@ -113,6 +145,11 @@ try {
   if (fixtures.length) {
     const deleted = await admin.from("practice_sessions").delete().in("owner_id", fixtures);
     cleanupSucceeded = !deleted.error;
+    // People, facts, links and private prep cascade with the user; delete explicitly so a failure is visible.
+    for (const table of ["person_shared_facts", "people", "about_me_facts", "private_prep"]) {
+      const removed = await admin.from(table).delete().in("owner_id", fixtures);
+      if (removed.error) cleanupSucceeded = false;
+    }
     for (const id of fixtures) {
       const result = await admin.auth.admin.deleteUser(id);
       if (result.error) cleanupSucceeded = false;
