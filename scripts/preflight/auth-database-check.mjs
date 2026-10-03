@@ -128,6 +128,57 @@ try {
       const after = await call(a, "GET", `/api/people/${id}`);
       assert(after.body.person.name === "Dana" && after.body.person.version === 2, "A's person unchanged by B");
       console.log("PASS: G3 two signed-in browser sessions over app routes: owner isolation (404), cross-owner sharing denied, stale version 409, private prep not shareable, saved-person start rejects stale/foreign/extra fields before any provider call.");
+
+      // UI: About me, keyboard and drag-and-drop sharing, chip edit, Never shared, saved-person start body, B's view.
+      const page = a.page;
+      await page.goto(`${base}/practice/about-me`);
+      await page.getByLabel("New fact about you").fill("g3 keyboard fixture fact");
+      await page.getByRole("button", { name: "Add fact", exact: true }).click();
+      await page.getByText("g3 keyboard fixture fact").first().waitFor({ timeout: 10_000 });
+      await page.goto(`${base}/practice/people/${id}`);
+      const knows = page.getByRole("region", { name: "Knows about Dana" }), about = page.getByRole("region", { name: "About me", exact: true });
+      await knows.getByRole("button", { name: "Stop sharing with Dana: g3 shared fixture fact" }).waitFor({ timeout: 15_000 });
+      await page.getByRole("button", { name: "Share with Dana: g3 keyboard fixture fact" }).focus();
+      await page.keyboard.press("Enter");
+      await knows.getByRole("button", { name: "Stop sharing with Dana: g3 keyboard fixture fact" }).waitFor({ timeout: 10_000 });
+      await page.getByRole("button", { name: "Share with Dana: g3 unshared fixture fact" }).dragTo(knows);
+      await knows.getByRole("button", { name: "Stop sharing with Dana: g3 unshared fixture fact" }).waitFor({ timeout: 10_000 });
+      await knows.getByRole("button", { name: "Stop sharing with Dana: g3 unshared fixture fact" }).dragTo(about);
+      await about.getByRole("button", { name: "Share with Dana: g3 unshared fixture fact" }).waitFor({ timeout: 10_000 });
+      const notes = page.getByLabel("Private preparation notes");
+      assert((await notes.inputValue()).includes("g3 private prep fixture"), "private prep shown in its own section");
+      assert(await page.getByRole("button", { name: /g3 private prep fixture/ }).count() === 0 && await page.locator("[draggable=true]", { hasText: "g3 private prep fixture" }).count() === 0, "private prep is not a chip or draggable");
+      await page.getByRole("group", { name: "Formality" }).getByRole("button", { name: "Casual", exact: true }).click();
+      await page.getByRole("button", { name: "Save", exact: true }).click();
+      let stored;
+      for (let tries = 0; tries < 20; tries++) {
+        stored = (await call(a, "GET", `/api/people/${id}`)).body.person;
+        if (stored.traits.formality === "casual") break;
+        await page.waitForTimeout(500);
+      }
+      await page.getByRole("button", { name: "Save", exact: true }).waitFor({ timeout: 10_000 });
+      await mkdir("artifacts/local", { recursive: true });
+      await page.screenshot({ path: "artifacts/local/g3-person.png", fullPage: true });
+      const facts = (await call(a, "GET", "/api/about-me")).body.facts;
+      const textOf = new Map(facts.map(fact => [fact.id, fact.text]));
+      const sharedTexts = stored.sharedFactIds.map(factId => textOf.get(factId)).sort().join("|");
+      assert(sharedTexts === "g3 keyboard fixture fact|g3 shared fixture fact", `UI sharing stored exactly the chosen facts (${sharedTexts})`);
+      assert(stored.traits.formality === "casual" && stored.version > 2, "chip edit saved with a version bump");
+      console.log("PASS: UI About me add, keyboard share (Enter), drag-and-drop share and unshare, chip edit + Save; Never shared notes are not chips or draggable.");
+      let startBody;
+      await page.route("**/api/sessions", async route => { startBody = route.request().postDataJSON(); await route.abort(); });
+      await page.goto(`${base}/practice?person=${id}`);
+      await page.getByRole("button", { name: "Start practice", exact: true }).click();
+      await page.waitForTimeout(1500);
+      await page.unroute("**/api/sessions");
+      assert(startBody && Object.keys(startBody).sort().join() === "durationSeconds,expectedVersion,idempotencyKey,personId" && startBody.personId === id && startBody.expectedVersion === stored.version, "saved-person start sends only ID and current version");
+      assert(!JSON.stringify(startBody).includes("g3 "), "no fact or prep text in the start body");
+      await b.page.goto(`${base}/practice/people/${id}`);
+      await b.page.waitForTimeout(2500);
+      const bText = await b.page.locator("body").innerText();
+      assert(!bText.includes("g3 shared fixture fact") && !bText.includes("g3 private prep fixture") && !bText.includes("You manage a small team."), "B's browser shows none of A's person, facts or prep");
+      await b.page.screenshot({ path: "artifacts/local/g3-foreign.png", fullPage: true });
+      console.log("PASS: UI saved-person start body is {durationSeconds, expectedVersion, idempotencyKey, personId} (browser-intercepted, no provider call); B's person page shows none of A's data.");
     } finally { await browser.close(); }
   } else if (process.argv.includes("--ui-only")) {
     const { chromium } = await import("@playwright/test");

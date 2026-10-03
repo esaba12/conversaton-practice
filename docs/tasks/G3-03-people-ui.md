@@ -1,6 +1,6 @@
 # G3-03: My people, person page, About me and save after End
 
-Status: review
+Status: integrated
 Updated: October 3, 2026, 17:30 EDT
 Assigned writer: G3-03 background subagent
 Coordinator: Cursor coordinator session
@@ -66,4 +66,4 @@ Mode: unit (mocked `fetch`) and static (TypeScript). Not browser-checked, not bu
 - External account action: none
 - Next smallest task: coordinator browser check of the flow above against the G3-01 routes.
 - Ready for review: yes
-- Coordinator integration: pending
+- Coordinator integration: integrated on `build/g3-people`; see [G3-04](G3-04-integration.md).

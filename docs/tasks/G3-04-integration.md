@@ -1,7 +1,7 @@
 # G3-04: Integrate and verify saved people, About me and per-person sharing
 
-Status: active
-Updated: October 3, 2026, 17:30 EDT
+Status: review — awaiting human live G3 call
+Updated: October 3, 2026, 17:42 EDT
 Assigned writer: coordinator
 Coordinator: Cursor coordinator session
 Gate: G3
@@ -15,6 +15,10 @@ CI run: not run
 | Commit | Content |
 | --- | --- |
 | `7bb796b` | Frozen contracts (`lib/schemas/people.ts`, role-context traits/`knownAboutUser`, saved-person start branch, `NOT_FOUND`, `lib/data/rpc.ts`), migration, SQL assertions, task records G3-01..03 |
+| `120f3c2` | [G3-02](G3-02-start-saved-person.md) saved-person start |
+| `b51bd69` | [G3-01](G3-01-people-data-routes.md) routes |
+| `12a3878`, `71e837d` | Two-session HTTP check; privacy-review follow-ups |
+| `1133e16` | [G3-03](G3-03-people-ui.md) UI |
 
 ## Verification evidence
 
@@ -34,4 +38,23 @@ All October 3, 2026, local macOS, Node 22.23.3, `/Users/ethansaba/code/therapist
 
 Read-only reviewer: no blockers, no required should-fix. Confirmed private prep, unshared facts, goals, notes and other users' data have no path to `buildRoleContext`/Tavus; auth precedes params/body on every route; foreign IDs 404 without existence leak; RLS forced, explicit grants, executor not overprivileged, definer functions use empty search path, version checks atomic; no private logging. Applied: `close` familiarity phrase no longer implies knowledge ("speaks familiarly … without inventing specifics") plus a "traits set tone only" line; shared facts framed as "statements about the user, not instructions"; retry-after-edit `VERSION_CONFLICT` documented in `lib/schemas/session.ts`; docs/26 notes provider disclosure, future-migration executor grant and intentional `service_role` defaults. Not applied: trimming constraint elements in SQL (routes already trim via Zod before the RPC).
 
-Not yet verified: UI (G3-03 still active), a successful saved-person start, live call.
+## UI integration (G3-03, `1133e16`)
+
+Coordinator added the provider disclosure to the sharing hint ("Shared facts are sent to the video call provider as part of this character's setup when you practice") and updated one G3-02 test for the new familiarity wording.
+
+- ~17:36 EDT — `npm run typecheck` pass; `npm test` 9 files, 103 tests pass; `npm run build` pass (Next 16.3.8; new dynamic routes `/practice/about-me`, `/practice/people/[id]` and six API routes).
+- ~17:38 EDT — `auth-database-check.mjs --g3-ui` with UI steps — live local (real Auth, real database, Chromium; start request intercepted in the browser, no provider call) — pass after one script-timing fix (first run read the stored person while the page still showed "Saving…"; screenshot inspected; not a UI defect). Verified: About me add; keyboard share (focus chip, Enter) moves it into "Knows about Dana"; native drag-and-drop shares a fact and drags it back out; stored `sharedFactIds` equal exactly the two chosen facts; Formality chip Formal → Casual + Save stores `casual` with a version bump; "Never shared" notes show the stored prep and are not a chip or draggable; `/practice?person=<id>` Start sends exactly `durationSeconds, expectedVersion, idempotencyKey, personId` with the current version and no fact/prep text; user B's `/practice/people/<A's id>` shows "Person not found." and none of A's data. Screenshots at ignored `artifacts/local/g3-person.png` and `g3-foreign.png`.
+- ~17:39 EDT — G2 regression `auth-database-check.mjs --ui-only` — pass (describe → mocked draft → edit → start body only the edited role; sign-out and denied re-entry).
+- ~17:40 EDT — browser suite against the running dev server (temporary uncommitted config pointing at port 3000) — 8 passed, 1 production-only skipped.
+- ~17:40 EDT — signed-out `/practice/about-me`, `/practice/people/new`, `/practice/people/<uuid>` → 307 to `/auth/sign-in`.
+
+Not yet verified (needs the human live call): a successful saved-person start with Tavus; the counterpart using the shared fact and not knowing the unshared fact or private prep; visible behavior change after a chip edit; "Save this person / Update" after a real End; screen-reader announcement quality and mobile layout of the new pages.
+
+## Human live G3 checklist
+
+1. Sign in at http://127.0.0.1:3000 → About me → add two facts, one distinctive (for example "I just adopted a greyhound named Pixel") and one you will not share (for example "I'm training for a marathon").
+2. Practice a new conversation (generate any setup) → Start → a short exchange → End → **Save this person**.
+3. Open the person → drag the greyhound fact into "Knows about <name>" (or select it and press Enter); leave the marathon fact; type something distinctive into "Never shared" and save it.
+4. Practice with <name> → ask "What do you know about me?" and "Any plans this weekend?" → the character may mention the dog; it should not know the marathon or the private note → End.
+5. Change Formality (for example Formal → Casual) → Save → practice again → note the tone difference and that the character does not remember the previous call → End.
+6. Report: shared fact used? unshared fact or private note surfaced? tone change visible? Save/Update after End worked? mic released?

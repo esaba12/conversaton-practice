@@ -1,6 +1,6 @@
 # G3-01: About-me, people and shared-facts data and routes
 
-Status: review
+Status: integrated
 Updated: October 3, 2026, 17:23 EDT
 Assigned writer: G3-01 background subagent
 Coordinator: Cursor coordinator session
@@ -69,4 +69,4 @@ Not verified: real PostgREST behavior (query-builder chaining, `maybeSingle`, `u
 - External account action: none
 - Next smallest task: coordinator integration, then a live two-user check through these routes (preflight script) against the applied migration.
 - Ready for review: yes
-- Coordinator integration: pending
+- Coordinator integration: integrated on `build/g3-people`; see [G3-04](G3-04-integration.md).

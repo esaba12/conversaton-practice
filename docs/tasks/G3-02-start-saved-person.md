@@ -1,6 +1,6 @@
 # G3-02: Start a practice with a saved person
 
-Status: review
+Status: integrated
 Updated: October 3, 2026, 17:21 EDT
 Assigned writer: G3-02 background subagent
 Coordinator: Cursor coordinator session
@@ -58,4 +58,4 @@ Mode: unit/mock only (mocked Supabase RPC client and Tavus `fetch`). No live dat
 - External account action: none
 - Next smallest task: coordinator integration, then a live start with a saved person against the applied migration; docs/05 start row and docs/07 context note.
 - Ready for review: yes
-- Coordinator integration: pending
+- Coordinator integration: integrated on `build/g3-people`; see [G3-04](G3-04-integration.md).
