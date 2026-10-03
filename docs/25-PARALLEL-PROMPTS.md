@@ -4,7 +4,9 @@ Written October 3, 2026, 16:50 EDT by the G2 coordinator. The G2 coordinator ses
 
 G2 passed and merged at `6682823`, so G3 is the active gate. Preparation in an isolated worktree is allowed: plan, contracts proposal, unapplied migration, repository code and unit tests, reviewed by the coordinator before anything merges or any SQL runs.
 
-## Prompt A — G3 approved-memory preparation (recommended)
+## Prompt A — superseded
+
+G3 was redefined at 17:05 (saved people, About me and per-person sharing; [docs/26](26-PEOPLE-AND-SHARING.md)). Use the G3 coordinator prompt at the end of docs/26 instead. The text below is kept only for history.
 
 ```text
 You are the G3 preparation lead for /Users/ethansaba/code/therapist (MHacks

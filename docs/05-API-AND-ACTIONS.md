@@ -5,6 +5,8 @@ These are application contracts, not copied provider APIs. Validate all input an
 Authentication applies to draft generation and session credentials as well as storage, independently of page redirects. Public product/sign-in pages do not create practice data. Reject missing/expired identity before provider calls. The client responds to sign-out or detected expiry by tearing down all audio/video and releasing capture tracks and clearing transient private state. Shared schemas are frozen in G1 foundation before workers implement consumers; auth-library callback routes are chosen there against current installed types.
 
 ## Routes
+G3 routes for About-me facts, saved people, per-person shared facts and starting with a saved person are specified in [docs/26](26-PEOPLE-AND-SHARING.md); the table below is the earlier, broader plan.
+
 
 | Route | Request essentials | Response / behavior |
 |---|---|---|
