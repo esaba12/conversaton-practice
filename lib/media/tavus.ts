@@ -26,6 +26,7 @@ export function conversationBody(role: RoleContext, durationSeconds: 180 | 300) 
 }
 export async function createConversation(role: RoleContext, durationSeconds: 180 | 300) {
   // No automatic POST retry: a timeout can have created a billable remote call.
+  const requestedAt = Date.now();
   const response = await request("conversations", "POST", conversationBody(role, durationSeconds));
   const raw: unknown = await response.json();
   const parsed = createdSchema.safeParse(raw);
@@ -35,7 +36,7 @@ export async function createConversation(role: RoleContext, durationSeconds: 180
     throw new AppError("PROVIDER_UNAVAILABLE", "The provider returned an incomplete call configuration.", 503);
   }
   const data = parsed.data;
-  const credential = mediaCredentialSchema.safeParse({ provider: "tavus", roomUrl: data.conversation_url, meetingToken: data.meeting_token, expiresAt: new Date(Date.now() + 110_000).toISOString() });
+  const credential = mediaCredentialSchema.safeParse({ provider: "tavus", roomUrl: data.conversation_url, meetingToken: data.meeting_token, expiresAt: new Date(requestedAt + 110_000).toISOString() });
   if (!credential.success) {
     await endConversation(data.conversation_id).catch(() => undefined);
     throw new AppError("PROVIDER_UNAVAILABLE", "The provider returned an unsupported call configuration.", 503);

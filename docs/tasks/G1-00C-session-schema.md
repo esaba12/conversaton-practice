@@ -5,7 +5,7 @@ Gate: G1 foundation, independent of media feasibility
 Owner: auth-research agent, SQL author only
 Base: `a601a0e` on `build/g1-foundation`; original checkout shared with coordinator
 Issue: https://github.com/esaba12/conversaton-practice/issues/1
-PR: foundation draft pending
+PR: https://github.com/esaba12/conversaton-practice/pull/8
 Port: none
 Owned paths: `supabase/migrations/20261003180000_session_foundation.sql`, `supabase/migrations/20261003182400_identity_helper_privileges.sql`, `supabase/tests/session_foundation.sql`, this task record only. Coordinator temporarily delegates authoring of these migrations; execution, secrets, shared schemas and numbered specs remain coordinator-owned. The second migration is an authorized additive repair after the first was applied; never rewrite the applied first migration.
 

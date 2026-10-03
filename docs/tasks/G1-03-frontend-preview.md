@@ -234,3 +234,7 @@ No merge performed; integrated revision, authenticated app wiring, permission an
 connection recovery, real device accessibility checks, and live audiovisual/teardown
 acceptance remain with the coordinator. The local task servers are stopped. No G1
 gate is marked passed, and issue #4 remains open for its integration acceptance.
+
+## Coordinator integration
+
+Reviewed exact PR head 9943679 and its passing CI, then merged PR #7 into build/g1-foundation at cf32199. Coordinator wired PracticeSetup into the protected workspace in owned app/practice paths. Combined typecheck, 9 unit tests, production build and 8 development browser checks passed (production-only preview guard intentionally skipped in that run; worker production evidence remains above). A real-Auth browser check verified sign-in, setup visibility, sign-out and blocked re-entry. Live media remains unintegrated; issue #4 stays open for full acceptance.

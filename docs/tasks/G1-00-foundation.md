@@ -4,7 +4,7 @@ Status: active — human video feasibility and final media contract freeze pendi
 Owner: coordinator
 Gate: G1 foundation; no product gate passed
 Issue: https://github.com/esaba12/conversaton-practice/issues/1
-PR: foundation draft pending
+PR: https://github.com/esaba12/conversaton-practice/pull/8
 Branch: build/g1-foundation
 Base: 4dc34a1; preservation e98fa75; tested scaffold a601a0e; current changes pending commit
 Worktree: /Users/ethansaba/code/therapist
@@ -18,14 +18,14 @@ G1 foundation establishes the smallest sign-in/session/video contract, not later
 ## Completed foundation work
 - Pinned Next 16.3.8, React 19.3.0, Node 22.23.3, TypeScript 5.9.3, Supabase SSR/client, Daily 0.87.0 and Zod 4.6.5. Lockfile committed. Vitest updated to patched 4.1.11 after initial audit; zero vulnerabilities then reported.
 - Added real scripts and CI for typecheck, unit tests, production build and browser checks.
-- Added sign-in/signup UI, callback, cookie-refresh proxy, verified nonanonymous workspace guard and explicitly disabled-call shell. Actual browser sign-in/email/callback not yet tested.
+- Added sign-in/signup UI, callback, cookie-refresh proxy, verified nonanonymous workspace guard and explicitly disabled-call shell. Real browser password sign-in/sign-out passed with confirmed fictional accounts; email delivery/confirmation callback remains pending.
 - Shared strict schemas separate identity, persisted session state, public-only fictional context, sanitized errors and provisional bounded media credentials.
 - Linked selected fresh Supabase project; verified empty schema before ordered migrations. Owner-readable session metadata, direct-write denial, capability-gated RPCs and durable one-active-owner lease exist.
 - Fixed observed Auth-schema delegation failure with an additive narrowly privileged identity-helper migration; public mutation functions remain restricted/RLS-constrained.
 - Provisioned server capability hash; raw secret stays only in ignored local environment.
 - Configured immutable Tavus PAL with stock face and premade ElevenLabs voice, explicit ElevenLabs TTS and perception off. Test-mode private conversation accepted and hard-deleted.
 - Loopback-only real-call harness is available on 3010 with two fictional contexts, camera off/local-only, immediate local teardown and separate provider cleanup results.
-- User received isolated frontend worktree/prompt; frontend PR #7 is available for coordinator review.
+- User received isolated frontend worktree/prompt; frontend PR #7 was reviewed and merged at cf32199, then its setup component was wired into the protected workspace with a sign-out control.
 
 ## Actual checks
 October 3, 2026, America/Detroit, original checkout a601a0e plus current changes:
@@ -36,9 +36,9 @@ October 3, 2026, America/Detroit, original checkout a601a0e plus current changes
 - `node_modules/.bin/node --env-file=.env.local scripts/preflight/auth-database-check.mjs`: exit 0. Two real confirmed fictional Auth identities signed in, verified JWT ownership and simultaneous acquisition checks passed; all users/session fixtures removed. No email or provider call. [Evidence](G1-00D-auth-database-check.md).
 - `node_modules/.bin/node --env-file=.env.local scripts/preflight/provider-setup.mjs`: exit 0. Live API PAL creation/readback plus test-mode private conversation/deletion pass. No audiovisual proof.
 - Loopback preflight screenshot inspected without starting a call. Installed Next cookies/proxy/auth/route guides and Daily types reviewed.
-- CI pending foundation draft; frontend PR's checks belong to its own revision.
+- Foundation CI passed at cf32199: https://github.com/esaba12/conversaton-practice/actions/runs/37144707035. Combined local wiring check then passed typecheck, 9 unit tests, build and 8 browser tests (1 production-only skip). Real browser Auth check passed sign-in, protected integrated workspace, sign-out and denied re-entry; fixtures removed.
 
 ## Remaining acceptance
 Human live preflight must establish usable synchronized speech/video, interruption, two isolated contexts and actual media release before media contracts freeze. Full G1 then requires authenticated app integration, real UI Auth, readiness acknowledgement and End/auth-loss/navigation teardown through application routes. Credential expiry and app lease expiry remain separate. No raw transcript/media persistence; provider transcripts and downstream deletion limitations are explicit.
 
-Next smallest action: record human preflight result, review/integrate frontend presentation, complete draft PR/CI, then dispatch application media/auth tasks against accepted contracts. Do not advance to G2 or count test mode as a working live call.
+Next smallest action: record human preflight result, keep draft PR/CI current, then dispatch application media/auth tasks against accepted contracts. Do not advance to G2 or count test mode as a working live call.

@@ -18,7 +18,7 @@ const adminKey = Array.isArray(keys) ? keys.find(key => key.name === "service_ro
 if (!adminKey) throw new Error("Administrative test key unavailable. No test users created.");
 const options = { auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false } };
 const admin = createClient(url, adminKey, options);
-const fixtures = [], clients = [];
+const fixtures = [], clients = [], credentials = [];
 const ledger = "artifacts/local/auth-fixtures.json";
 const assert = (condition, name) => { if (!condition) throw new Error(`Assertion failed: ${name}`); };
 const rpc = (client, name, args) => client.rpc(name, { p_secret: capability, ...args });
@@ -36,8 +36,27 @@ try {
     const identity = await client.auth.getUser();
     assert(!identity.error && identity.data.user?.id === created.data.user.id && !identity.data.user.is_anonymous, "server verified identity");
     clients.push(client);
+    credentials.push({ email, password });
   }
   console.log("PASS: two real Auth password sign-ins and verified nonanonymous identities (fictional fixtures; no email sent).");
+  if (process.argv.includes("--ui-only")) {
+    const { chromium } = await import("@playwright/test");
+    const browser = await chromium.launch();
+    try {
+      const page = await browser.newPage();
+      await page.goto("http://127.0.0.1:3000/auth/sign-in");
+      await page.getByLabel("Email", { exact: true }).fill(credentials[0].email);
+      await page.getByLabel("Password", { exact: true }).fill(credentials[0].password);
+      await page.getByRole("button", { name: "Sign in", exact: true }).click();
+      await page.waitForURL("**/practice", { timeout: 20_000 });
+      assert(await page.getByRole("button", { name: "Start practice", exact: true }).isDisabled(), "verified workspace remains call-disabled");
+      await page.getByRole("button", { name: "Sign out", exact: true }).click();
+      await page.waitForURL("**/auth/sign-in", { timeout: 20_000 });
+      await page.goto("http://127.0.0.1:3000/practice");
+      await page.waitForURL("**/auth/sign-in", { timeout: 20_000 });
+      console.log("PASS: real browser sign-in, SSR-protected workspace, integrated setup, sign-out and denied re-entry.");
+    } finally { await browser.close(); }
+  } else {
   const [first, second] = clients;
   const publicClient = createClient(url, publishable, options);
   const deniedPublic = await publicClient.rpc("practice_acquire", { p_secret: capability, p_key: randomUUID(), p_fingerprint: "public", p_duration: 180 });
@@ -65,6 +84,7 @@ try {
   const acknowledged = await rpc(first, "practice_connected", { p_id: winner.id });
   assert(acknowledged.error?.message === "SESSION_CLOSED", "late acknowledgement rejection");
   console.log("PASS: terminal state survives late provider association and acknowledgement.");
+  }
 } finally {
   let cleanupSucceeded = true;
   for (const client of clients) await client.auth.signOut().catch(() => undefined);
