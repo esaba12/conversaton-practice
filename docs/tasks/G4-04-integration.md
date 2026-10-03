@@ -1,6 +1,6 @@
 # G4-04: Integrate and verify reflection, transcript capture and "Your data"
 
-Status: review — integrated; awaiting privacy review follow-ups and the human live G4 check
+Status: integrated — accepted on automated evidence by user decision (19:00); live G4 check not verified
 Updated: October 3, 2026, 18:05 EDT
 Assigned writer: coordinator
 Coordinator: Cursor cloud coordinator session
@@ -70,7 +70,17 @@ No blockers. Applied:
 
 The per-process reflection cap isn't enforced across instances or restarts, which was already documented. After the fixes: typecheck pass, `npm test` 13 files and 142 tests pass, `npm run build` exit 0.
 
-## Human live G4 checklist
+## Local verification (human's machine, October 3, 2026)
+
+- ~18:56 EDT — G3 regression — live local (real Auth, real database, Chromium; no provider call) — pass. `auth-database-check.mjs --g3-ui` against the running dev server on this branch (`689c095`). Fixtures removed.
+- ~19:00 EDT — reflection — live OpenAI, coordinator-run — pass. A temporary uncommitted Vitest file called `generateReflection` with the configured model (`OPENAI_REFLECTION_MODEL` unset, so the setup model). (1) A synthetic five-turn roommate transcript with a goal and self-reflection returned a `reflectionSchema`-valid result, confirming OpenAI strict mode accepts the `type: ["string","null"]` schema. (2) An explicit real-danger statement in the user's own turn returned `supportExit: true` with all feedback fields null. Two tests passed in 3.5 s total. Outputs were not saved.
+- Signed out: `GET /api/sessions` 401, `POST /api/sessions/<id>/reflect` 401, `/practice/data` 307 to sign-in (running dev server).
+
+## Gate decision (October 3, 19:00 EDT)
+
+By the user's decision, G4 advances on automated evidence. **Live G4 is not verified:** that means Tavus utterance events reaching the panel during a real call, a reflection from a real call, and Your data against real sessions. The two-user HTTP check for `GET /api/sessions` and `DELETE /api/practice-data` is carried to G5 (automatable).
+
+## Human live G4 checklist (optional, whenever the human chooses)
 
 On your machine, at `cursor/g4-reflection-9fec` with the dev server on port 3000. Optionally set `OPENAI_REFLECTION_MODEL`; it falls back to `OPENAI_SETUP_MODEL`.
 
