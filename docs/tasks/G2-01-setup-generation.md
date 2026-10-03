@@ -1,6 +1,6 @@
 # G2-01: Generate an editable setup draft from a described situation
 
-Status: review
+Status: integrated
 Updated: October 3, 2026, 16:45 EDT
 Assigned writer: G2-01 background subagent
 Coordinator: Cursor coordinator session
@@ -49,6 +49,7 @@ Mode: unit/mock only (mocked `fetch`, mocked `@/lib/auth/server`, `vi.stubEnv`).
 - `npx vitest run tests/unit/setup-generate.test.ts`: 1 file, 14 tests passed. Covers strict schema shape; success with `outOfScope` stripped; request body (URL, Bearer key, `AbortSignal`, `store:false`, strict `json_schema` named `practice_setup_draft`, model from env, system message identical to the constant and free of notes, notes inside `<untrusted_input>` in the user message); supplied goal returned unchanged; 401 before body read (`request.bodyUsed === false`) and before fetch; 400 for empty/extra-field/oversized bodies; `NOT_CONFIGURED` for missing key and missing model; refusal → retry → 503 retryable (2 calls); invalid JSON then valid → 200 (2 calls); incomplete + 500 and timeout + schema-invalid → 503 retryable without upstream text (2 calls each); `outOfScope` → 422 non-retryable (1 call); echoed private-note phrase twice → 503 and response never contains it; leaked first attempt then clean → clean result; leak-check normalization unit cases.
 - `npm test`: 6 files, 66 tests passed (full suite including other workers' in-progress files at that moment).
 - `npm run typecheck`: no errors in owned files. One error outside ownership: `app/practice/practice-workspace.tsx(180,76) TS2554` (another worker's in-progress change).
+- Coordinator live check, October 3, 2026 16:44 EDT, mode **live**, outcome **pass**, tested on `262c04e` (prompt `setup-2026-10-03.1`) with `.env.local` model `gpt-5.4-mini-2026-03-17`. Ran `generateDraft` directly from a temporary, uncommitted Vitest file (deleted afterwards). Input was a novel fictional situation (a neighbor blocking the driveway on Tuesdays) plus a private note containing a distinctive marker phrase. Two real calls were made: the first passed but its output was hidden by the test runner, so the second wrote it to a temporary file that was deleted after inspection. The second call took 1.7 s and returned a usable draft: a fictional neighbor with a plausible opening, neutral challenge, a concrete goal and three reviewable assumptions. Neither marker word appeared in the role. One constraint said "Does not know any private coaching notes", which reveals that notes exist without revealing what they say. The coordinator tightened the prompt in `setup-2026-10-03.2` so no role field mentions notes, coaching or rehearsal; that revision has not been re-run live. The out-of-scope classification was not tested live, the route was not called over HTTP, and the UI and Tavus start were not exercised.
 - Emitted strict schema inspected: root `type: "object"` with no `anyOf`; every object has all properties in `required` and `additionalProperties: false`; no `minLength`/`maxLength`/`$schema`; `enum` and `maxItems: 5` retained. Length/`min(1)` limits are enforced afterwards by `draftModelOutputSchema` (violation → retry → 503).
 
 ## Handoff
@@ -62,4 +63,4 @@ Mode: unit/mock only (mocked `fetch`, mocked `@/lib/auth/server`, `vi.stubEnv`).
 - External account action: none for this task (coordinator needs a real `OPENAI_API_KEY` and model ID for the live check).
 - Next smallest task: coordinator live call of `POST /api/scenarios/draft` with a novel situation plus an out-of-scope request, then UI wiring of the editable draft.
 - Ready for review: yes
-- Coordinator integration: pending
+- Coordinator integration: reviewed and committed at `262c04e` on `build/g2-generation`; prompt tightened to `.2` after live check (see evidence).
