@@ -5,16 +5,20 @@ import { useEffect, useRef, useState } from "react";
 import { MyPeople } from "@/components/presentation/people-list";
 import { SaveAfterEnd } from "@/components/presentation/people-save";
 import { SavedPersonStart } from "@/components/presentation/people-start";
+import peopleStyles from "@/components/presentation/people.module.css";
 import { PracticeCall, type PracticeCallProps } from "@/components/presentation/practice";
+import { ReflectionPanel } from "@/components/presentation/reflection-panel";
 import { SetupDescribe, type SetupDescribeError } from "@/components/presentation/setup-describe";
 import { SetupReview, emptyRole, parseReviewedRole, type SetupMode } from "@/components/presentation/setup-review";
 import { roommate } from "@/fixtures/roommate";
 import { createBrowserAuthClient } from "@/lib/auth/browser";
 import { createDailyController } from "@/lib/media/daily-controller";
 import { createPerson, getPerson, listPeople, updatePerson } from "@/lib/people/api-client";
+import { requestReflection } from "@/lib/reflection/api-client";
 import type { DraftRequest } from "@/lib/schemas/draft";
 import type { MediaController, MediaEvent } from "@/lib/schemas/media";
 import { roleToPersonFields, type Person } from "@/lib/schemas/people";
+import { appendTurn, type Reflection, type TranscriptTurn } from "@/lib/schemas/reflection";
 import type { RoleContext } from "@/lib/schemas/role-context";
 import type { EndReason, PracticeSession, StartResponse } from "@/lib/schemas/session";
 import { SessionClientError, endSession, generateDraft, markConnected, startSavedPersonSession, startSession } from "@/lib/session/api-client";
@@ -32,6 +36,19 @@ type CallOrigin = { kind: "role"; role: RoleContext } | { kind: "person"; person
 type SaveOffer = { open: boolean; saving: boolean; saved: { id: string; name: string; updated: boolean } | null; error: string };
 const closedOffer: SaveOffer = { open: false, saving: false, saved: null, error: "" };
 const sameName = (a: string, b: string) => a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase();
+// Reflection is per attempt and in memory only. goal is the user's reviewed goal; saved-person calls have none.
+type ReflectState = { sessionId: string | null; goal: string; selfReflection: string; pending: boolean; reflection: Reflection | null; error: { message: string; retry: boolean } | null };
+const closedReflect: ReflectState = { sessionId: null, goal: "", selfReflection: "", pending: false, reflection: null, error: null };
+const REFLECTION_FAILED = "The reflection couldn’t be generated. Your own notes still count.";
+
+function reflectionError(error: unknown): { message: string; retry: boolean } {
+  const code = error instanceof SessionClientError ? error.code : null;
+  if (code === "USAGE_LIMIT") return { message: "You’ve reached the reflection limit for this practice. Your own notes still count.", retry: false };
+  if (code === "SESSION_ACTIVE") return { message: "The call is still closing. Try again in a moment.", retry: true };
+  if (code === "NOT_FOUND") return { message: "This practice is no longer available to reflect on.", retry: false };
+  if (code === "NOT_CONFIGURED" || code === "VALIDATION_ERROR") return { message: REFLECTION_FAILED, retry: false };
+  return { message: REFLECTION_FAILED, retry: true };
+}
 
 const failureMessages: Record<Extract<MediaEvent, { type: "failed" }>["reason"], string> = {
   join: "We couldn’t join the call.",
@@ -100,6 +117,11 @@ export function PracticeWorkspace() {
   const [savedPerson, setSavedPerson] = useState<Person | null>(null);
   const [callOrigin, setCallOrigin] = useState<CallOrigin | null>(null);
   const [saveOffer, setSaveOffer] = useState<SaveOffer>(closedOffer);
+  // The provider transcript for the current attempt only; never logged or persisted.
+  const [turns, setTurns] = useState<TranscriptTurn[]>([]);
+  const [reflect, setReflect] = useState<ReflectState>(closedReflect);
+  const reflectGenerationRef = useRef(0);
+  const reflectingRef = useRef(false);
   const generationRef = useRef(0);
 
   // Refs carry the authoritative call state so media/auth callbacks never act on stale renders.
@@ -178,6 +200,7 @@ export function PracticeWorkspace() {
       case "local-preview": setLocalStream(event.stream); if (!event.stream) setCameraEnabled(false); return;
       case "remote-left": interrupt("The counterpart left the call."); return;
       case "failed": interrupt(failureMessages[event.reason]); return;
+      case "utterance": setTurns((current) => appendTurn(current, event.speaker, event.text)); return;
       case "ready": {
         if (connectedRef.current || phaseRef.current !== "connecting") return;
         connectedRef.current = true;
@@ -196,7 +219,14 @@ export function PracticeWorkspace() {
     router.refresh();
   }
 
+  function clearReflection() {
+    reflectGenerationRef.current++;
+    reflectingRef.current = false;
+    setTurns([]); setReflect(closedReflect);
+  }
+
   function clearPrivateSetup() {
+    clearReflection();
     generationRef.current++;
     setStep("describe"); setSituation(""); setIntent(""); setPrivateNotes("");
     setReviewRole(emptyRole); setReviewGoal(""); setAssumptions([]); setSetupMode("manual");
@@ -317,6 +347,8 @@ export function PracticeWorkspace() {
     if (startingRef.current || controllerRef.current || sessionIdRef.current || authLostRef.current || generating) return;
     startingRef.current = true;
     const attempt = ++attemptRef.current;
+    const reflectGoal = origin.kind === "role" ? reviewGoal.trim() : "";
+    clearReflection();
     setStarting(true); setSetupMessage(""); setPreviousSessionId(null); setGenerateError(null);
     let joined = false;
     try {
@@ -329,6 +361,7 @@ export function PracticeWorkspace() {
       connectedRef.current = false;
       setCallInfo({ name: origin.kind === "role" ? origin.role.name : origin.person.name, goal });
       setCallOrigin(origin); setSaveOffer({ ...closedOffer, open: true });
+      setReflect({ ...closedReflect, sessionId: session.id, goal: reflectGoal });
       setMutedState(false); setCameraEnabled(false); setCameraNote(""); setElapsedSeconds(0); setCallMessage(""); setCleanup(null); setCleanupTarget(null);
       setPhase("connecting");
       setView("call");
@@ -397,8 +430,29 @@ export function PracticeWorkspace() {
     setView("setup");
     setCallMessage(""); setCleanup(null); setCleanupTarget(null); setSetupMessage("");
     setCallOrigin(null); setSaveOffer(closedOffer);
+    clearReflection();
     if (origin?.kind === "person") { void openPerson(origin.person.id); return; }
     setStep("review"); setMoveFocus(true);
+  }
+
+  // One request at a time; a newer attempt or a clear drops a late result.
+  async function requestReflectionNow() {
+    const { sessionId, goal, selfReflection, reflection } = reflect;
+    if (!sessionId || reflection || reflectingRef.current || authLostRef.current) return;
+    reflectingRef.current = true;
+    const generation = reflectGenerationRef.current;
+    setReflect((state) => ({ ...state, pending: true, error: null }));
+    try {
+      const result = await requestReflection(sessionId, { turns, goal: goal || undefined, selfReflection: selfReflection.trim() || undefined });
+      if (generation !== reflectGenerationRef.current) return;
+      setReflect((state) => ({ ...state, pending: false, reflection: result }));
+    } catch (error) {
+      if (generation !== reflectGenerationRef.current) return;
+      if (isAuthError(error)) { handleAuthLoss(); return; }
+      setReflect((state) => ({ ...state, pending: false, error: reflectionError(error) }));
+    } finally {
+      if (generation === reflectGenerationRef.current) reflectingRef.current = false;
+    }
   }
 
   // Explicit only: a generated/manual role becomes a new person, or updates a same-named one keeping its chips and shared facts.
@@ -469,6 +523,7 @@ export function PracticeWorkspace() {
 
   useEffect(() => {
     const onPageHide = () => {
+      clearReflection();
       if (!controllerRef.current && !sessionIdRef.current) return;
       abandon("navigation");
       if (phaseRef.current && phaseRef.current !== "ended") setPhase("ended");
@@ -490,7 +545,8 @@ export function PracticeWorkspace() {
   const statusMessage = [callMessage, cameraNote, phase === "ended" || phase === "interrupted" ? cleanupMessage(cleanup) : ""].filter(Boolean).join(" ");
   const canRetryCleanup = !!cleanupTarget && !!cleanup && cleanup.state !== "closing" && !(cleanup.state === "closed" && cleanup.cleanup === "confirmed");
 
-  return <><header className="site-header"><Link className="wordmark" href="/">Conversation practice<span className="mark" aria-hidden="true">↗</span></Link><button type="button" className="button secondary" disabled={signingOut} onClick={() => void signOut()}>{signingOut ? "Signing out…" : "Sign out"}</button></header>
+  return <><header className="site-header"><Link className="wordmark" href="/">Conversation practice<span className="mark" aria-hidden="true">↗</span></Link>
+    <div className="actions"><Link className={peopleStyles.textLink} href="/practice/data">Your data</Link><button type="button" className="button secondary" disabled={signingOut} onClick={() => void signOut()}>{signingOut ? "Signing out…" : "Sign out"}</button></div></header>
     <main id="main">
       {headerMessage && <p role="status" className="notice">{headerMessage}</p>}
       {view === "setup" ? (step === "describe"
@@ -519,6 +575,9 @@ export function PracticeWorkspace() {
             : <SaveAfterEnd mode={match && !saveOffer.saved ? "update" : "new"} name={match && !saveOffer.saved ? match.name : callOrigin.role.name} onSave={() => void saveFromCall()} onDismiss={() => setSaveOffer(closedOffer)}
                 saving={saveOffer.saving} ready={peopleStatus !== "loading"} saved={saveOffer.saved} errorMessage={saveOffer.error || undefined} />;
         })()}
+        {(phase === "ended" || phase === "interrupted") && reflect.sessionId && <ReflectionPanel selfReflection={reflect.selfReflection}
+          onSelfReflectionChange={(selfReflection) => setReflect((state) => ({ ...state, selfReflection }))} onReflect={() => void requestReflectionNow()} onDone={clearReflection}
+          pending={reflect.pending} reflection={reflect.reflection} error={reflect.error} noSpeech={!turns.some((turn) => turn.speaker === "user")} />}
         {(phase === "ended" || phase === "interrupted") && <div className="actions">
           {canRetryCleanup && <button type="button" className="button secondary" onClick={() => cleanupTarget && closeRemote(cleanupTarget.id, cleanupTarget.reason)}>Retry closing session</button>}
           {phase === "ended" && <button type="button" className="button" onClick={backToSetup}>Back to setup</button>}

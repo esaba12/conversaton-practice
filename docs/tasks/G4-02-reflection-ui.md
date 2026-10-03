@@ -1,6 +1,6 @@
 # G4-02: Reflection after End in the practice workspace
 
-Status: ready
+Status: review
 Updated: October 3, 2026, 17:50 EDT
 Assigned writer: G4-02 background subagent
 Coordinator: Cursor cloud coordinator session
@@ -45,13 +45,20 @@ Non-goals: storing reflections or transcripts, memory proposals, editing people 
 
 ## Verification evidence
 
-Not run yet.
+Mock-tested only (October 3, 2026, 21:53 UTC, uncommitted on `cursor/g4-reflection-9fec` at base `fbcd359`). No browser, build, dev server, live provider or database run.
+
+- `npm run typecheck`: pass (whole repo, including other workers' in-progress files at that moment).
+- `npx vitest run tests/unit/reflection-api-client.test.ts tests/unit/api-client.test.ts`: 2 files, 18 tests, all pass (5 new reflection-client tests: path/method/same-origin JSON/body shape validated by `reflectRequestSchema`; empty optional fields omitted and extra fields such as private notes, role, About-me and per-turn extras stripped; empty transcript allowed; REFLECTION_UNAVAILABLE/USAGE_LIMIT/SESSION_ACTIVE/NETWORK mapped to typed errors; extra `score` field, bad `evidence` and HTML 502 rejected as MALFORMED_RESPONSE).
+- ESLint: the repo has no ESLint config, so not run.
+- Not verified: the workspace UI states (no component test harness in the repo, no browser run), real `utterance` events from Tavus, and the G4-01 route.
 
 ## Handoff
 
-- Changed paths and commit(s):
-- Remaining failures/risks:
+- Changed paths and commit(s): `app/practice/practice-workspace.tsx`, `components/presentation/reflection-panel.tsx` (new), `components/presentation/reflection.module.css` (new), `lib/reflection/api-client.ts` (new), `tests/unit/reflection-api-client.test.ts` (new), this record. Not committed (coordinator is the only Git writer).
+- Behavior: `utterance` events for the current attempt go through `appendTurn` into state; earlier attempts' events are already dropped by the attempt guard. The transcript and reflection state are cleared at the start of each launch, on Back to setup, on Skip/Done, through `clearPrivateSetup` (auth loss, sign-out, bfcache `pageshow`), and at the start of every `pagehide`. The panel appears in the `ended` and `interrupted` phases once a session ID is known, below the Save offer, and does not take focus. `goal` is the reviewed role goal when non-empty (never the fallback goal; saved-person calls send none). A generation counter plus a ref guard allow one request at a time and drop late results after a clear or new call. After a successful result the request button is hidden and Skip becomes Done. Errors: REFLECTION_UNAVAILABLE/NETWORK/MALFORMED → retryable; SESSION_ACTIVE → "still closing", retryable (End and reflect can race); USAGE_LIMIT, NOT_FOUND, NOT_CONFIGURED, VALIDATION_ERROR → no retry; UNAUTHENTICATED → existing auth-loss path. The typed note is kept on error. The header has a "Your data" link to `/practice/data`.
+- Proposed shared changes: none required. Optionally, the coordinator could update docs/02 "Reflection" to the delivered copy (no memory proposals in G4; "Skip"/"Done" instead of "Finish for now").
+- Remaining failures/risks: live Tavus utterance text and timing are unverified (an empty capture shows the no-speech hint). The header link reuses `people.module.css` `textLink` inside the global `.actions` row. The no-retry message for NOT_CONFIGURED/VALIDATION_ERROR is the generic one.
 - External account action: none
 - Next smallest task: coordinator integration and browser check with the reflect route intercepted.
-- Ready for review:
+- Ready for review: yes
 - Coordinator integration: pending
