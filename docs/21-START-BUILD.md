@@ -1,5 +1,7 @@
 # Start the build after resetting context
 
+Latest access check: all five local environment values are present, and read-only Tavus, ElevenLabs, OpenAI, and Supabase requests passed on October 3 at 13:45 America/Detroit. Git main/remote match `4dc34a1`. Do not repeat key creation. Supabase CLI is still blocked by protected telemetry in this session, so migration access remains unverified. See [PREP-03](tasks/PREP-03-access-check.md). The user requested access checks/documentation only before clearing context; no build or call was started.
+
 Later update: the user completed baseline commit `ec919a5` (main tracking origin/main), and the two project skills are now active. Skip completed activation/initial-commit steps after checking actual state. A public static website is now live at https://conversation-practice-site.vercel.app; preserve its uncommitted source/handoff changes before starting G1. See STATUS.md for the latest state.
 
 Checked October 3, 2026. Codex CLI, Node/npm, GitHub CLI, and Homebrew are installed. GitHub access works and G1 issues #1-#5 exist. The application has not been scaffolded. No additional MCP is required to begin coding.
@@ -46,7 +48,7 @@ ELEVENLABS_API_KEY=your-elevenlabs-key
 OPENAI_API_KEY=your-openai-key
 ```
 
-These are server-only values: no `NEXT_PUBLIC_` prefix. Keep secrets out of chat and GitHub. The local presence check on October 3 found the two Supabase values present and these three provider values missing; keys have not been validated.
+These are server-only values: no `NEXT_PUBLIC_` prefix. Keep secrets out of chat and GitHub. The latest local check found all five values present. Authenticated read-only provider access passed; paid generation, TTS capability, and live video remain untested.
 
 Supabase dashboard setup for the first local build: keep Email sign-in enabled and anonymous sign-in disabled. Set Authentication > URL Configuration > Site URL to `http://localhost:3000`, and allow `http://localhost:3000/**` for local development. The wildcard is local only; exact production URLs are added after the app is deployed. See [redirect URL guidance](https://supabase.com/docs/guides/auth/redirect-urls). The current public static preview is not the Auth callback application.
 
