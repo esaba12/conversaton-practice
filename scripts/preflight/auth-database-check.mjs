@@ -71,6 +71,64 @@ try {
     const direct = await first.from("person_shared_facts").insert({ owner_id: fixtures[0], person_id: dana.data.id, fact_id: unshared.data.id });
     assert(direct.error, "direct sharing writes denied");
     console.log("PASS: G3 real-JWT owner isolation, cross-owner sharing denied, stale version conflict, private prep and unshared facts absent from context.");
+  } else if (process.argv.includes("--g3-ui")) {
+    // Two signed-in browser sessions against the running app's routes. Only starts that fail before any provider call are attempted.
+    const { chromium } = await import("@playwright/test");
+    const browser = await chromium.launch();
+    const base = "http://127.0.0.1:3000";
+    try {
+      const signIn = async ({ email, password }) => {
+        const context = await browser.newContext();
+        const page = await context.newPage();
+        await page.goto(`${base}/auth/sign-in`);
+        await page.getByLabel("Email", { exact: true }).fill(email);
+        await page.getByLabel("Password", { exact: true }).fill(password);
+        await page.getByRole("button", { name: "Sign in", exact: true }).click();
+        await page.waitForURL("**/practice", { timeout: 20_000 });
+        return { context, page, api: context.request };
+      };
+      const a = await signIn(credentials[0]), b = await signIn(credentials[1]);
+      const call = async (who, method, path, data) => {
+        const response = await who.api.fetch(`${base}${path}`, { method, data, headers: { Origin: base } });
+        return { status: response.status(), body: await response.json().catch(() => null) };
+      };
+      const fields = { name: "Dana", relationship: "Your fictional manager", traits: { formality: "formal" }, style: "Calm, asks clarifying questions.", publicContext: "You manage a small team.", opening: "Hi, you wanted to talk?", constraints: [], challenge: "neutral", pace: "patient" };
+      const shared = await call(a, "POST", "/api/about-me", { text: "g3 shared fixture fact" });
+      const unshared = await call(a, "POST", "/api/about-me", { text: "g3 unshared fixture fact" });
+      const prep = await call(a, "PUT", "/api/private-prep", { notes: "g3 private prep fixture" });
+      const created = await call(a, "POST", "/api/people", fields);
+      assert(shared.status === 201 && unshared.status === 201 && prep.status === 200 && created.status === 201 && created.body.person.version === 1, "A creates facts, prep and person over HTTP");
+      const id = created.body.person.id;
+      const linked = await call(a, "PUT", `/api/people/${id}/shared-facts`, { factIds: [shared.body.fact.id], expectedVersion: 1 });
+      assert(linked.status === 200 && linked.body.person.version === 2 && linked.body.person.sharedFactIds.join() === shared.body.fact.id, "A shares exactly one fact");
+      const prepShare = await call(a, "PUT", `/api/people/${id}/shared-facts`, { factIds: [shared.body.fact.id], privatePrep: "g3 private prep fixture", expectedVersion: 2 });
+      assert(prepShare.status === 400, "private prep cannot be sent to the sharing route");
+      const stale = await call(a, "PATCH", `/api/people/${id}`, { ...fields, name: "Stale", expectedVersion: 1 });
+      const fresh = await call(a, "GET", `/api/people/${id}`);
+      assert(stale.status === 409 && stale.body.code === "VERSION_CONFLICT" && fresh.body.person.name === "Dana" && fresh.body.person.version === 2, "stale PATCH 409 without partial write");
+      const staleStart = await call(a, "POST", "/api/sessions", { idempotencyKey: randomUUID(), personId: id, expectedVersion: 1, durationSeconds: 180 });
+      assert(staleStart.status === 409 && staleStart.body.code === "VERSION_CONFLICT", "stale saved-person start 409 before any provider call");
+      const leakStart = await call(a, "POST", "/api/sessions", { idempotencyKey: randomUUID(), personId: id, expectedVersion: 2, durationSeconds: 180, knownAboutUser: ["g3 unshared fixture fact"] });
+      assert(leakStart.status === 400, "client cannot add facts to a saved-person start");
+      const lists = await Promise.all(["/api/people", "/api/about-me", "/api/private-prep"].map(path => call(b, "GET", path)));
+      assert(lists[0].body.people.length === 0 && lists[1].body.facts.length === 0 && lists[2].body.privatePrep.notes === "", "B lists none of A's people, facts or prep");
+      const foreign = [
+        await call(b, "GET", `/api/people/${id}`),
+        await call(b, "PATCH", `/api/people/${id}`, { ...fields, name: "Hijack", expectedVersion: 2 }),
+        await call(b, "PUT", `/api/people/${id}/shared-facts`, { factIds: [], expectedVersion: 2 }),
+        await call(b, "DELETE", `/api/people/${id}`),
+        await call(b, "PATCH", `/api/about-me/${shared.body.fact.id}`, { text: "hijack" }),
+        await call(b, "DELETE", `/api/about-me/${unshared.body.fact.id}`),
+        await call(b, "POST", "/api/sessions", { idempotencyKey: randomUUID(), personId: id, expectedVersion: 2, durationSeconds: 180 }),
+      ];
+      assert(foreign.every(result => result.status === 404 && result.body.code === "NOT_FOUND"), `B gets 404 for A's records and start (${foreign.map(r => r.status).join(",")})`);
+      const own = await call(b, "POST", "/api/people", { ...fields, name: "Sam" });
+      const cross = await call(b, "PUT", `/api/people/${own.body.person.id}/shared-facts`, { factIds: [shared.body.fact.id], expectedVersion: 1 });
+      assert(cross.status === 400, "B cannot share A's fact into B's person");
+      const after = await call(a, "GET", `/api/people/${id}`);
+      assert(after.body.person.name === "Dana" && after.body.person.version === 2, "A's person unchanged by B");
+      console.log("PASS: G3 two signed-in browser sessions over app routes: owner isolation (404), cross-owner sharing denied, stale version 409, private prep not shareable, saved-person start rejects stale/foreign/extra fields before any provider call.");
+    } finally { await browser.close(); }
   } else if (process.argv.includes("--ui-only")) {
     const { chromium } = await import("@playwright/test");
     const browser = await chromium.launch();
