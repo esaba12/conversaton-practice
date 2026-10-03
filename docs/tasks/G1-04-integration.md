@@ -1,6 +1,6 @@
 # G1-04: Integrate and verify the authenticated FaceTime-style live video slice
 
-Status: planned
+Status: active — integrated and statically verified; human live call pending
 Updated: October 3, 2026, America/Detroit
 Assigned writer: unassigned; coordinator role
 Gate: G1 acceptance
@@ -44,6 +44,18 @@ Update specs/runbooks to final interfaces and configuration; link task evidence 
 of copying it. Record integrated SHA, actual check results, selected resources without
 private identifiers, limitations, and next gate in STATUS. Pending provider cleanup
 must remain pending; no instant-erasure promise or claim that all release tests passed.
+
+## Integration record (October 3, 2026)
+
+Branch `build/g1-session-media`: contracts `7d6ff43`, G1-02 `1e20d98`, G1-01 `bdc6ae1`, G1-03 `a8211af`, integrated one at a time after coordinator review. Coordinator contract changes on integration: `INTERNAL_ERROR` code for unexpected 500s; documented media clarifications (ejected = remote-left, `setCamera` resolves current preview state, `connect` resolves if End interrupts) and SESSION_ACTIVE replay semantics.
+
+Checks on combined `a8211af`, original checkout, Node 22.23.3, America/Detroit ~16:10:
+- `npm run typecheck`: exit 0. `npm test`: 5 files, 38 tests pass (unit/mock only).
+- `npm run build`: exit 0; routes `/api/sessions`, `/api/sessions/[id]/connected`, `/api/sessions/[id]/end`, dynamic `/practice`.
+- `npm run test:ui` (with `PLAYWRIGHT_BROWSERS_PATH=$HOME/Library/Caches/ms-playwright`; the sandbox's temporary browser cache was empty): 8 pass, 1 production-only skip.
+- Live HTTP on dev 3000, signed out: POST start and end → 401 UNAUTHENTICATED; cross-site Origin → 403 FORBIDDEN; `/practice` → 307 to sign-in. No provider call made.
+
+Not yet run: signed-in five-turn live call in the app, interruption, End/microphone release, auth-loss/navigation teardown, live Tavus cleanup confirmation, two-owner HTTP denial on the new routes. G1 not passed.
 
 ## Verification evidence
 
