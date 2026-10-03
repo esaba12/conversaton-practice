@@ -24,9 +24,9 @@ export async function handle(request: Request, run: () => Promise<Response>) {
   }
 }
 // Reads text regardless of content type so navigator.sendBeacon bodies are accepted.
-export async function readBody<T extends z.ZodType>(request: Request, schema: T): Promise<z.output<T>> {
+export async function readBody<T extends z.ZodType>(request: Request, schema: T, maxLength = 2048): Promise<z.output<T>> {
   const text = await request.text().catch(() => "");
-  if (text.length > 2048) throw invalid();
+  if (text.length > maxLength) throw invalid();
   let value: unknown;
   try { value = JSON.parse(text); } catch { throw invalid(); }
   const parsed = schema.safeParse(value);
