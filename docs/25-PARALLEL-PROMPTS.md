@@ -1,6 +1,6 @@
 # Parallel agent prompts during G2 integration
 
-Written October 3, 2026, 16:50 EDT by the G2 coordinator. The G2 coordinator session stays in `/Users/ethansaba/code/therapist` on `build/g2-generation` and owns STATUS.md, `lib/schemas/**` existing files, migrations execution, the shared Supabase project and the microphone. These prompts start **separate** agents that must not touch that checkout.
+Written October 3, 2026, 16:50 EDT by the G2 coordinator. The G2 coordinator session stays in `/Users/ethansaba/code/therapist` on `main` and owns STATUS.md, `lib/schemas/**` existing files, migrations execution, the shared Supabase project and the microphone. These prompts start **separate** agents that must not touch that checkout.
 
 G2 passed and merged at `6682823`, so G3 is the active gate. Preparation in an isolated worktree is allowed: plan, contracts proposal, unapplied migration, repository code and unit tests, reviewed by the coordinator before anything merges or any SQL runs.
 
