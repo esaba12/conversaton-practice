@@ -1,24 +1,24 @@
-# MHacks conversation rehearsal specification pack
+# Conversation practice
 
-Project name undecided. Prepared October 3, 2026 (America/Detroit).
-Status: public product preview deployed; authenticated application foundation in progress. No live acceptance gate or clinical validation.
-Confirmed core experience: FaceTime-style practice with a visible, talking fictional AI counterpart. Real synchronized video is required in the first slice. See docs/22-LIVE-VIDEO.md for the integration and acceptance plan.
-Target: a 24-hour MHacks prototype. Confirmed team: one human builder coordinating multiple coding agents.
+A FaceTime-style rehearsal for an everyday conversation you have been putting off. You describe a situation, review an editable fictional counterpart, and talk live on video. This is a practice tool, not therapy, and it does not predict anyone real.
 
-Public website: [conversation-practice-site.vercel.app](https://conversation-practice-site.vercel.app). This is a static concept preview for the credits application; see [source/deployment notes](website/README.md).
+**MHacks prototype** (October 3–4, 2026). One human builder with coding agents. Submit by **11:30 AM America/Detroit** October 4 (hard noon). Pitch, backup shot list, Devpost drafts and claims we must not make: [docs/tasks/DEMO-01-submission-prep.md](docs/tasks/DEMO-01-submission-prep.md).
 
-## Product
+Public concept site (static, not the app): [conversation-practice-site.vercel.app](https://conversation-practice-site.vercel.app).
 
-A FaceTime-style rehearsal space for conversations you are avoiding. Users describe a situation; the app generates an editable fictional counterpart and conversation setup. The fictional counterpart responds live on video as the user speaks. Users practice a concrete communication goal and control what the app remembers. Sessions end with a brief reflection and an optional real-world step.
+## What it does
 
-Every session starts fresh. Approved preferences and persona settings may carry over; previous simulated conversations do not.
+Sign in, describe a situation (or use a saved person), optionally keep private notes that never go to the call, edit the generated setup, then practice on a live video call. After End you can skip or request a short reflection (nothing stored) and optionally save the person. Each saved person knows only the About-me facts you share with them. Each practice starts fresh.
 
-The core loop is: prepare -> review persona -> practice -> reflect -> approve memory -> close.
+## Build status
+
+G1 and G2 passed human live calls. G3–G5 are merged and accepted on automated evidence (**live not verified**). See [STATUS.md](STATUS.md). Dependencies are frozen at the lockfile; do not upgrade for the demo.
+
+Stack: Next.js 16, Supabase Auth/PostgreSQL, Tavus CVI + ElevenLabs TTS, OpenAI Responses for setup and optional reflection, Zod, Vitest, Playwright.
 
 ## Read in this order
 
-On restart, begin with [STATUS.md](STATUS.md), [project instructions](AGENTS.md), the active gate in [the build plan](docs/10-BUILD-PLAN.md), and your assigned [task record](docs/tasks/TEMPLATE.md). Read the PRD and affected contracts before changing code. The full reference index follows; do not repeat product discovery on every task.
-For setup/resume commands, follow [the startup checklist](docs/21-START-BUILD.md). For the editor transition and exact next implementation task, read [the Cursor handoff](docs/23-CURSOR-HANDOFF.md).
+On restart, begin with [STATUS.md](STATUS.md) and [AGENTS.md](AGENTS.md). Demo/submission: [docs/11](docs/11-DEMO-AND-SUBMISSION.md) and [DEMO-01](docs/tasks/DEMO-01-submission-prep.md). The full reference index follows.
 
 1. [Decisions and viability](docs/00-DECISIONS-AND-VIABILITY.md)
 2. [Product requirements](docs/01-PRD.md)
@@ -46,11 +46,11 @@ For setup/resume commands, follow [the startup checklist](docs/21-START-BUILD.md
 
 ## Build with agents
 
-Local application: `npm ci`, then `npm run dev` (http://127.0.0.1:3000). Use Node 22 (`.nvmrc`); a pinned local Node binary also supplies npm scripts. Copy `.env.example` only for a new environment; preserve existing ignored `.env.local`. Checks: `npm run typecheck`, `npm test`, `npm run build`, `npm run test:ui`. Calls are disabled in the initial protected workspace shell. The original static preview remains under `website/`.
+Local application: `npm ci`, then `npm run dev` (http://127.0.0.1:3000). Use Node 22 (`.nvmrc`); a pinned local Node binary also supplies npm scripts. Copy `.env.example` only for a new environment; preserve existing ignored `.env.local`. Checks: `npm run typecheck`, `npm test`, `npm run build`, `npm run test:ui`. Real-Auth scripts: `scripts/preflight/auth-database-check.mjs` (`--g3-ui`, `--g5-ui`) against a running server. The original static preview remains under `website/`.
 
-Track current work in [the GitHub G1 milestone](https://github.com/esaba12/conversaton-practice/milestone/1). Each implementation task has an issue; agents use focused branches and draft PRs with documented verification. GitHub Actions is part of the foundation task and has not run yet.
+Repository: [esaba12/conversaton-practice](https://github.com/esaba12/conversaton-practice).
 
-The coordinator completes [G1 foundation](docs/tasks/G1-00-foundation.md), then dispatches independent [auth/session](docs/tasks/G1-01-auth-session.md), [voice](docs/tasks/G1-02-voice.md), and [UI](docs/tasks/G1-03-ui.md) tasks before [integration](docs/tasks/G1-04-integration.md). Keep one writer per worktree and one owner for shared contracts. Workers maintain task evidence; the coordinator updates STATUS.md and accepts gates. See the workflow for Warp tabs, the guarded worktree helper, and merge checkpoints. This is a development workflow, not another application dependency.
+Gates G1–G5 are implemented. Workers maintain task evidence; the coordinator updates STATUS.md. This is a development workflow, not another application dependency.
 
 First stretch after all core gates pass: bounded iMessage rehearsal using Photon Spectrum. Deferred for the solo MVP. Share approved persona/profile settings, keep session histories separate, and keep reflection in the web app. Implementation is gated on remaining time, sponsor access, and current SDK verification.
 
@@ -58,7 +58,7 @@ First stretch after all core gates pass: bounded iMessage rehearsal using Photon
 
 ## What has and has not been done
 
-This folder supplies specifications, acceptance gates, research, development tooling, and the deployed static product preview in `website/`. Context7 is installed locally; the two staged vendor skills are now active in this session. Recheck MCP activation on restart. See [tooling status](tooling/README.md). The authenticated scaffold and provider API preflight now exist; live audiovisual integration and the full application gates remain pending. See STATUS.md for actual evidence.
+This folder supplies the application, specifications, and the deployed static product preview in `website/`. See STATUS.md for actual evidence. G3–G5 live audiovisual paths remain labelled live not verified.
 
 ## Defaults and unresolved items
 
@@ -66,9 +66,9 @@ Current direction: Next.js App Router, TypeScript, npm, Tavus CVI with explicit 
 
 Confirmed event strategy: Actually Intelligent plus both listed ElevenLabs categories, subject to organizer confirmation of category stacking. Submission is before noon Sunday, October 4, America/Detroit; judging uses a three-minute pitch. See docs/16-MHACKS-STRATEGY.md.
 
-Confirmed: one human with parallel coding agents, fresh sessions, user-described situations as the primary input, warm minimal/crisp modern design, and sign-in before all workspace actions. The user supplied a fresh Supabase project; local configuration and Auth health are verified, while sign-in/database integration remain untested. See STATUS.md. Situation generation is a core requirement, not an optional scope cut.
+Confirmed: one human with parallel coding agents, fresh sessions, user-described situations as the primary input, warm minimal/crisp modern design, and sign-in before all workspace actions. The user supplied a fresh Supabase project; Auth and owner isolation are automated-tested. Situation generation is core scope.
 
-Open items: prize stacking, detailed Figma eligibility, available credits, provider account permissions, selected voices and model IDs, and public deployment choice. Live roleplay is confirmed; a written sample conversation is outside the current scope. Record concrete values in STATUS.md when known.
+Open items: Devpost submission, ElevenLabs category stacking, backup-demo recording, and optional human live checks of G3–G5. Photon/Relay remain deferred.
 
 ## Evidence policy
 

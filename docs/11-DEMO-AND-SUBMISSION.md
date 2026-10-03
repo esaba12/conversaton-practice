@@ -9,18 +9,18 @@ Primary targets: Actually Intelligent and the two listed ElevenLabs categories. 
 | Time | What to show |
 | --- | --- |
 | 0:00-0:20 | Personal motivation and one concrete user problem |
-| 0:20-0:40 | Roommate cleaning-boundary scenario; editable traits and private communication goal |
-| 0:40-1:55 | Live conversation: roommate deflects with a joke, user interrupts or restates a boundary, counterpart responds coherently |
-| 1:55-2:15 | End, one brief factual reflection, and an optional real-world step |
-| 2:15-2:35 | User explicitly states a pacing preference; review and approve the proposed profile update |
-| 2:35-3:00 | Explain context separation, approved memory, ElevenLabs' role, and observed test results |
+| 0:20-0:40 | New generated situation (roommate example only if generation fails); edit one field; private notes stay off the call |
+| 0:40-1:55 | Live conversation: counterpart responds on video, user interrupts once, restates the request |
+| 1:55-2:15 | End, optional short reflection (or Skip), no automatic save |
+| 2:15-2:40 | Your data cleanup label; optional Save this person / sharing — explicit only |
+| 2:40-3:00 | Stack (Tavus CVI + ElevenLabs TTS, OpenAI, Supabase, Next.js) and what was actually verified |
 
 Rehearse to finish comfortably inside three minutes. The live exchange should be 60-90 seconds and can be ended early. Test character behavior, but do not require an exact scripted line. A second session showing an edited persona is optional for Q&A, not required in the timed pitch.
 
 ## What makes the demo strong
 Believable behavior is the main demonstration: the counterpart reacts to what the user says, stays in character, and accepts interruptions. Show realistic pushback without escalating into abuse. A visibly separate private goal illustrates the context boundary; the character must not know it unless the user expresses it aloud or explicitly shares it.
 
-Memory learning must use the user's stated preference and approval. The model must not infer permanent facts about the real roommate from roleplay.
+Saving a person and sharing About-me facts are explicit. The model must not infer permanent facts about a real person from roleplay. Reflection does not write memory. Full script, backup shot list, Devpost drafts and claims we must not make: [DEMO-01](tasks/DEMO-01-submission-prep.md).
 
 ## ElevenLabs contribution
 Explain real-time voice interaction, expressive delivery, turn-taking, selected voices, and per-session persona configuration. The contribution should be audible and visible. Do not add unrelated API calls to inflate integration count.
@@ -28,12 +28,12 @@ Explain real-time voice interaction, expressive delivery, turn-taking, selected 
 ## Technical contribution
 - Typed persona and public/private context allowlists.
 - Separate roleplay and reflection paths.
-- Versioned, transactional user-approved memory updates.
+- Versioned saved people and per-person sharing of About-me facts (explicit Save after End; no automatic memory writes).
 - Deterministic session teardown and microphone release.
 - Tested owner isolation and honest no-app-save behavior.
 
 ## Claims and evidence
-Describe a working rehearsal prototype, not clinical efficacy, prediction of a real person's response, or a market first. State only actual tests performed and outcomes observed. Never claim a mock, prerecorded voice, or scripted playback is live inference.
+Describe a working rehearsal prototype, not clinical efficacy, prediction of a real person's response, or a market first. State only actual tests performed and outcomes observed. Never claim a mock, prerecorded voice, or scripted playback is live inference. G1 and G2 were live-checked; G3–G5 are automated and labelled live not verified. Do not claim instant global erasure of provider copies. Full do-not-claim list: [DEMO-01](tasks/DEMO-01-submission-prep.md).
 
 ## Backup
 Record a real working session using fictional data. Clearly label prerecorded material. Bring a headset and charged laptop. A local frontend still needs network access for provider calls.
@@ -54,6 +54,8 @@ Judging factors listed: innovation, technical complexity, usability, and present
 - [ ] Demo/source access and required fields verified against the submission form.
 - [ ] No keys or private user data in screenshots, logs, or demo.
 - [ ] Successful submission confirmation retained before noon.
+- [ ] Backup recording labelled prerecorded (shot list in DEMO-01).
+- [ ] Do not claim G3–G5 live verification.
 
 Sources: S35-S38 in [sources](14-SOURCES.md).
 

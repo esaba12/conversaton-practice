@@ -113,7 +113,7 @@ G1 covers P04/P05/P09/P12/P13 and the applicable T01/T03/T09/T10/T12/T13/T14/T15
 - A visible talking fictional roommate responds coherently with synchronized audio/video when the user states a cleaning boundary and handles an interruption without restarting the scenario. No exact scripted line is required.
 - The private goal is not revealed by the counterpart before the user expresses it.
 - Persona controls change the actual role configuration, not only the displayed label.
-- A user-stated preference becomes memory only after approval; the approved value survives refresh.
+- Saving a person and sharing About-me facts are explicit; nothing is written from reflection automatically. A saved person’s next practice uses only shared facts (automated; counterpart live-pending).
 - The complete pitch fits three minutes with a 60-90 second live exchange.
 - The backup recording is identified as prerecorded if used.
 - Submitted sponsor categories match working integrations and available evidence.
