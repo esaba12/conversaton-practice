@@ -7,8 +7,8 @@ Coordinator: Cursor coordinator session
 Gate: G5 ("no critical ownership/context/teardown defects"; docs/10)
 Requirements/tests: T01, T03, T08, T09, T10, T13, T14, T16; docs/28 G5 items 1–7
 GitHub issue: https://github.com/esaba12/conversaton-practice/issues/25 (tasks: #22, #23, #24)
-Pull request: not opened
-CI run: not run
+Pull request: https://github.com/esaba12/conversaton-practice/pull/26
+CI run: https://github.com/esaba12/conversaton-practice/actions/runs/37161341412 — verify SUCCESS (October 3, 2026, 19:19 EDT)
 
 ## Design decisions (coordinator, 19:10 EDT)
 
@@ -53,8 +53,8 @@ Coordinator review notes: G5-02's duplicate-save fix asks the user to confirm "U
 
 ## Gate decision
 
-Pending CI and the read-only privacy review. G5 will be accepted on automated evidence by the user's 19:00 decision; **live not verified**.
+CI verify SUCCESS on [PR #26](https://github.com/esaba12/conversaton-practice/pull/26) (run 37161341412). Accepted on automated evidence by the user's 19:00 decision; **live not verified**. Coordinator review of the G5 diffs found no privacy blockers (test-media override compiled out of production; private notes stay off start/reflect bodies; rate limit is after auth). The dispatched read-only privacy reviewer did not return a record in this session.
 
 ## Handoff
 
-- Coordinator integration: integrated on `build/g5-hardening` at `d6917f9`; PR pending.
+- Coordinator integration: integrated on `build/g5-hardening`; PR #26.
