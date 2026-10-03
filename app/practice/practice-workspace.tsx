@@ -548,7 +548,7 @@ export function PracticeWorkspace() {
   const canRetryCleanup = !!cleanupTarget && !!cleanup && cleanup.state !== "closing" && !(cleanup.state === "closed" && cleanup.cleanup === "confirmed");
 
   return <><header className="site-header"><Link className="wordmark" href="/">Conversation practice<span className="mark" aria-hidden="true">↗</span></Link>
-    <div className="actions"><Link className={peopleStyles.textLink} href="/practice/data">Your data</Link><button type="button" className="button secondary" disabled={signingOut} onClick={() => void signOut()}>{signingOut ? "Signing out…" : "Sign out"}</button></div></header>
+    <div className="actions"><Link className={peopleStyles.textLink} href="/practice/about-me">About me</Link><Link className={peopleStyles.textLink} href="/practice/data">Your data</Link><button type="button" className="button secondary" disabled={signingOut} onClick={() => void signOut()}>{signingOut ? "Signing out…" : "Sign out"}</button></div></header>
     <main id="main">
       {headerMessage && <p role="status" className="notice">{headerMessage}</p>}
       {view === "setup" ? (step === "describe"
