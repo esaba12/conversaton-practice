@@ -85,6 +85,7 @@
 .callNotes { padding-top: 14px; font-size: 11px; line-height: 1.65; color: var(--muted); }
 .callNotes p { margin: 0 0 7px; }
 .callNotes .callStatus { color: var(--ink); font-size: 13px; }
+.callNotes .callStatus:empty { margin: 0; }
 .callNotes .mutedNote { color: #795627; }
 
 @media (max-width: 760px) {

@@ -28,6 +28,8 @@ export type PracticeCallProps = {
   onEnd: () => void;
   statusMessage?: string;
   isMock?: boolean;
+  // A development-only fake media controller is driving the call.
+  testMedia?: boolean;
 };
 
 type IconName = "arrow" | "video" | "videoOff" | "mic" | "micOff" | "end" | "person" | "check";
@@ -80,7 +82,7 @@ function formatTime(seconds: number) {
 
 const phaseLabels = { connecting: "Connecting", live: "In conversation", interrupted: "Connection interrupted", ended: "Practice ended" };
 
-export function PracticeCall({ counterpartName, goal, phase, muted, cameraEnabled, elapsedSeconds, durationSeconds, remoteMedia, localPreview, onMuteToggle, onCameraToggle, onEnd, statusMessage, isMock = false }: PracticeCallProps) {
+export function PracticeCall({ counterpartName, goal, phase, muted, cameraEnabled, elapsedSeconds, durationSeconds, remoteMedia, localPreview, onMuteToggle, onCameraToggle, onEnd, statusMessage, isMock = false, testMedia = false }: PracticeCallProps) {
   const id = useId();
   const ended = phase === "ended";
   const hasRemoteMedia = remoteMedia !== null && remoteMedia !== undefined && typeof remoteMedia !== "boolean";
@@ -92,8 +94,9 @@ export function PracticeCall({ counterpartName, goal, phase, muted, cameraEnable
 
   return (
     <section className={styles.call} aria-labelledby={`${id}-title`}>
-      <header className={styles.callHeader}><div><p className={styles.eyebrow}>A little space to practice</p><h1 id={`${id}-title`}>In conversation with <span>{counterpartName}</span></h1></div><div className={styles.timer} aria-label={`${formatTime(elapsedSeconds)} elapsed, ${formatTime(durationSeconds)} planned`}><span>{formatTime(elapsedSeconds)}</span><span aria-hidden="true"> / {formatTime(durationSeconds)}</span></div></header>
+      <header className={styles.callHeader}><div><p className={styles.eyebrow}>A little space to practice</p><h1 id={`${id}-title`}>In conversation with <span>{counterpartName}</span></h1></div><div className={styles.timer} role="timer" aria-label={`${formatTime(elapsedSeconds)} elapsed, ${formatTime(durationSeconds)} planned`}><span>{formatTime(elapsedSeconds)}</span><span aria-hidden="true"> / {formatTime(durationSeconds)}</span></div></header>
       {isMock && <p className={styles.mockBanner}>UI preview — no live call</p>}
+      {testMedia && <p className={styles.mockBanner}>Test media — no live call</p>}
       <div className={styles.videoStage}>
         {showRemoteMedia && <div className={styles.remoteMedia}>{remoteMedia}</div>}
         <div className={styles.stageTop}><span className={styles.stageTag}>Fictional AI counterpart</span><span className={styles.phase} data-phase={phase} role="status"><span className={styles.phaseDot} aria-hidden="true" />{label}</span></div>
@@ -109,7 +112,7 @@ export function PracticeCall({ counterpartName, goal, phase, muted, cameraEnable
           <button type="button" className={`${styles.control} ${styles.endControl}`} onClick={onEnd} disabled={ended} aria-label={ended ? "Practice ended" : "End practice"}><Icon name="end" /><span>{ended ? "Ended" : "End"}</span></button>
         </div>
       </div>
-      <div className={styles.callNotes}>{statusMessage && <p className={styles.callStatus} role="status">{statusMessage}</p>}<p>Your camera is a local preview. The counterpart responds to your voice and cannot see you.</p>{muted && !ended && <p className={styles.mutedNote}>Your microphone is muted. The conversation is not paused.</p>}</div>
+      <div className={styles.callNotes}><p className={styles.callStatus} role="status">{statusMessage}</p><p>Your camera is a local preview. The counterpart responds to your voice and cannot see you.</p>{muted && !ended && <p className={styles.mutedNote}>Your microphone is muted. The conversation is not paused.</p>}</div>
     </section>
   );
 }
