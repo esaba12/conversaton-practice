@@ -49,7 +49,6 @@ add_server() {
 }
 add_server openaiDeveloperDocs --url https://developers.openai.com/mcp
 add_server context7 -- "$(command -v node)" "$project_root/tooling/codex/node_modules/@upstash/context7-mcp/dist/index.js"
-add_server awsKnowledge --url https://knowledge-mcp.global.api.aws
 
 if "$install_editor"; then
   if command -v code >/dev/null; then

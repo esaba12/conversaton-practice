@@ -7,11 +7,11 @@ Specifications are a reviewed build baseline and must evolve with implementation
 
 One human builder is coordinating multiple coding agents. The user explicitly requested multitasking and worktrees in Warp. [The agent workflow](19-AGENT-WORKFLOW.md), [documentation standard](20-DOCUMENTATION-STANDARD.md), and prefilled G1 task records establish ownership and handoffs. Development delegation is authorized; no app runtime orchestration framework is needed.
 
-Settled product direction: fresh sessions, live roleplay from generated editable setups, AWS database instead of Supabase, required sign-in before all workspace actions, and warm minimal design with crisp modern styling. Read [design and AWS direction](18-DESIGN-AND-AWS.md). Tooling is partially installed; see [tooling status](../tooling/README.md). Written sample conversations are outside scope.
+Settled product direction: FaceTime-style calls with a visible talking fictional AI counterpart, fresh sessions, live roleplay from generated editable setups, Supabase Auth/PostgreSQL, required sign-in before all workspace actions, and warm minimal design with crisp modern styling. The user abandoned AWS credits and supplied fresh Supabase configuration; health is verified, integration is untested. Read [live video](22-LIVE-VIDEO.md) for the first provider feasibility checks and [design and backend direction](18-DESIGN-AND-AWS.md). Confirm the new project's details/access before applying migrations. Tooling is partially installed; see [tooling status](../tooling/README.md). Written sample conversations are outside scope.
 
 ## Coordinator prompt to paste into Codex
 
-> Act as the build coordinator. Read STATUS.md, AGENTS.md, README.md, docs/01-PRD.md, the active gate in docs/10-BUILD-PLAN.md, docs/19-AGENT-WORKFLOW.md, and docs/20-DOCUMENTATION-STANDARD.md. Inspect Git/worktree state and preserve existing work. Start with docs/tasks/G1-00-foundation.md and its architecture/provider dependencies. Establish a reviewed committed baseline and shared contracts, then delegate G1 auth/session, voice, and UI tasks with explicit ownership and separate worktrees where supported. In-session subagents share files unless assigned isolation. Own shared specs, dependencies, integration entrypoints, and STATUS.md. Integrate one task at a time and verify the combined result. G1 requires real sign-in, minimal durable identity/session/cleanup records, a real five-turn fictional-roommate voice exchange, and End that stops audio and releases the mic, including sign-out/expiry. Use current official docs and installed types. Continue independent work if credentials are missing, label mocks, and record exact remaining account actions. Do not pass a gate on mock evidence or begin later-gate features before it passes. Update affected docs and task evidence throughout.
+> Act as the build coordinator. Read STATUS.md, AGENTS.md, README.md, docs/01-PRD.md, the active gate in docs/10-BUILD-PLAN.md, docs/19-AGENT-WORKFLOW.md, and docs/20-DOCUMENTATION-STANDARD.md. Inspect Git/worktree state and preserve existing work. Start with docs/tasks/G1-00-foundation.md and its architecture/provider dependencies. Establish a reviewed committed baseline and shared contracts, then delegate G1 auth/session, voice, and UI tasks with explicit ownership and separate worktrees where supported. In-session subagents share files unless assigned isolation. Own shared specs, dependencies, integration entrypoints, and STATUS.md. Integrate one task at a time and verify the combined result. G1 requires real sign-in, minimal durable identity/session/cleanup records, a real five-turn fictional-roommate video exchange with synchronized responsive speech and animation, and End that stops all media and releases mic/camera, including sign-out/expiry. Use current official docs and installed types. Continue independent work if credentials are missing, label mocks, and record exact remaining account actions. Do not pass a gate on mock evidence or begin later-gate features before it passes. Update affected docs and task evidence throughout.
 
 ## Worker prompt
 
@@ -45,12 +45,12 @@ Workers use [the task template](tasks/TEMPLATE.md), including revision, mode/out
 - Project name is undecided; naming does not change requirements.
 
 ## Unresolved decisions
-- Reviewed first commit and task worktrees; Git is initialized on main with the selected GitHub origin, but no baseline commit existed when this workflow was prepared. Verify current state in STATUS.md and Git.
+- Commit the newer website/backend changes before creating task worktrees. Baseline commit `ec919a5` already exists on main tracking origin/main; verify current state in STATUS.md and Git.
 - Prize stacking, detailed Figma eligibility, available credits, and advance preparation allowances.
 - Optional Gemini provider decision before setup/reflection implementation; no change by default.
 - Available ElevenLabs voice/model IDs.
 - Structured-output provider model ID.
-- AWS application access, Cognito configuration, PostgreSQL service/region, and credit eligibility.
+- Fresh Supabase project details/access (user will create it), Auth configuration, and verified ownership policies.
 - Public hosting versus supervised local/private demonstration.
 - Exact tested provider retention settings.
 
@@ -58,7 +58,7 @@ Workers use [the task template](tasks/TEMPLATE.md), including revision, mode/out
 Persona: editable fictional counterpart configuration.
 Scenario: one practice situation with separate public facts and private user preparation.
 Profile: user-approved preferences and goals.
-Practice: one bounded voice session.
+Practice: one bounded live video call with the fictional AI counterpart.
 Reflection: optional short post-session review.
 Proposal: a pending memory change that cannot affect future sessions before approval.
 Role context: allowlisted information the counterpart is permitted to know.

@@ -2,28 +2,33 @@
 
 All identifiers are UUIDs unless provider-issued. All timestamps are UTC. Every user-owned row carries owner_id referencing the authenticated user, with RLS enforcing ownership.
 
-AWS backend update: add `users(id UUID, auth_issuer TEXT, auth_subject TEXT, created_at)` with a unique constraint on `(auth_issuer, auth_subject)`. Derive these values from verified sign-in, not the request body. Every owner_id references users.id; no Supabase auth schema dependency. See docs/18-DESIGN-AND-AWS.md. The remaining domain tables and approval transaction remain required.
+Backend decision: Supabase Auth + PostgreSQL replaces the abandoned AWS plan. Every owner_id references the primary key `auth.users.id`, derived from verified sign-in; do not add the proposed AWS issuer/subject mapping. Require a non-anonymous account and owner-scoped RLS for every operation. Explicit table/function grants belong in the same migration as the policies. See [backend direction](18-DESIGN-AND-AWS.md) and [Supabase user-data guidance](https://supabase.com/docs/guides/auth/managing-user-data).
 
 ## Tables
-This is the full MVP model, not a requirement to build every table before the first call. G1 implements users plus minimal session leases and provider cleanup metadata; G3 extends them with saved domain records. For the G1 transient preset, scenario/persona references and persona_version may be null. Later saved-record references must belong to the same owner. Do not persist the transient prompt or transcript to fill absent domain rows.
+This is the full MVP model, not a requirement to build every table before the first call. G1 uses Supabase's managed Auth identity plus minimal session leases and provider cleanup metadata; G3 extends them with saved domain records. For the G1 transient preset, scenario/persona references and persona_version may be null. Later saved-record references must belong to the same owner. Do not persist the transient prompt or transcript to fill absent domain rows.
 
 | Table | Key fields |
 |---|---|
 | profiles | owner_id PK, version, display_alias, goals JSON, preferred_pace, default_duration_seconds, created_at, updated_at |
-| personas | id, owner_id, version, alias, role, style JSON, voice_id, familiarity, constraints JSON, source_kind, deleted_at |
+| personas | id, owner_id, version, alias, role, style JSON, voice_id, avatar_id, familiarity, constraints JSON, source_kind, deleted_at |
 | scenarios | id, owner_id, persona_id, situation, behavioral_goal, counterpart_known_facts JSON, private_notes, challenge |
-| sessions | id, owner_id, scenario_id, persona_id, persona_version, status, save_mode, started_at, ended_at, lease_expires_at, provider_conversation_id |
+| sessions | id, owner_id, scenario_id, persona_id, persona_version, status, save_mode, started_at, ended_at, lease_expires_at, avatar_provider, avatar_session_id, provider_conversation_id |
 | reflections | id, owner_id, session_id UNIQUE, observed_action, takeaway, next_step, evidence_status |
 | memory_proposals | id, owner_id, session_id, target_type, target_id, target_field, expected_version, old_value JSON, proposed_value JSON, source_type, evidence_text, status |
-| deletion_jobs | id, owner_id, session_id, provider_conversation_id, state, last_attempt_at, error_code |
+| deletion_jobs | id, owner_id, session_id, provider, provider_resource_id, state, last_attempt_at, error_code |
 
-Do not persist raw transcript/audio or a full live prompt snapshot. For no-app-save mode, use only a minimal short-lived session record for authorization/concurrency, then remove it after cleanup. Its remaining provider deletion job, if any, must be shown as pending rather than hidden.
-Only a verified provider conversation association may populate the authoritative provider_conversation_id used for provider access/deletion. A browser-supplied ID is an untrusted hint; unresolved association must remain visibly unresolved, not authorize a provider action. See the connected/End contracts in docs/05-API-AND-ACTIONS.md.
+Do not persist raw transcript/audio/video, camera frames, or a full live prompt snapshot. For no-app-save mode, use only a minimal short-lived session record for authorization/concurrency, then remove it after cleanup. Its remaining provider deletion job, if any, must be shown as pending rather than hidden.
+Keep verified avatar-session and conversation-provider associations separate. Each provider cleanup/deletion job has its own truthful status; stopping a call is not deleting content. Only a verified provider conversation association may populate the authoritative provider_conversation_id used for provider access/deletion. A browser-supplied ID is an untrusted hint; unresolved association must remain visibly unresolved, not authorize a provider action. See the connected/End contracts in docs/05-API-AND-ACTIONS.md.
 
 Private notes are optional. Persist only if the user explicitly saves the scenario. Prefer leaving them in browser session memory for one-off practice.
 
+## Database access and atomic operations
+Owner repositories use a request-scoped Supabase client carrying the verified user's JWT. Policies use `auth.uid()` for reads/deletes and both existing-row and resulting-row ownership for updates; writes must never reassign ownership. Deny signed-out and anonymous Auth access. No ordinary request uses a service-role key. Review direct table/RPC access as well as application routes. [RLS reference](https://supabase.com/docs/guides/database/postgres/row-level-security).
+
+Implement lease acquisition/expiry, version-checked approval, and approved-memory removal as transactional PostgreSQL functions exposed through narrowly granted RPCs. Lock/check the relevant rows and enforce idempotency in the database; separate JavaScript requests do not form a transaction. Prefer invoker rights. Where exclusive function writes are needed, a reviewed restricted definer function must validate identity/ownership, fix its search path, qualify relations, and prevent direct-grant bypass. Preserve RLS on underlying owner data and restrict trusted provider metadata mutations. Test two owners, duplicate starts, concurrent approvals, stale versions, and rollback. [Function security](https://supabase.com/docs/guides/database/functions).
+
 ## Allowed persona fields
-Alias, role, formality, directness, talkativeness, familiarity, selected voice, constraints.
+Alias, role, formality, directness, talkativeness, familiarity, selected voice, allowlisted stock avatar, constraints. Start with one avatar; do not generate a real person's likeness. Avatar choice is presentation, not a fact about a real counterpart.
 No fields for inferred real-person thoughts, diagnoses, hostility probability, or approval probability.
 
 ## Allowed profile fields
@@ -65,8 +70,10 @@ It does not automatically make a persona remember prior simulated events. Each p
 ## Deletion
 Deleting a persona removes dependent scenarios/sessions/reflections/proposals according to a tested cascade or explicit transaction. Queue provider deletion before removing IDs needed for cleanup. Delete memory entries independently. Provider deletion status is separate from application row deletion.
 
+Practice-data deletion is separate from deleting the Supabase Auth account. Do not cascade away unresolved provider-cleanup jobs; finish or explicitly retain the minimal cleanup record before account removal. Background cleanup cannot depend on an expired user JWT: foundation must define a narrowly authorized worker/database function and its ownership checks. A broad service-role key in ordinary requests is not the fallback. Account removal and global token revocation are not implied by the practice-data deletion UI.
+
 Individual approved-memory removal uses the version-checked profile/persona PATCH routes. Allowlisted optional fields can be unset with `remove_fields`; list updates replace the approved list without the removed item. Removing a required preference resets it to its documented default and shows that default in the UI. Perform target/version updates and removal of matching proposal value/evidence copies transactionally for that owner. Current memory comes from the target record, never reconstructed from approved proposal history. A deleted value must be absent from future role context. Profile practice-data deletion remains the bulk removal path.
 
 ## Optional Photon data extension
-Sessions gain channel=voice|text and a persona/profile version snapshot. A messaging_links record maps owner_id to a verified opaque provider identity; clients never choose owner_id. Linking challenges are short-lived, single-use, hashed, rate-limited, and stored separately. Message event IDs support deduplication without copying message bodies into logs.
+Sessions gain channel=video|text and a persona/profile version snapshot. A messaging_links record maps owner_id to a verified opaque provider identity; clients never choose owner_id. Linking challenges are short-lived, single-use, hashed, rate-limited, and stored separately. Message event IDs support deduplication without copying message bodies into logs.
 Text context is temporary and isolated per session. Proposed default: purge application text bodies after reflection or within 30 minutes after session closure, whichever comes first; hard-delete within one hour of receipt even if abandoned. Persist approved summaries/preferences only when save mode permits. Infrastructure cleanup must enforce TTLs; app deletion does not promise deletion from iMessage or Photon. Disclose provider/device retention and verify available deletion capabilities. See docs/17-PHOTON-TEXT-PRACTICE.md.

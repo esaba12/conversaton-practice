@@ -9,7 +9,7 @@ Build under Actually Intelligent. The track asks for AI solving a real problem. 
 | Priority | Category | Listed award | Action |
 | --- | --- | --- | --- |
 | Primary | Actually Intelligent | $2,500 | Select main theme and demonstrate the user problem |
-| Primary | Best Project Built with ElevenLabs | Three months Scale per teammate, listed $897/member | Make real-time expressive voice central |
+| Primary | Best Project Built with ElevenLabs | Three months Scale per teammate, listed $897/member | Demonstrate expressive ElevenLabs speech within the required live AI video call |
 | Primary | MLH Best Use of ElevenLabs | Wireless earbuds | Confirm separate entry and stacking rules |
 | Secondary | Figma x MHacks Best Design | First: LEGO Architecture Trevi Fountain; second/third: merch | Polish controls/accessibility; confirm detailed eligibility |
 | Low added scope | Notability | One year Pro and four merch pieces per teammate | Genuine Pro planning/wireframing, tools tag, usage note, at least two screenshots |
@@ -21,7 +21,7 @@ Grand prize: $5,000. The additional ElevenLabs Pro benefit listed for the overal
 Hero scenario: setting a cleaning boundary with a fictional roommate who deflects with jokes but is friendly underneath. Keep professor and saying-no presets as alternatives.
 The confirmed solo product centers on generating practice from the user's own situation. The roommate example is a demo choice, not a research-established superior scenario. Defer Photon until all core gates pass and demo/submission preparation is covered.
 
-Keep Next.js, ElevenLabs, and the currently specified structured-output provider. The user's later AWS credits/account-capacity decision replaces Supabase with AWS-hosted PostgreSQL and required account sign-in (docs/18-DESIGN-AND-AWS.md). This is an infrastructure decision, not prize-driven provider expansion. Gemini is an optional substitution, not a second model layer or an instruction to migrate. If selected, update the server adapter, SDK dependencies, environment example, schemas/refusal handling, privacy disclosure, and provider retention checks together, using official Gemini docs before coding.
+Keep Next.js, ElevenLabs, and the currently specified structured-output provider. The user confirmed FaceTime-style AI video as the main draw; avatar streaming is core product infrastructure, not optional sponsor breadth. See docs/22-LIVE-VIDEO.md. The latest user decision returns to Supabase Auth/PostgreSQL because AWS credits will not arrive in time; required account sign-in remains (docs/18-DESIGN-AND-AWS.md). This is an infrastructure decision, not prize-driven provider expansion. Gemini is an optional substitution, not a second model layer or an instruction to migrate. If selected, update the server adapter, SDK dependencies, environment example, schemas/refusal handling, privacy disclosure, and provider retention checks together, using official Gemini docs before coding.
 
 The timed demo uses one session. Persona edits must affect actual behavior; approved profile memory must survive refresh. A second session is optional for Q&A, not a forced replay loop.
 

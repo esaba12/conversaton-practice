@@ -1,6 +1,8 @@
 # 24-hour build plan
 
-Confirmed team: one human builder coordinating multiple coding agents. Pass the gates in order; parallelize independent tasks within the active gate. Situation generation is a core user requirement and must not be removed as a solo scope cut. Start with one voice and simplify automated reflection before compromising generation or live practice. Photon is deferred until all core gates pass and submission preparation is covered.
+Confirmed scope: FaceTime-style calls with a visible talking AI counterpart are the main draw. Real synchronized video is required in G1. Complete the bounded provider feasibility checks in [live video](22-LIVE-VIDEO.md) before freezing media contracts; independent auth/database work can proceed in parallel. Voice-only, static portraits, and prerecorded responses do not pass.
+
+Confirmed team: one human builder coordinating multiple coding agents. Pass the gates in order; parallelize independent tasks within the active gate. Situation generation is a core user requirement and must not be removed as a solo scope cut. Start with one stock avatar and one voice and simplify automated reflection before compromising generation or live practice. Photon is deferred until all core gates pass and submission preparation is covered.
 
 These are elapsed build targets, not a promise that a full 24 hours remains. Adjust optional work to the actual start time while preserving the submission buffer. The user authorizes proactive coding-agent delegation and worktrees; use them where they reduce the active gate's critical path.
 
@@ -10,28 +12,28 @@ Follow [the agent workflow](19-AGENT-WORKFLOW.md) and [documentation standard](2
 The coordinator owns STATUS.md, shared contracts, dependencies, and integration. Each worker updates its task record with changed behavior, exact checks, remaining gaps, and proposed spec changes. Documentation and combined verification are part of completion, not deferred cleanup. Later gates get bounded task records when their dependencies are ready; do not implement them early merely to occupy agents.
 
 ## Account readiness
-The user has AWS credits and no capacity for another Supabase database. App-specific account access is unverified. Account creation, billing, and sponsor redemption remain user actions.
-- First: ElevenLabs access for a base agent and real audio testing, plus AWS sign-in setup (Cognito recommended) so the workspace is authenticated from its first usable flow.
+The user returned to Supabase because AWS credits will not arrive in time and supplied a fresh project. Local configuration and Auth health are verified; sign-in/database integration remains untested. Account creation, billing, and sponsor redemption remain user actions; no other app's project is being reused.
+- First: Supabase Auth sign-in plus live avatar/conversation access. The first feasibility candidate needs a paid ElevenLabs plan and separate LiveAvatar API access; verify account eligibility before integration. See docs/22-LIVE-VIDEO.md.
 - Next: the configured structured-output provider (OpenAI by default) for situation generation in G2.
-- Before G1 acceptance: AWS-hosted PostgreSQL for the verified identity mapping, owner-scoped session leases, and minimal cleanup metadata. G3 extends this foundation with saved profiles/personas and transactional memory. Supabase and anonymous entry are superseded. All workspace actions require sign-in; internal mocks are labeled development-only and do not count as working authentication.
-- Hosting remains undecided. No deployment has been authorized or performed.
+- Before G1 acceptance: Supabase PostgreSQL for owner-scoped session leases and minimal cleanup metadata, with owners derived from verified Supabase Auth users. G3 extends this foundation with saved profiles/personas and transactional memory. The AWS backend plan is superseded; anonymous entry remains out of scope. Internal mocks are labeled development-only and do not count as working authentication.
+- Application hosting remains undecided. The user separately authorized a quick public product website for AWS credits; that static preview is deployed at https://conversation-practice-site.vercel.app. This does not select the app's hosting path or pass an application gate.
 
 ## Before the build window
 The handbook requires all coding and building during the hackathon. The live schedule starts hacking at noon Saturday, October 3; submission is before noon Sunday, October 4, America/Detroit. This pack is a planning artifact; confirm advance planning/tool-setup allowances with organizers.
 At the 11:30 AM-1 PM Sponsor Expo in Pierpont Connector Hall, ask about ElevenLabs credits and eligibility for both listed awards. Read docs/16-MHACKS-STRATEGY.md. Confirm team members and create the submission draft early during the build window.
 Choose repository, account owners, and selected deployment path. Keep the project unnamed for now. Never put keys in a shared chat or committed file.
 
-## 0-2 hours: sign-in and prove voice
+## 0-2 hours target: sign-in and prove the video call
 - [ ] Scaffold Next.js/TypeScript with lockfile.
-- [ ] Freeze shared identity/session/voice/error contracts, UI tokens, and worker ownership before parallel implementation.
+- [ ] Freeze shared identity/session/media/error contracts, UI tokens, and worker ownership before parallel implementation.
 - [ ] Establish required account sign-in and server authorization before exposing persona/setup/practice actions.
 - [ ] Add minimal durable users/session/cleanup metadata with owner isolation and an atomic one-active-session lease; reserve broader domain persistence for G3.
 - [ ] Create one fictional roommate preset: cleaning boundary, deflects with jokes, friendly underneath.
-- [ ] Configure ElevenLabs base agent, voice, and model.
-- [ ] Add server session credential route and browser voice adapter.
-- [ ] Have a real five-turn conversation.
-- [ ] End stops playback and releases microphone.
-Gate G1: authenticated workspace and owner-scoped session authorization, durable concurrency control, a real five-turn voice exchange, and microphone teardown (including sign-out/expiry); stop adding features until repaired. Mocks support parallel development but do not pass this gate.
+- [ ] Verify live video feasibility: trusted per-session persona input, provider credentials/IDs, synchronized response, interruption, and teardown. Configure one ElevenLabs base agent and stock avatar without mutating shared prompts per user.
+- [ ] Add server session credential route and browser media adapter; one managed call transport with optional local-only camera preview.
+- [ ] Have a real five-turn video conversation with a responsive, lip-synced fictional counterpart.
+- [ ] End stops current/future audio and video, releases microphone/camera, and initiates verified remote session cleanup.
+Gate G1: authenticated workspace and owner-scoped session authorization, durable concurrency control, a real five-turn synchronized video exchange, interruption, and complete media teardown (including sign-out/expiry); stop adding features until repaired. Mocks support parallel development but do not pass this gate.
 
 ## 2-6 hours: full interaction
 Parallel after draft/context contracts settle: setup generation, preparation/review UI, and context-separation tests/review. Integrate their combined behavior before G3.
@@ -67,7 +69,7 @@ Gate G4: end-to-end flow closes with a short optional reflection.
 ## 14-18 hours: evaluation
 Parallel on one recorded integrated revision: focused domain checks, browser/accessibility checks, and demo/documentation review. Schedule live microphone checks on one device at a time.
 - [ ] Run meaningful domain tests and browser mock tests.
-- [ ] Test real microphone/interruptions and End.
+- [ ] Test real audiovisual synchronization/interruption, video-loss handling, optional local camera privacy, and complete End teardown (T14/T15).
 - [ ] Conduct 3-5 optional low-stakes user sessions.
 - [ ] Fix observed failures; record actual results.
 Gate G5: no critical ownership/context/teardown defects.
@@ -92,16 +94,16 @@ Gate G5: no critical ownership/context/teardown defects.
 Verify receipt and required fields, charge devices, and prepare the headset and backup. Avoid feature work that risks the submitted build.
 
 ## Sponsor scope gate
-Keep voice, situation generation, and the core loop first. Defer Relay and Photon for the solo MVP. Gemini can replace the setup/reflection provider before that layer is implemented, but do not maintain two providers. Notability requires genuine Pro usage, a tools tag, a usage note, and two screenshots. Figma eligibility and prize stacking remain questions for organizers.
+Keep the live video call, situation generation, and the core loop first. Defer Relay and Photon for the solo MVP. Gemini can replace the setup/reflection provider before that layer is implemented, but do not maintain two providers. Notability requires genuine Pro usage, a tools tag, a usage note, and two screenshots. Figma eligibility and prize stacking remain questions for organizers.
 
 ## Scope cuts
-Cut in order: Photon/other extra channels -> animations -> extra voices -> optional repeat-practice shortcut -> automated reflection (keep self-reflection and explicit preference review). Recovery from a failed connection remains required.
-Do not cut situation generation, real voice, editable persona, approved-memory boundary, End, or ownership protection.
+Cut in order: Photon/other extra channels -> decorative UI motion -> extra avatars/voices -> optional repeat-practice shortcut -> automated reflection (keep self-reflection and explicit preference review). Recovery from a failed connection remains required.
+Do not cut situation generation, responsive synchronized counterpart video/audio, editable persona, approved-memory boundary, End, or ownership protection.
 If database setup blocks progress, continue isolated development with a labeled mock and record the blocker. G1/G3 cannot pass without their real ownership and persistence checks; do not present a local mock as an authenticated multi-user integration.
 
 ## Per-task handoff
 Each worker records owned files, contract revision, changes, actual checks, blocker, and next action in its docs/tasks/ record. Only the coordinator updates STATUS.md after review/integration. Shared schemas and entrypoints have one assigned writer.
 
 ## First stretch allocation: Photon
-Deferred for the solo MVP. Only consider a time-boxed 60-90 minute feasibility spike after all core gates pass and demo/submission preparation is covered. Verify a real Spectrum iMessage round trip and identity mapping before expanding scope. Do not wait for a sponsor workshop to prove core voice.
+Deferred for the solo MVP. Only consider a time-boxed 60-90 minute feasibility spike after all core gates pass and demo/submission preparation is covered. Verify a real Spectrum iMessage round trip and identity mapping before expanding scope. Do not wait for a sponsor workshop to prove the core video call.
 If access or integration is blocked, stop the spike. If successful and time remains, implement explicit start/end, shared approved persona settings, isolated temporary text context, delivery deduplication, and web reflection. Complete the relevant identity and closure tests before demonstrating the extension. Do not pursue Relay simultaneously. Text is the first scope cut if it jeopardizes the primary demo or submission.

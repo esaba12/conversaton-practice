@@ -1,12 +1,15 @@
 # MHacks conversation rehearsal specification pack
 
 Project name undecided. Prepared October 3, 2026 (America/Detroit).
-Status: specifications plus partially installed development tooling; no application has been built or clinically validated.
+Status: public product preview deployed; authenticated application has not been built or clinically validated.
+Confirmed core experience: FaceTime-style practice with a visible, talking fictional AI counterpart. Real synchronized video is required in the first slice. See docs/22-LIVE-VIDEO.md for the integration and acceptance plan.
 Target: a 24-hour MHacks prototype. Confirmed team: one human builder coordinating multiple coding agents.
+
+Public website: [conversation-practice-site.vercel.app](https://conversation-practice-site.vercel.app). This is a static concept preview for the credits application; see [source/deployment notes](website/README.md).
 
 ## Product
 
-A voice rehearsal space for conversations you are avoiding. Users describe a situation; the app generates an editable fictional counterpart and conversation setup. The conversation then unfolds live as the user speaks, as confirmed by the user. Users practice a concrete communication goal and control what the app remembers. Sessions end with a brief reflection and an optional real-world step.
+A FaceTime-style rehearsal space for conversations you are avoiding. Users describe a situation; the app generates an editable fictional counterpart and conversation setup. The fictional counterpart responds live on video as the user speaks. Users practice a concrete communication goal and control what the app remembers. Sessions end with a brief reflection and an optional real-world step.
 
 Every session starts fresh. Approved preferences and persona settings may carry over; previous simulated conversations do not.
 
@@ -35,10 +38,11 @@ For the first implementation session, follow [the final startup checklist](docs/
 16. [Handoff and first Codex prompt](docs/15-HANDOFF.md)
 17. [MHacks prize strategy and confirmed requirements](docs/16-MHACKS-STRATEGY.md)
 18. [Photon text-message rehearsal stretch](docs/17-PHOTON-TEXT-PRACTICE.md)
-19. [Latest design, required sign-in, and AWS direction](docs/18-DESIGN-AND-AWS.md)
+19. [Latest design, required sign-in, and backend direction](docs/18-DESIGN-AND-AWS.md)
 20. [Multiagent workflow, Warp, and worktrees](docs/19-AGENT-WORKFLOW.md)
 21. [Documentation and verification standard](docs/20-DOCUMENTATION-STANDARD.md)
 22. [Final startup checklist and reset prompt](docs/21-START-BUILD.md)
+23. [Live video experience and integration](docs/22-LIVE-VIDEO.md)
 
 ## Build with agents
 
@@ -52,15 +56,15 @@ First stretch after all core gates pass: bounded iMessage rehearsal using Photon
 
 ## What has and has not been done
 
-This folder supplies specifications, acceptance gates, research, and development tooling. Context7 is installed locally; two vendor skills are staged for activation. Global MCP/VS Code setup was blocked by session permissions/network restrictions. See [tooling status and finish command](tooling/README.md). No application, cloud project, app credential, or deployment has been created.
+This folder supplies specifications, acceptance gates, research, development tooling, and the deployed static product preview in `website/`. Context7 is installed locally; the two staged vendor skills are now active in this session. Recheck MCP activation on restart. See [tooling status](tooling/README.md). The authenticated video-call application and provider integrations have not been built.
 
 ## Defaults and unresolved items
 
-Current direction: Next.js App Router, TypeScript, npm, ElevenLabs Agents, AWS-hosted PostgreSQL, required account sign-in, and a server-side structured-output model for setup/reflection. Cognito, Aurora Data API, and Amplify are the recommended AWS path pending verification; see docs/18-DESIGN-AND-AWS.md. Default demo: setting a cleaning boundary with a fictional roommate.
+Current direction: Next.js App Router, TypeScript, npm, ElevenLabs Agents, Supabase Auth/PostgreSQL, required account sign-in, and a server-side structured-output model for setup/reflection. The user returned to Supabase because AWS credits will not arrive in time. Vercel is the recommended app hosting path given the already deployed public site; the authenticated app is not deployed. See docs/18-DESIGN-AND-AWS.md. Default demo: setting a cleaning boundary with a fictional roommate.
 
 Confirmed event strategy: Actually Intelligent plus both listed ElevenLabs categories, subject to organizer confirmation of category stacking. Submission is before noon Sunday, October 4, America/Detroit; judging uses a three-minute pitch. See docs/16-MHACKS-STRATEGY.md.
 
-Confirmed: one human with parallel coding agents, fresh sessions, user-described situations as the primary input, warm minimal/crisp modern design, and sign-in before all workspace actions. The user has AWS credits and no space for another Supabase database; app-specific access is unverified. Situation generation is a core requirement, not an optional scope cut.
+Confirmed: one human with parallel coding agents, fresh sessions, user-described situations as the primary input, warm minimal/crisp modern design, and sign-in before all workspace actions. The user supplied a fresh Supabase project; local configuration and Auth health are verified, while sign-in/database integration remain untested. See STATUS.md. Situation generation is a core requirement, not an optional scope cut.
 
 Open items: prize stacking, detailed Figma eligibility, available credits, provider account permissions, selected voices and model IDs, and public deployment choice. Live roleplay is confirmed; a written sample conversation is outside the current scope. Record concrete values in STATUS.md when known.
 

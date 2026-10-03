@@ -42,5 +42,5 @@ GitHub follow-up, October 3: user explicitly requested frequent GitHub use. Veri
 - First commit, global tool activation, and Warp template installation remain pending; project Git metadata/global settings are protected in this Codex session.
 - The selected origin is already configured; do not rerun Git initialization or remote-add.
 - Normal-terminal baseline and worktree instructions: [agent workflow](../19-AGENT-WORKFLOW.md). Tool activation/template instructions: [tooling README](../../tooling/README.md).
-- Next implementation task: [G1-00 foundation](G1-00-foundation.md). Confirm actual AWS hosting/auth/database choices, scaffold, and freeze contracts before dispatch.
+- Next implementation task: [G1-00 foundation](G1-00-foundation.md). Latest backend decision is Supabase Auth/PostgreSQL in a fresh project the user will create; scaffold and freeze contracts before dispatch. Earlier AWS references in this preparation record describe superseded planning.
 - Coordinator integration revision: pending first commit. No push, cloud provisioning, application build, or live gate success is claimed.

@@ -38,16 +38,16 @@ If explicit imminent self-harm, violence, or immediate danger emerges, stop the 
 Mitigations: typed allowlists, owner checks + RLS, separate prompts, no live mutation tools, deletion tombstones, server secrets, verified retention settings, provenance checks.
 
 ## Data path disclosure
-Audio and text are processed by ElevenLabs and the configured model providers. The reflection/setup provider may also receive text. The app requires account sign-in; AWS stores account/approved app data. No-app-save practice does not mean anonymous processing or zero provider retention, and does not remove the sign-in account.
+Audio and text are processed by ElevenLabs and the configured model providers. The required live avatar provider also processes call data to deliver synchronized video; verify its retention and deletion capabilities separately. Optional user camera is local preview only, off until opt-in: no upload, recording, publication, or analysis, and no claim that the counterpart sees it. The recommended LiveAvatar connector requires registering a restricted ElevenLabs key with LiveAvatar; disclose this credential transfer before configuring it. See docs/22-LIVE-VIDEO.md. The reflection/setup provider may also receive text. The app requires account sign-in; Supabase stores account/approved app data. No-app-save practice does not mean anonymous processing or zero provider retention, and does not remove the sign-in account.
 Do not use therapy transcripts or actual third-party voice samples for the demo.
-Default application policy: temporary transcript in memory, approved memories only in database.
+Default application policy: temporary transcript in memory, approved memories only in database; no raw camera/video recordings. The small session/cleanup records required for authorization are documented separately.
 Provider policy: set minimum supported transcript/audio retention, review audio recording and training-use settings, and document actual choices.
 
 ElevenLabs documentation states a two-year conversation-data retention default with configurable periods (S12). Zero Retention Mode availability and compatible model requirements must be checked on the actual account; do not assume a free account has every privacy feature (S13).
 OpenAI store:false avoids creating a stored response object where supported; it is not by itself a promise of zero provider logging. Consult current provider data policies before public sensitive-data use.
 
 ## Deletion truthfulness
-Show separate app and provider states. Never claim instant deletion across all providers from deleting a Postgres row.
+Show separate app, avatar-provider, and conversation-provider deletion states. Stopping a provider session is not proof of deleting its retained data. Never claim instant deletion across all providers from deleting a Postgres row.
 Keep only a minimal protected deletion job/tombstone until provider cleanup finishes, then remove it.
 If a processor has retention beyond app control, disclose it rather than implying guaranteed immediate erasure.
 Private rehearsal mode means no lasting application memory, with processor behavior separately explained.

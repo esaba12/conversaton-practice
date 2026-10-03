@@ -6,12 +6,14 @@ Proceed as a hackathon prototype. Business viability and clinical benefit remain
 The founder's experience is specific: a therapist played the other person so he could rehearse a feared conversation. The product reproduces the practice interaction, not the therapist's clinical role.
 
 ## Confirmed user direction, October 3
-- One human builder, explicitly using multiple coding agents and worktrees in Warp. Parallelize independent engineering tasks inside ordered product gates. Keep shared contracts and integration under one coordinator; see docs/19-AGENT-WORKFLOW.md. The user has AWS credits and an existing Supabase account with no room for another database; this app's service access and credentials are not yet verified.
+- Latest resource/preference: user supplied a Tavus student offer and wants ElevenLabs used wherever practical. Research confirms Tavus CVI can use ElevenLabs TTS. Evaluate that combination before requiring LiveAvatar, while explicitly distinguishing ElevenLabs speech from the full ElevenLabs Agents platform. Offer activation, account access, provider choice, and live behavior remain unverified; see docs/22-LIVE-VIDEO.md. No backend/model/provider migration has been executed.
+- Confirmed product correction: FaceTime-style practice with a visible talking AI counterpart is the main draw and mandatory core scope. This supersedes voice-only acceptance and the blanket avatar exclusion. The first feasibility candidate is ElevenLabs with HeyGen LiveAvatar; separate account access, personalization, and live quality are unverified. See [live video](22-LIVE-VIDEO.md).
+- One human builder, explicitly using multiple coding agents and worktrees in Warp. Parallelize independent engineering tasks inside ordered product gates. Keep shared contracts and integration under one coordinator; see docs/19-AGENT-WORKFLOW.md. This app's service access and credentials are not yet verified.
 - Fresh sessions are desired. Approved settings can persist without carrying fictional events into later sessions.
 - The user confirmed live roleplay: generate the counterpart, context, and opening from a user-described situation, then respond live to the user's speech. Written dialogue generation is outside the current scope.
 - Keep situation generation in core scope. Defer Photon until all core gates pass; simplify automated reflection and extra voices first.
 - The project remains unnamed.
-- Latest infrastructure direction: AWS-hosted PostgreSQL replaces Supabase because of account capacity and available AWS credits. Cognito is the recommended sign-in provider; the exact hosting/database pairing is documented in docs/18-DESIGN-AND-AWS.md as a recommendation, not a deployed integration.
+- Latest infrastructure direction: return to Supabase Auth/PostgreSQL because AWS credits will not arrive in time. This explicitly supersedes the earlier AWS/Cognito/Aurora plan. Keep required sign-in; no anonymous workspace. The user supplied the fresh project configuration; Auth health passed, while sign-in/database integration remains unverified. No unrelated project is being reused.
 - Sign-in is required before all persona/conversation design and practice. This supersedes anonymous sign-in and guest-first entry.
 - Visual direction: warm and minimal, with crisp, modern typography, spacing, and controls.
 

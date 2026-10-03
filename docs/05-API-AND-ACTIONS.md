@@ -2,7 +2,7 @@
 
 These are application contracts, not copied provider APIs. Validate all input and output with shared Zod schemas. Require authenticated owner context on all user-data endpoints. Server-derived identity is authoritative.
 
-Authentication applies to draft generation and session credentials as well as storage, independently of page redirects. Public product/sign-in pages do not create practice data. Reject missing/expired identity before provider calls. The client responds to sign-out or detected expiry by tearing down audio and clearing transient private state. Shared schemas are frozen in G1 foundation before workers implement consumers; auth-library callback routes are chosen there against current installed types.
+Authentication applies to draft generation and session credentials as well as storage, independently of page redirects. Public product/sign-in pages do not create practice data. Reject missing/expired identity before provider calls. The client responds to sign-out or detected expiry by tearing down all audio/video and releasing capture tracks and clearing transient private state. Shared schemas are frozen in G1 foundation before workers implement consumers; auth-library callback routes are chosen there against current installed types.
 
 ## Routes
 
@@ -54,12 +54,12 @@ Do not include prompts, secrets, or provider raw bodies in errors.
 
 ## Retry/idempotency
 Session creation uses an idempotency key tied to owner and request. One active lease per user.
-The voice adapter acknowledges a successful connection through the connected route. A lost acknowledgement can be retried within the existing lease; it never creates a second session or extends the duration cap. A terminal/expired response triggers local teardown. G1 foundation freezes this response and the caller/receiver contract before dispatch.
+The media adapter acknowledges usable remote video/audio readiness through the connected route. A lost acknowledgement can be retried within the existing lease; it never creates a second session or extends the duration cap. A terminal/expired response triggers local teardown. G1 foundation freezes this response and the caller/receiver contract before dispatch.
 
-Browser-reported provider IDs are untrusted hints, including on End. Never authorize provider data retrieval/deletion from a supplied ID alone. Verify its association to the authorized application session through a supported server/provider mechanism before storing it as the authoritative provider_conversation_id. Foundation must verify the available mechanism with current vendor docs/types; do not invent a binding API. If association cannot be verified, report cleanup as unresolved and retain only the minimal permitted pending metadata. A client acknowledgement is not proof of live audio quality.
+Browser-reported provider IDs are untrusted hints, including on End. Never authorize provider data retrieval/deletion from a supplied ID alone. Verify its association to the authorized application session through a supported server/provider mechanism before storing it as the authoritative provider_conversation_id. Foundation must verify the available mechanism with current vendor docs/types; do not invent a binding API. If association cannot be verified, report cleanup as unresolved and retain only the minimal permitted pending metadata. A client acknowledgement is not proof of live audiovisual quality. Credentials cover one managed call; camera preview is not sent to providers. Retain separately verified avatar-session and agent-conversation identifiers and cleanup status; never accept arbitrary provider IDs as authority. See docs/22-LIVE-VIDEO.md.
 End and reflection are idempotent per session; duplicate reflection returns the stored approved-safe result if save mode allows it.
 For no-save mode, allow an in-flight request retry token with short expiry, then discard result; do not persist a transcript to achieve idempotency.
-Race between End and network disconnect resolves to the first committed ended/interrupted state; deletion supersedes either. See the architecture for persisted statuses versus UI phases. Teardown runs immediately in the browser independently of this request; an HTTP failure must not keep the microphone open. On expired authentication, the server rejects further operations and lease expiry reconciles metadata.
+Race between End and network disconnect resolves to the first committed ended/interrupted state; deletion supersedes either. See the architecture for persisted statuses versus UI phases. Teardown runs immediately in the browser independently of this request; an HTTP failure must not keep microphone/camera capture or playback active. On expired authentication, the server rejects further operations and lease expiry reconciles metadata.
 A deleted session cannot accept a late reflection or recreate memory.
 
 ## Optional provider webhook

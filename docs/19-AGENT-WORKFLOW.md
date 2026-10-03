@@ -34,7 +34,7 @@ git commit -m "docs: prepare solo multiagent build workflow"
 
 These commands are instructions, not evidence of a commit. Do not rerun `git init` or add a duplicate origin. This checkpoint commits preparation only; complete and commit foundation before launching the three implementation workers.
 
-Next complete [G1-00 foundation](tasks/G1-00-foundation.md): choose the supported app/runtime path, scaffold once, install and pin dependencies, define shared types, and establish the minimal durable identity/session/cleanup design. G1 includes the users mapping and session/cleanup metadata needed for authenticated ownership and provider cleanup; the broader profile/persona/memory domain remains G3.
+Next complete [G1-00 foundation](tasks/G1-00-foundation.md): choose the supported app/runtime path, scaffold once, install and pin dependencies, define shared types, and establish the minimal durable identity/session/cleanup design. G1 uses verified Supabase Auth user IDs and owner-scoped session/cleanup metadata; the broader profile/persona/memory domain remains G3.
 
 ## Task lifecycle
 
@@ -104,11 +104,11 @@ Git's [official worktree documentation](https://git-scm.com/docs/git-worktree) e
 | Git files | One writer per worktree; one branch per task. Preserve another worker's changes. |
 | Packages/build output | Each worktree installs from the committed app lockfile with `npm ci`. Do not share `node_modules`, `.next`, or test output folders. Foundation must create the app lockfile first. |
 | Local ports | Assign and record distinct ports for running servers, such as 3000/3001/3002. Record the actual URL; a planned port is not a running server. |
-| Auth redirects | Confirm each tested origin has the intended Cognito callback/logout configuration. A different worktree port does not automatically support live sign-in. |
+| Auth redirects | Confirm each tested origin has the intended Supabase Auth redirect configuration. A different worktree port does not automatically support live sign-in. |
 | Environment | Use ignored per-worktree `.env.local` or the established secure environment. Commit placeholders only in `.env.example`; never copy secrets into tasks or chats. |
 | Database | Coordinator applies one reviewed migration sequence. Workers author only assigned migration files; do not run competing schema changes against the same database. |
 | Shared test data | Use fictional fixtures and separate test identities. Scope cleanup to the task's records; never clear shared demo data as test setup. |
-| Provider assets | Coordinator owns shared ElevenLabs agent settings, Cognito configuration, IAM, and AWS resources. Worktrees do not isolate remote assets. Request a concrete configuration change through the task handoff. |
+| Provider assets | Coordinator owns shared ElevenLabs agent settings, Supabase Auth configuration, database policies, and deployment settings. Worktrees do not isolate remote assets. Request a concrete configuration change through the task handoff. |
 | Browser/audio | Keep test contexts and recordings separate. Only one scheduled live microphone test should control the demo device at a time. |
 
 Record resource assignments in the task, without credentials. Stop the task's own server when finished; identify its process instead of killing every process on a guessed port. Shared configuration and cloud changes stay within the user's authorized build scope.

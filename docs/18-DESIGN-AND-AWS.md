@@ -1,13 +1,15 @@
-# Design and AWS direction
+# Design and backend direction
 
-Updated October 3, 2026. Product decisions below are confirmed; named AWS services are the recommended implementation path, not provisioned resources.
+Updated October 3, 2026. The user cannot obtain AWS credits in time and approved Supabase. This supersedes the AWS/Cognito/Aurora/Amplify proposal; the filename remains unchanged to preserve existing links. The user supplied fresh Supabase project `rcktybngebovyopregnt`; local configuration is saved and Auth health returned HTTP 200. Application integration has not started.
 
 ## Confirmed decisions
 
 - Warm and minimal, with crisp modern styling.
-- Sign-in is the basis of the entire product. Users authenticate before designing personas/conversations, generating setups, or practicing. No guest workspace.
-- The user has AWS credits and cannot add another Supabase database. Use AWS for the database; prefer AWS hosting where practical.
-- Live ElevenLabs roleplay and server-only OpenAI setup/reflection remain the selected model/provider approach. AWS credits do not themselves authorize replacing either provider.
+- FaceTime-style practice with a visible talking AI counterpart is the core experience. Live synchronized audio/video is mandatory; the video provider remains undecided pending feasibility research. See [the live video contract](22-LIVE-VIDEO.md).
+- Sign-in is the basis of the entire product. Users authenticate before designing personas/conversations, generating setups, or practicing. No guest workspace or anonymous Auth users.
+- Use Supabase Auth and PostgreSQL. The user supplied a fresh project; verify migration/admin access before applying migrations. No existing project is being reused or deleted.
+- Live ElevenLabs roleplay and server-only OpenAI setup/reflection remain the selected providers.
+- Vercel is the recommended application host because the static preview already runs there. That preview is not the authenticated video-call application and does not prove its deployment.
 
 ## Design proposal
 
@@ -27,41 +29,40 @@ The signed-in home should open with “What conversation would you like to pract
 
 These are proposed tokens, not a rendered or accessibility-tested interface. Verify contrast, focus, keyboard use, and mobile layout during implementation. Use a slightly compact heading scale and plain labels to keep the design crisp. Avoid pervasive pill shapes and ornamental gradients.
 
-Flow: sign in → describe situation → review/edit fictional counterpart → live practice → optional reflection/memory approval → finish. Persona review puts “What the character knows” and “Private preparation” in separate clearly labeled sections. Practice emphasizes the goal, listening/speaking status, mute, and a persistent End button. Keep captions optional and collapsed.
+Flow: sign in → describe situation → review/edit fictional counterpart → live video practice → optional reflection/memory approval → finish. Persona review puts “What the character knows” and “Private preparation” in separate clearly labeled sections. The practice screen centers a large, live talking counterpart with a clear fictional AI roleplay label. Put an optional small self-view in a corner, with separate mic mute, camera on/off, and persistent End controls. Keep the goal and listening/speaking status legible but secondary; captions remain optional and collapsed.
 
-## Recommended AWS path
+Camera off until opt-in and local-only self-view are implementation defaults, not separately confirmed user choices. Do not send, analyze, or record user camera frames. Explain that the counterpart responds to speech and cannot see the user. A denied local camera must not block practice. End, sign-out, or auth expiry disconnects all audio/video and provider sessions and releases microphone/camera tracks. Frozen or missing counterpart video is an explicit interrupted state; an audio-only/static-portrait fallback must be labeled and cannot pass G1.
 
-| Layer | Recommendation | Reason |
+## Recommended backend path
+
+| Layer | Recommendation | Implementation boundary |
 | --- | --- | --- |
-| Identity | Amazon Cognito user pool | Managed account sign-in and validated tokens |
-| Database | Aurora PostgreSQL Serverless v2 with RDS Data API | Relational schema and transactions with HTTPS access from server code |
-| Hosting | AWS Amplify Hosting, subject to Next.js compatibility check | Managed Next.js deployment and an SSR IAM compute role |
-| Secrets | AWS Secrets Manager and narrowly scoped runtime IAM role | Server-side provider/database credentials |
-| Voice | ElevenLabs Agents | Existing core product choice |
-| Setup/reflection | Existing OpenAI structured-output adapter | Existing core product choice |
+| Identity | Supabase Auth with `@supabase/ssr` | Verified non-anonymous identity and cookie refresh; sign-in method/callback URLs are foundation decisions |
+| Database | Supabase PostgreSQL | Owner RLS, explicit grants, and transactional session/memory functions |
+| Hosting | Vercel for the Next.js application | Pin supported Next.js/Node versions and verify the real application build/deployment |
+| Secrets | Ignored local environment plus host-managed server environment | Keep OpenAI/ElevenLabs/video-provider keys and migration credentials out of client bundles |
+| Voice | ElevenLabs Agents | Browser connects with short-lived credentials issued by the authenticated server |
+| Counterpart video | Provider selection pending feasibility research | Live synchronized talking counterpart; authenticated session setup, truthful readiness/failure, and verified complete teardown |
+| Setup/reflection | OpenAI structured-output adapter | Server-only model requests with configured model IDs |
 
-AWS describes [Cognito user pools](https://docs.aws.amazon.com/cognito/latest/developerguide/what-is-amazon-cognito.html) as an identity service that can issue application JWTs. Use a maintained OIDC integration and server sessions; exact library and account login methods remain to be chosen before implementation. No custom password storage.
+Use separate browser/server clients and request-scoped cookies as described in the [Supabase SSR guide](https://supabase.com/docs/guides/auth/server-side/creating-a-client). Verify the identity with `getClaims()` rather than trusting the cookie or `getSession()` user object; use `getUser()` when current Auth-record information is needed. Match cookie refresh to the pinned Next.js version. Authenticated responses must not enter a shared public cache.
 
-The [RDS Data API](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/data-api.html) offers SQL over HTTPS without maintaining database connections and uses database credentials in Secrets Manager. It supports [transactions](https://docs.aws.amazon.com/rdsdataservice/latest/APIReference/API_BeginTransaction.html). Combining it with Amplify's [SSR compute IAM role](https://docs.aws.amazon.com/amplify/latest/userguide/amplify-SSR-compute-role.html) is our proposed integration, not a verified deployment. Verify engine/region availability, privileges, migrations, transaction behavior, and owner isolation before accepting it.
-
-The smaller compute size of a conventional RDS PostgreSQL instance is another option. Choose it only with a concrete hosting/networking path: a private database needs private connectivity. For example, [App Runner VPC egress](https://docs.aws.amazon.com/apprunner/latest/dg/network-vpc.html) requires an internet egress route to reach external providers. This adds infrastructure work compared with the proposed HTTPS database adapter.
-
-## Hosting compatibility and cost
-
-AWS's current [Amplify support page](https://docs.aws.amazon.com/amplify/latest/userguide/ssr-amplify-support.html) lists Next.js 12-15 and excludes Next.js streaming. Do not scaffold an unverified newer version and promise native Amplify support. Choose the current patched supported version, or a different verified AWS deployment path, before scaffold. Next DevTools MCP is deferred if Next.js 15 is selected, because its runtime features require 16+.
-
-Voice audio travels directly between browser and ElevenLabs; the hosting layer issues session credentials and handles bounded JSON setup/reflection requests. It does not proxy continuous audio.
-
-[Aurora auto-pause](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2-auto-pause.html) can reduce idle compute on supported versions, but resume adds latency and does not remove storage/other charges. Keep the demo database ready during judging. No price estimate or credit eligibility has been verified for this account. AWS credits apply only to designated [eligible services](https://aws.amazon.com/awscredits/); do not assume they pay direct ElevenLabs/OpenAI invoices.
+No AWS CLI login, Cognito pool, Aurora cluster, IAM role, or AWS administration MCP is required for this build. Existing optional AWS documentation tooling can stay installed; it is not a setup gate.
 
 ## Database boundary
 
-Retain the existing profiles, personas, scenarios, sessions, reflections, memory_proposals, and deletion_jobs schema. Add a small users mapping from validated auth issuer/subject to an internal UUID. The browser never selects the owner_id and never connects directly to Postgres.
+Retain profiles, personas, scenarios, sessions, reflections, memory_proposals, and deletion_jobs from the data specification. Use `auth.users.id` directly as the owner UUID; omit the AWS-specific identity mapping. App queries use the user's JWT, RLS, and scoped privileges. Do not use a service-role/secret key for ordinary runtime requests. Supabase's publishable project key is not a provider secret, but it never replaces authorization. [User-data model](https://supabase.com/docs/guides/auth/managing-user-data), [RLS and grants](https://supabase.com/docs/guides/database/postgres/row-level-security).
 
-Every application read/write checks ownership; PostgreSQL RLS adds defense in depth with a restricted runtime role. Owner context is transaction-local, including for Data API requests. Test this with two real signed-in identities; login alone does not prove isolation. Approval checks ownership and expected version, then updates target/proposal atomically. Unapproved proposals and synthetic character claims never become facts.
+The browser's normal data path is through authenticated application routes. Direct Supabase access must still reject missing/anonymous identities, other owners, invalid transitions, and privileged-field changes. Check owner IDs for referenced rows as well as the row being edited. A signed-in page alone does not establish isolation.
 
-Account records and minimal authorization/cleanup metadata exist even when practice saving is disabled. Raw audio/transcripts are not stored by the app by default. Private notes stay transient unless explicitly saved. Deletion retains only the metadata required to finish truthful provider cleanup.
+Acquire/release session leases and approve/remove memories through reviewed atomic PostgreSQL RPCs with database-enforced ownership, allowed fields, and version checks. Prefer invoker rights; define and test restricted privileges for any necessary definer operation before implementation. Raw transcripts and private preparation notes are not saved by default. Cleanup keeps only the metadata needed for truthful provider deletion status; it needs a bounded worker authorization path independent of an expired user session. [Database functions](https://supabase.com/docs/guides/database/functions).
+
+## Hosting and account readiness
+
+The existing [public preview](https://conversation-practice-site.vercel.app) remains useful as a product page. Application deployment requires its own verified build, environment variables, and Supabase Auth redirect configuration; do not assume the preview's settings cover it. Next.js handles bounded authenticated JSON requests and does not proxy continuous media. Verify the provider-supported ElevenLabs/video transport and interruption behavior before freezing the media contract; provider selection must not introduce a custom speech pipeline. Local self-view camera tracks never join a provider transport.
+
+The user supplied a fresh Supabase project. Its local URL/publishable configuration and Auth health response are verified. Migration/admin access, real sign-in, plan price, and quota remain unverified. Local scaffolding and clearly labeled mocks can proceed while access is pending; real G1 acceptance cannot.
 
 ## Next implementation step
 
-Finish tooling activation, verify AWS application access/region and ElevenLabs access, then implement one authenticated G1 voice slice. Authentication is a prerequisite to all user workspace flows. G1 includes minimal durable identity/session/cleanup records for ownership and concurrency. G2 adds actual generated setup. G3 adds saved domain tables and transactional memory. Follow [the parallel task workflow](19-AGENT-WORKFLOW.md): shared foundation first, then isolated auth/session, voice, and UI tasks, then combined verification. No infrastructure has been created, and no browser/audio/database integration has been tested yet.
+Verify available Supabase project access, ElevenLabs access, and the selected video provider's real integration path, then implement one authenticated G1 video-call slice. G1 includes managed Auth identity plus minimal durable owner-scoped session/cleanup records for concurrency, expiry, and cleanup across every media provider. Five live synchronized video/audio exchanges, interruption, and complete teardown are mandatory; voice-only or static-portrait fallback cannot pass. G2 adds actual generated setup. G3 adds saved domain tables and transactional memory. Follow [the parallel task workflow](19-AGENT-WORKFLOW.md): shared foundation first, isolated auth/session, media, and UI tasks next, then combined verification. No authenticated browser/audio/video/database integration has been created or tested in this decision update.

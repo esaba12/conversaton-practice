@@ -5,9 +5,9 @@ Prepared October 3, 2026. These are development tools, not application dependenc
 ## Actual state
 
 - Context7 MCP 4.1.1 installed in `codex/node_modules`, with exact dependency version and `package-lock.json`.
-- Its local MCP handshake and tool discovery passed; remote Context7 retrieval has not been tested. OpenAI Docs and AWS Knowledge each returned tool lists and real documentation search results via direct HTTP; their Codex registration is still pending.
-- ElevenLabs agents and Vercel web-design-guidelines downloaded under `skills/`. They are staged, not automatically discoverable skills yet.
-- Codex MCP registration and VS Code extension installation did not complete: the session cannot write global Codex settings or the protected project `.agents` directory; VS Code also encountered a marketplace DNS failure.
+- Its local MCP handshake and tool discovery passed; remote Context7 retrieval has not been tested. OpenAI Docs and AWS Knowledge each returned tool lists and real documentation search results via direct HTTP. The latest setup dry run found existing OpenAI Docs and Context7 Codex configurations; queries through those configured connections were not retested.
+- ElevenLabs agents and Vercel web-design-guidelines are staged under `skills/` and now active under the project's `.agents/skills` after the user's setup.
+- Earlier automated activation was blocked by protected settings/skill directories; the user subsequently activated the skills and documentation MCP configurations. The VS Code extension attempt encountered a marketplace DNS failure, and extension installation remains unverified.
 - No AWS account connection or cloud provisioning has occurred.
 
 ## Finish activation
@@ -18,9 +18,9 @@ Run in your normal terminal:
 bash /Users/ethansaba/code/therapist/tooling/finish-setup.sh
 ```
 
-Use `--dry-run` to preview the operations or `--skip-editor` to omit VS Code extensions. The script installs the staged skills into project `.agents/skills`, registers OpenAI Docs, local Context7, and AWS Knowledge MCP servers, and installs ESLint and Tailwind CSS IntelliSense. Existing named MCP configurations are preserved; differing existing skills cause a stop rather than overwrite.
+Use `--dry-run` to preview the operations or `--skip-editor` to omit VS Code extensions. The script installs the staged skills into project `.agents/skills`, registers OpenAI Docs and local Context7, and installs ESLint and Tailwind CSS IntelliSense. Existing named MCP configurations are preserved; differing existing skills cause a stop rather than overwrite. AWS Knowledge was removed from the default setup after the user returned to Supabase; an already registered copy can remain optional.
 
-The two remote MCPs provide documentation access, not account administration. Context7 may require authentication for higher limits. No credentials are embedded in the script.
+These MCPs provide documentation access, not account administration. Context7 may require authentication for higher limits. No credentials are embedded in the script. No AWS CLI/account setup is required for this build.
 
 Start a new turn after activation so Codex can discover the skills. Test an actual documentation query before treating a configured MCP as a working remote integration.
 
@@ -46,7 +46,7 @@ cp -n tooling/warp/task-codex.toml ~/.warp/tab_configs/task_codex.toml
 
 Open Warp's Tab Configs picker and choose **Task: Codex + checks**, then enter the absolute path of the created worktree. Review any existing same-named file before using it; `cp -n` preserves it. The TOML is based on [official Warp documentation](https://docs.warp.dev/terminal/windows/tab-configs); it has not been installed or exercised in Warp here. A separate editor/agent writer must use another worktree.
 
-The initial repository still needs its first commit; prepared commands are not created worktrees. Shell syntax and isolated Git-fixture checks passed for creation, no-mutation dry-run, dirty/invalid/duplicate/path guard cases, and linked-checkout refusal. TOML parsing and structure checks passed; Warp UI was not tested. See [STATUS.md](../STATUS.md) for current verification and repository state.
+The user completed baseline commit `ec919a5`; preserve subsequent local changes before creating task worktrees. Shell syntax and isolated Git-fixture checks passed for creation, no-mutation dry-run, dirty/invalid/duplicate/path guard cases, and linked-checkout refusal. TOML parsing and structure checks passed; Warp UI was not tested. See [STATUS.md](../STATUS.md) for current verification and repository state.
 
 ## Provenance
 

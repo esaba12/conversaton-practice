@@ -2,7 +2,7 @@
 
 Researched October 3, 2026. Commands are recommendations for the user's Mac and project; they were not executed there. Start with the minimal set. Source IDs link to [the source register](14-SOURCES.md).
 
-Later same-day update: selected commands have now been attempted. Context7 4.1.1 is installed locally, two skills are staged, and activation requires the normal terminal because this session cannot write Codex settings or `.agents`. See [actual tooling state](../tooling/README.md). The user has also superseded Supabase/anonymous auth with AWS PostgreSQL and required sign-in; see [current direction](18-DESIGN-AND-AWS.md). The global latest-version commands below are historical recommendations; use the pinned finish script for this setup.
+Latest same-day update: Context7 4.1.1 is installed locally and the two project skills are active. Recheck MCP registration after restart; this session cannot write Codex settings or `.agents`. See [actual tooling state](../tooling/README.md). The user returned to Supabase Auth/PostgreSQL and will create a fresh project; required non-anonymous sign-in remains. AWS setup is no longer required. See [current direction](18-DESIGN-AND-AWS.md). The global latest-version commands below are historical recommendations; use the pinned finish script only for incomplete setup.
 
 ## Recommended tools
 
@@ -136,7 +136,7 @@ Commit a placeholder .env.example and ignore .env.local.
 - ElevenLabs skill is discoverable.
 - Documentation MCP returns a real result.
 - Playwright opens the running app.
-- A real voice session completes and End releases the microphone.
+- A real synchronized AI video call completes and End releases microphone/camera and stops all playback; see docs/22-LIVE-VIDEO.md.
 - Owner isolation and memory approval tests pass.
 - Provider retention settings match the UI's disclosure.
 
