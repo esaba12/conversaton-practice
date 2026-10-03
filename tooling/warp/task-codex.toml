@@ -1,0 +1,30 @@
+# Optional macOS Warp Tab Config; staged only, not installed or UI-tested.
+# Source checked October 3, 2026:
+# https://docs.warp.dev/terminal/windows/tab-configs
+# Install as ~/.warp/tab_configs/task_codex.toml in a normal terminal.
+# First create the worktree with tooling/worktree.sh; enter its absolute path.
+name = "Task: Codex + checks"
+title = "Task workspace"
+color = "green"
+
+[[panes]]
+id = "root"
+split = "horizontal"
+children = ["codex", "checks"]
+
+[[panes]]
+id = "codex"
+type = "terminal"
+directory = "{{worktree}}"
+commands = ["codex"]
+is_focused = true
+
+[[panes]]
+id = "checks"
+type = "terminal"
+directory = "{{worktree}}"
+commands = ["git status --short --branch"]
+
+[params.worktree]
+type = "text"
+description = "Absolute path of an existing task worktree"

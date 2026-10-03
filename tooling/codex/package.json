@@ -1,0 +1,9 @@
+{
+  "name": "conversation-rehearsal-codex-tools",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Development tools for Codex; separate from application dependencies.",
+  "dependencies": {
+    "@upstash/context7-mcp": "4.1.1"
+  }
+}

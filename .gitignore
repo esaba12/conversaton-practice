@@ -1,0 +1,12 @@
+node_modules/
+.env
+.env.*
+!.env.example
+.DS_Store
+.next/
+coverage/
+test-results/
+playwright-report/
+.worktrees/
+artifacts/local/
+.aws/
