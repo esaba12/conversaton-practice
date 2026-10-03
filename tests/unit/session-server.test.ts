@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppError, errorSchema } from "@/lib/schemas/errors";
 import { buildRoleContext, type RoleContext } from "@/lib/schemas/role-context";
+import { personToRole } from "@/lib/schemas/people";
 import { sessionResponseSchema, startRequestSchema, startResponseSchema } from "@/lib/schemas/session";
 import { roommate } from "@/fixtures/roommate";
 
@@ -228,6 +229,77 @@ describe("session routes", () => {
     expect(sessionResponseSchema.parse(await ok.json()).session.status).toBe("active");
     handlers.practice_connected = () => marker("SESSION_CLOSED");
     expect((await errorOf(await connect(post(`/api/sessions/${id}/connected`, {}), ctx(id)), 409)).code).toBe("SESSION_EXPIRED");
+  });
+
+  describe("saved person", () => {
+    const personId = "55555555-5555-4555-8555-555555555555", key2 = "44444444-4444-4444-8444-444444444444";
+    const stored = {
+      id: personId, version: 2, name: "Sam", relationship: "Your fictional coworker", traits: { tone: "blunt" }, style: "Direct; prefers specifics.",
+      public_context: "You share a desk on the design team.", opening: "Hey, got a minute?", constraints: ["Stay at work."], challenge: "neutral", pace: "patient",
+      known_about_user: ["SHARED-FACT I run on weekends"],
+    };
+    const personBody = { idempotencyKey: key, personId, expectedVersion: 2, durationSeconds: 180 };
+    function live(data: Record<string, unknown> = stored) {
+      handlers.person_context = (args) => args.p_id === personId && args.p_expected_version === data.version ? { data } : marker(args.p_id === personId ? "VERSION_CONFLICT" : "NOT_FOUND");
+      // Rows the caller also owns but which must never reach the builder.
+      handlers.private_prep_get = () => ({ data: { notes: "PRIVATE-PREP-MARKER" } });
+      handlers.about_me_list = () => ({ data: [{ text: "SHARED-FACT I run on weekends" }, { text: "UNSHARED-FACT-MARKER" }] });
+      handlers.practice_acquire = () => ({ data: { created: true, session: row() } });
+      handlers.practice_bind = (args) => ({ data: row({ provider_conversation_id: args.p_provider_id }) });
+    }
+    const sentBody = (fetchMock: ReturnType<typeof tavus>, index = 0) => JSON.parse(String(fetchMock.mock.calls[index][1].body));
+
+    it("builds the context from the person and only its shared facts, loaded before the lease", async () => {
+      live(); const fetchMock = tavus();
+      expect((await start(post("/api/sessions", personBody))).status).toBe(201);
+      expect(rpc.mock.calls.map(([name]) => name)).toEqual(["person_context", "practice_acquire", "practice_bind"]);
+      const role = personToRole({ name: "Sam", relationship: "Your fictional coworker", style: stored.style, publicContext: stored.public_context, opening: stored.opening, constraints: stored.constraints, challenge: "neutral", pace: "patient", traits: { tone: "blunt" } });
+      const extras = { traits: { tone: "blunt" as const }, knownAboutUser: stored.known_about_user };
+      const sent = sentBody(fetchMock);
+      expect(sent.conversational_context).toBe(buildRoleContext(role, extras));
+      expect(sent.conversational_context).toContain("SHARED-FACT I run on weekends"); expect(sent.conversational_context).toContain("blunt and direct");
+      for (const leak of ["UNSHARED-FACT-MARKER", "PRIVATE-PREP-MARKER", "Alex"]) expect(JSON.stringify(sent)).not.toContain(leak);
+      expect(sent.custom_greeting).toBe(stored.opening);
+      expect(Object.keys(sent).sort()).toEqual(["audio_only", "conversational_context", "custom_greeting", "face_id", "max_participants", "pal_id", "participant_tags", "properties", "require_auth"]);
+      const fingerprint = calls("practice_acquire")[0].p_fingerprint;
+      expect(fingerprint).toBe(startFingerprint(role, 180, SECRET, { extras, personId, version: 2 }));
+      expect(fingerprint).not.toBe(startFingerprint(role, 180, SECRET));
+    });
+
+    it("rejects a stale version with 409 and a missing or foreign person with 404, before the lease and provider", async () => {
+      live(); const fetchMock = tavus();
+      expect((await errorOf(await start(post("/api/sessions", { ...personBody, expectedVersion: 1 })), 409)).code).toBe("VERSION_CONFLICT");
+      expect((await errorOf(await start(post("/api/sessions", { ...personBody, personId: other })), 404)).code).toBe("NOT_FOUND");
+      expect(calls("practice_acquire")).toHaveLength(0); expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("rejects client-supplied facts, roles or private prep on the person branch", async () => {
+      live(); const fetchMock = tavus();
+      for (const extra of [{ knownAboutUser: ["INJECTED"] }, { role: reviewed }, { privatePrep: "PRIVATE-PREP-MARKER" }, { preset: "roommate" }]) {
+        expect((await errorOf(await start(post("/api/sessions", { ...personBody, ...extra })), 400)).code).toBe("VALIDATION_ERROR");
+      }
+      expect(rpc).not.toHaveBeenCalled(); expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("fails closed with 503 on malformed person_context output", async () => {
+      live(); const fetchMock = tavus();
+      handlers.person_context = () => ({ data: { ...stored, private_prep: "PRIVATE-PREP-MARKER" } });
+      const text = await (await start(post("/api/sessions", personBody))).text();
+      expect(errorSchema.parse(JSON.parse(text)).code).toBe("PROVIDER_UNAVAILABLE"); expect(text).not.toContain("PRIVATE-PREP");
+      expect(calls("practice_acquire")).toHaveLength(0); expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("starts fresh each time and reflects edited traits without carrying history", async () => {
+      const fetchMock = tavus();
+      live(); await start(post("/api/sessions", personBody));
+      live({ ...stored, version: 3, traits: { tone: "warm" } }); await start(post("/api/sessions", { ...personBody, idempotencyKey: key2, expectedVersion: 3 }));
+      const [first, second] = [sentBody(fetchMock), sentBody(fetchMock, 1)];
+      expect(first.conversational_context).toContain("blunt and direct"); expect(second.conversational_context).toContain("warm and friendly");
+      expect(second.conversational_context).not.toContain("blunt");
+      expect(Object.keys(second).sort()).toEqual(Object.keys(first).sort());
+      const [a, b] = calls("practice_acquire").map((args) => args.p_fingerprint);
+      expect(a).not.toBe(b);
+    });
   });
 
   it("never returns raw database or unexpected error messages", async () => {

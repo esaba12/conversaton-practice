@@ -1,11 +1,12 @@
 import "server-only";
 import { createHmac } from "node:crypto";
 import { roommate } from "@/fixtures/roommate";
+import { loadPersonContext } from "@/lib/data/person-context";
 import * as sessions from "@/lib/data/sessions";
 import type { Db, SessionRow } from "@/lib/data/sessions";
 import { assertTavusConfigured, createConversation, stopConversation } from "@/lib/media/tavus";
 import { AppError } from "@/lib/schemas/errors";
-import { roleContextSchema, type RoleContext } from "@/lib/schemas/role-context";
+import { roleContextSchema, type RoleContext, type RoleExtras } from "@/lib/schemas/role-context";
 import { startResponseSchema, type EndReason, type StartResponse, type startRequestSchema } from "@/lib/schemas/session";
 import type { z } from "zod";
 
@@ -32,18 +33,25 @@ function canonical(value: unknown): string {
   }
   return JSON.stringify(value);
 }
-// Keyed so a stored fingerprint cannot confirm a guessed role.
-export function startFingerprint(role: RoleContext, durationSeconds: 180 | 300, secret: string) {
-  return createHmac("sha256", secret).update(canonical({ durationSeconds, role })).digest("hex");
+// Keyed so a stored fingerprint cannot confirm a guessed role. Preset/role starts omit `person`, keeping their hashes unchanged.
+export function startFingerprint(role: RoleContext, durationSeconds: 180 | 300, secret: string, person?: { extras: RoleExtras; personId: string; version: number }) {
+  return createHmac("sha256", secret).update(canonical({ durationSeconds, role, ...person })).digest("hex");
 }
 
 export async function startSession(db: Db, input: z.output<typeof startRequestSchema>): Promise<StartResponse> {
   const secret = capability();
   assertTavusConfigured();
-  if ("personId" in input) throw new AppError("NOT_FOUND", "That item was not found.", 404);
-  // Only the allowlisted role reaches the provider; no other client field is forwarded.
-  const role = roleContextSchema.parse("role" in input ? input.role : roommate);
-  const fingerprint = startFingerprint(role, input.durationSeconds, secret);
+  let role: RoleContext, extras: RoleExtras | undefined, fingerprint: string;
+  if ("personId" in input) {
+    // Loaded and version-checked for the caller before any lease or provider call; the client sends only ID and version.
+    const person = await loadPersonContext(db, input.personId, input.expectedVersion);
+    ({ role, extras } = person);
+    fingerprint = startFingerprint(role, input.durationSeconds, secret, { extras, personId: input.personId, version: person.version });
+  } else {
+    // Only the allowlisted role reaches the provider; no other client field is forwarded.
+    role = roleContextSchema.parse("role" in input ? input.role : roommate);
+    fingerprint = startFingerprint(role, input.durationSeconds, secret);
+  }
   let acquired: Awaited<ReturnType<typeof sessions.acquire>>;
   try { acquired = await sessions.acquire(db, secret, input.idempotencyKey, fingerprint, input.durationSeconds); }
   catch (error) {
@@ -54,7 +62,7 @@ export async function startSession(db: Db, input: z.output<typeof startRequestSc
   // Only a fresh lease may create a provider call; replays never start a second one.
   if (!acquired.created) throw new AppError("SESSION_ACTIVE", "This start request was already handled. End that session to start another.", 409, false, id);
   let created: Awaited<ReturnType<typeof createConversation>>;
-  try { created = await createConversation(role, input.durationSeconds); }
+  try { created = await createConversation(role, input.durationSeconds, extras); }
   catch {
     // Without a provider ID the database records cleanup as unresolved, which is truthful after a timeout.
     await sessions.end(db, secret, id, "connection_failure").catch(() => undefined);
