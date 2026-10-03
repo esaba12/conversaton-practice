@@ -79,12 +79,41 @@ provider, microphone, camera, or other checkout access is needed.
   adapter and report `interrupted`. Render one active call component per page.
   These checks do not establish live G1 acceptance or owner isolation.
 
+### Component behavior and integration boundaries
+
+`PracticeSetup` reviews supplied data; the assigned props do not include editing
+or generation callbacks. `onStart` is called only from the enabled Start button.
+`disabled` defaults to false, and `statusMessage` is announced and associated with
+Start when present. The public-context panel must receive only approved character
+knowledge; there is no private-notes input or counterpart-context assembly here.
+
+| Call input | Presentation | Parent responsibility |
+| --- | --- | --- |
+| `connecting` | Connecting status and preparation placeholder; controls enabled | Acquire/connect media and advance phase only on verified readiness |
+| `live`, remote node supplied | Supplied media displayed, “In conversation” status | Verify actual playback and synchronized video/audio |
+| `live`, remote node absent | “Video unavailable” status and placeholder | Handle unavailable video; a phase alone does not establish readiness |
+| `interrupted` | Explicit interruption overlay/status; controls enabled | Recover or end the connection; no retry callback exists in this contract |
+| `ended` | Ended message, media slots unmounted, all controls disabled | Stop playback, release tracks, close provider sessions, ignore late events |
+| `muted` | Unmute action and explicit “not paused” explanation | Apply microphone state; button only invokes `onMuteToggle` |
+| `cameraEnabled` | Supplied local preview or “Preview unavailable” | Acquire only after opt-in, keep local, release on disable/end |
+| Camera disabled | “Camera off”; supplied local node not rendered | Do not acquire or publish camera tracks |
+| `isMock` | Prominent “UI preview — no live call” banner | Set for any simulated caller; default is false |
+
+The component treats null, undefined, and boolean media nodes as absent. It cannot
+inspect whether a supplied wrapper contains functioning video. Connecting and
+interrupted overlays do not stop an already mounted remote node's audio.
+`elapsedSeconds` and `durationSeconds` are display inputs, not timers or automatic
+end logic; nonfinite/negative values display as zero, fractions are floored.
+Optional `statusMessage` uses a status region. Callback errors, permission failures,
+and reconnection policies belong to the caller, which can describe them through
+phase/status. No provider deletion or saved-memory guarantees are added.
+
 ## Verification — October 3, 2026, America/Detroit
 
 All commands ran in the assigned worktree against base
 `a601a0eaea6cd84b68050687fa1ebfd6fb85a39f` plus uncommitted owned changes.
-Project-local Node verified as `v22.23.3`; installed Chromium via existing
-Playwright cache. Only port 3003 was used. No environment files copied or edited.
+Project-local Node verified as `v22.23.3`; Chromium used from the existing
+Playwright cache. Only port 3003 was used locally. No environment files copied or edited.
 
 | Time EDT | Mode / outcome | Command or check | Evidence |
 | --- | --- | --- | --- |
@@ -111,7 +140,63 @@ uses `@playwright/test` from this worktree, testDir `tests/browser`, testMatch
 `http://127.0.0.1:3003`, no webServer, trace/video/screenshot disabled by default,
 and outputDir `artifacts/local/frontend-preview/results`. Tests explicitly save
 synthetic screenshots to their isolated output paths. The shared port-3100 config
-and full browser suite were not used. Recreate this config locally before repeating.
+and full browser suite were not used locally. Recreate this config locally before repeating.
+
+### Reproduce the isolated checks
+
+Run from `/Users/ethansaba/code/therapist/.worktrees/g1-frontend` on
+`agent/g1-frontend`. The config and screenshots are intentionally ignored and are
+not included in the PR. Recreate the exact config without modifying shared files:
+
+```sh
+npm ci
+mkdir -p artifacts/local/frontend-preview
+cat > artifacts/local/frontend-preview/playwright.config.cjs <<'EOF'
+const { defineConfig, devices } = require('../../../node_modules/@playwright/test');
+const path = require('node:path');
+module.exports = defineConfig({
+  testDir: path.resolve(__dirname, '../../../tests/browser'),
+  testMatch: 'frontend-preview.spec.ts',
+  outputDir: path.resolve(__dirname, 'results'),
+  reporter: 'list',
+  workers: 1,
+  use: { baseURL: 'http://127.0.0.1:3003', trace: 'off', screenshot: 'off', video: 'off' },
+  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+});
+EOF
+npm run dev -- --port 3003
+```
+
+While that server runs, use a second terminal in the same worktree:
+
+```sh
+npx playwright test --config artifacts/local/frontend-preview/playwright.config.cjs
+```
+
+Open `http://127.0.0.1:3003/design-preview` for manual review. Fixture controls
+switch setup/call, select all four phases, toggle synthetic media, exercise disabled
+Start, and supply long example text. Start, mute, camera, and End change display
+state only. No credentials are needed. Test screenshots use `setup-*`,
+`connecting-long-*`, `call-long-*`, and `call-*` names inside per-test result folders.
+
+Stop the development server before running the production check on the same port:
+
+```sh
+npm run typecheck
+npm run build
+npm run start -- --port 3003
+```
+
+Then, in the second terminal:
+
+```sh
+FRONTEND_PREVIEW_PRODUCTION=1 npx playwright test --config artifacts/local/frontend-preview/playwright.config.cjs --output artifacts/local/frontend-preview/production-results
+```
+
+Stop the production server when finished. A successful development run has six
+passes and one intentional skip; a successful production run has one pass and six
+intentional skips. `git diff --check` and `git status --short` expose generated
+changes before staging; keep commits within the assigned paths.
 
 Read-only review found changing action labels paired with `aria-pressed`, possible
 long-name placeholder overlap, and offscreen mobile End. Resolved with ordinary
@@ -125,8 +210,27 @@ match base and are excluded from commits. Optional coordinator proposal: set
 `agentRules: false` in the shared Next config if repeated generated AGENTS churn
 is unwanted; no config edit was made here.
 
-Implementation commit: `8a46703` (`feat: add isolated setup and video call presentation`).
-Draft PR #7 opened after confirming no existing frontend PR; branch pushed to origin.
-CI: [Application checks](https://github.com/esaba12/conversaton-practice/actions/runs/37143417445)
-queued when checked at 14:14 EDT; not claimed passed. Integrated revision remains
-pending coordinator review. No merge performed and no gate marked passed.
+## Delivery and CI evidence
+
+- Implementation: `8a46703` (`feat: add isolated setup and video call presentation`).
+- Initial PR/verification handoff: `6b19d80` (`docs: link frontend draft PR and verification handoff`).
+- Draft [PR #7](https://github.com/esaba12/conversaton-practice/pull/7) targets
+  `build/g1-foundation` from `agent/g1-frontend`; no previous frontend PR existed.
+  Both commits were pushed, and the worktree was clean at handoff.
+- The initial [CI run](https://github.com/esaba12/conversaton-practice/actions/runs/37143417445)
+  was queued when first checked at 14:14 EDT.
+- Follow-up verification at 14:20 EDT confirmed
+  [Application checks run 37143448569](https://github.com/esaba12/conversaton-practice/actions/runs/37143448569)
+  **passed** for head `6b19d8044be09966b70e7fb2625d88c9cdbae701`, completing at
+  14:16:29 EDT. `gh run view 37143448569 --repo esaba12/conversaton-practice --json headSha,conclusion,url,jobs`
+  returned success for install, typecheck, unit tests, production build, Chromium
+  installation, and the repository browser-test step. CI used its existing shared
+  workflow/config in GitHub's runner; it did not start port 3100 in this worktree.
+- This follow-up expands documentation only. Implementation checks were not rerun
+  for prose changes. CI success is attributed to the exact head above; later
+  documentation commits have their own checks.
+
+No merge performed; integrated revision, authenticated app wiring, permission and
+connection recovery, real device accessibility checks, and live audiovisual/teardown
+acceptance remain with the coordinator. The local task servers are stopped. No G1
+gate is marked passed, and issue #4 remains open for its integration acceptance.
