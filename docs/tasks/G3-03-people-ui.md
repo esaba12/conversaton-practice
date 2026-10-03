@@ -1,7 +1,7 @@
 # G3-03: My people, person page, About me and save after End
 
-Status: ready
-Updated: October 3, 2026, 17:20 EDT
+Status: review
+Updated: October 3, 2026, 17:30 EDT
 Assigned writer: G3-03 background subagent
 Coordinator: Cursor coordinator session
 Gate: G3
@@ -46,13 +46,24 @@ Non-goals: server routes, context building, voice/avatar per person, reordering,
 
 ## Verification evidence
 
-Not run yet.
+Mode: unit (mocked `fetch`) and static (TypeScript). Not browser-checked, not built, no live provider or database calls. Run October 3, 2026, about 17:27 EDT, on `build/g3-people` (base `7bb796b`) with other workers' uncommitted files present.
+
+- `npm run typecheck` (`tsc --noEmit`): passed, 0 errors.
+- `npx vitest run tests/unit/people-api-client.test.ts tests/unit/api-client.test.ts`: 2 files, 23 tests passed (10 new people/about-me/private-prep client tests; 13 session/draft client tests including 2 new saved-person start tests).
+- `npx vitest run` (whole unit suite, informational): 9 files, 103 tests passed; no failures from other workers' files at that moment.
+- Covered by tests: each people/about-me/private-prep method's path, verb and exact body (bodiless GET/DELETE; `{ text }`; person fields only, extra trait keys, goal and private notes dropped; PATCH adds only `expectedVersion`; shared-facts sends the full de-duplicated `factIds` plus `expectedVersion`); request bodies validate against the frozen request schemas; 404 NOT_FOUND, 409 VERSION_CONFLICT and 409 USAGE_LIMIT become `SessionClientError` with code/status; malformed and non-JSON responses become MALFORMED_RESPONSE. Saved-person start body is exactly `{ idempotencyKey, personId, expectedVersion, durationSeconds }` and passes `startRequestSchema`.
+- Not covered (needs a browser): drag and drop, keyboard focus after a chip moves, `aria-live` announcements, mobile layout, Dismiss default focus, sign-in redirects on the new pages.
 
 ## Handoff
 
-- Changed paths and commit(s): pending
-- Remaining failures/risks: pending
+- Changed paths (no commits; coordinator is the Git writer):
+  - New: `app/practice/people/[id]/page.tsx`, `app/practice/people/[id]/person-workspace.tsx`, `app/practice/about-me/page.tsx`, `app/practice/about-me/about-me-workspace.tsx`, `components/presentation/people-list.tsx` (MyPeople cards, `PeopleHeader`, `formatUpdated`), `people-start.tsx` (saved-person start card), `people-editor.tsx` (chip editor), `people-sharing.tsx` (Knows about you + Never shared), `people-about-me.tsx`, `people-save.tsx` (after End), `people.module.css`, `lib/people/api-client.ts`, `tests/unit/people-api-client.test.ts`.
+  - Modified: `app/practice/practice-workspace.tsx` (My people above the describe flow; `?person=<id>` opens a saved person; a shared `launch` path for role and saved-person starts; VERSION_CONFLICT reloads the person; after End, Save this person / Update <name> / Edit <name> with Dismiss focused; nothing saves automatically; call view, mute, End and teardown unchanged), `lib/session/api-client.ts` (exported `requestJson` generalizing the old `post`, added `startSavedPersonSession`; existing exports unchanged), `components/presentation/setup-describe.tsx` (eyebrow now "Practice a new conversation"), `tests/unit/api-client.test.ts`.
+- Behavior notes: pages redirect signed-out users like `app/practice/page.tsx`; `[id]` accepts `new` or a UUID, otherwise `notFound()`. Trait chips are pressed buttons in labelled groups (click again to clear). Sharing chips are buttons with native HTML drag and drop (custom MIME type only, so no text field, including the private notes, accepts a dropped fact); Enter/Space/click toggles; focus follows the moved chip; a `role="status"` line announces each change. Each change PUTs the full set with `expectedVersion` and updates only version/shared IDs, keeping unsaved form edits. Save/share 409 shows a non-destructive message with "Load latest version". Private notes go only to `/api/private-prep`; the G2 describe notes stay browser-only and are never passed to people routes.
+- Accessible names for a browser script: home "My people" heading, links "About me" and "Add a person", buttons "Practice with <name>", links "Edit <name>"; person page heading = name, text fields "Name", "Relationship", "How they talk", "What they know about the situation", "Opening line"; chip groups "Tone"/"Formality"/"Talkativeness"/"Familiarity" with buttons "Warm", "Casual", … (`aria-pressed`); buttons "Save" ("Save person" when new), "Load latest version", "Delete <name>" then "Yes, delete"; link "Practice with <name>"; sharing regions "About me" and "Knows about <name>", chips "Share with <name>: <fact>" / "Stop sharing with <name>: <fact>"; "Never shared" heading, textarea "Private preparation notes", button "Save private notes". About me page: input "New fact about you", button "Add fact", per-fact "Edit: <fact>", "Delete: <fact>", "Confirm delete: <fact>", edit input "Edit fact", "Save fact". Saved-person start: heading "Talk with <name>.", button "Start practice". After End: "Dismiss" (focused), "Save this person" or "Update <name>", or link "Edit <name>"; after saving, link "Open <name>".
+- Remaining risks: browser behavior unverified (see above). If the people list fails to load after End, "Save this person" stays enabled and could create a duplicate of a same-named person (not destructive). Same-name matching uses the list loaded at End. `/practice?person=` is read once on mount. The practice page's `useSearchParams` relies on the route being dynamic (`force-dynamic` already set); production build not run.
+- Proposed shared changes: none required. Optional: coordinator updates docs/02 with the screens above.
 - External account action: none
-- Next smallest task: pending
-- Ready for review: no
+- Next smallest task: coordinator browser check of the flow above against the G3-01 routes.
+- Ready for review: yes
 - Coordinator integration: pending

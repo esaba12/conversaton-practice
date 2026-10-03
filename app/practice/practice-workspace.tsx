@@ -1,18 +1,23 @@
 "use client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { MyPeople } from "@/components/presentation/people-list";
+import { SaveAfterEnd } from "@/components/presentation/people-save";
+import { SavedPersonStart } from "@/components/presentation/people-start";
 import { PracticeCall, type PracticeCallProps } from "@/components/presentation/practice";
 import { SetupDescribe, type SetupDescribeError } from "@/components/presentation/setup-describe";
 import { SetupReview, emptyRole, parseReviewedRole, type SetupMode } from "@/components/presentation/setup-review";
 import { roommate } from "@/fixtures/roommate";
 import { createBrowserAuthClient } from "@/lib/auth/browser";
 import { createDailyController } from "@/lib/media/daily-controller";
+import { createPerson, getPerson, listPeople, updatePerson } from "@/lib/people/api-client";
 import type { DraftRequest } from "@/lib/schemas/draft";
 import type { MediaController, MediaEvent } from "@/lib/schemas/media";
+import { roleToPersonFields, type Person } from "@/lib/schemas/people";
 import type { RoleContext } from "@/lib/schemas/role-context";
-import type { EndReason, PracticeSession } from "@/lib/schemas/session";
-import { SessionClientError, endSession, generateDraft, markConnected, startSession } from "@/lib/session/api-client";
+import type { EndReason, PracticeSession, StartResponse } from "@/lib/schemas/session";
+import { SessionClientError, endSession, generateDraft, markConnected, startSavedPersonSession, startSession } from "@/lib/session/api-client";
 
 const DURATION_SECONDS = 180;
 const EXAMPLE_GOAL = "Make a clear request about sharing kitchen chores.";
@@ -22,6 +27,11 @@ const GENERATION_FAILED = "We couldn’t generate a setup right now.";
 type Phase = PracticeCallProps["phase"];
 type Cleanup = { state: "closing" } | { state: "closed"; cleanup: PracticeSession["cleanup"] } | { state: "unreachable" };
 type CleanupTarget = { id: string; reason: EndReason };
+// What the call started from, so End can offer an explicit save. Never includes goal or private notes.
+type CallOrigin = { kind: "role"; role: RoleContext } | { kind: "person"; person: Person };
+type SaveOffer = { open: boolean; saving: boolean; saved: { id: string; name: string; updated: boolean } | null; error: string };
+const closedOffer: SaveOffer = { open: false, saving: false, saved: null, error: "" };
+const sameName = (a: string, b: string) => a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase();
 
 const failureMessages: Record<Extract<MediaEvent, { type: "failed" }>["reason"], string> = {
   join: "We couldn’t join the call.",
@@ -54,6 +64,7 @@ function StreamVideo({ stream, muted = false }: { stream: MediaStream; muted?: b
 
 export function PracticeWorkspace() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [view, setView] = useState<"setup" | "call">("setup");
   const [phase, setPhaseState] = useState<Phase>("connecting");
   const [starting, setStarting] = useState(false);
@@ -72,7 +83,7 @@ export function PracticeWorkspace() {
   const [signingOut, setSigningOut] = useState(false);
   const [headerMessage, setHeaderMessage] = useState("");
   // Setup content is transient: never persisted, and private notes go only to generateDraft.
-  const [step, setStep] = useState<"describe" | "review">("describe");
+  const [step, setStep] = useState<"describe" | "review" | "person">("describe");
   const [moveFocus, setMoveFocus] = useState(false);
   const [situation, setSituation] = useState("");
   const [intent, setIntent] = useState("");
@@ -84,6 +95,11 @@ export function PracticeWorkspace() {
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<SetupDescribeError | null>(null);
   const [callInfo, setCallInfo] = useState({ name: "", goal: "" });
+  const [people, setPeople] = useState<Person[]>([]);
+  const [peopleStatus, setPeopleStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [savedPerson, setSavedPerson] = useState<Person | null>(null);
+  const [callOrigin, setCallOrigin] = useState<CallOrigin | null>(null);
+  const [saveOffer, setSaveOffer] = useState<SaveOffer>(closedOffer);
   const generationRef = useRef(0);
 
   // Refs carry the authoritative call state so media/auth callbacks never act on stale renders.
@@ -185,6 +201,45 @@ export function PracticeWorkspace() {
     setStep("describe"); setSituation(""); setIntent(""); setPrivateNotes("");
     setReviewRole(emptyRole); setReviewGoal(""); setAssumptions([]); setSetupMode("manual");
     setGenerating(false); setGenerateError(null); setCallInfo({ name: "", goal: "" });
+    setSavedPerson(null); setCallOrigin(null); setSaveOffer(closedOffer);
+  }
+
+  function isAuthError(error: unknown) { return error instanceof SessionClientError && error.code === "UNAUTHENTICATED"; }
+
+  async function loadPeople() {
+    setPeopleStatus("loading");
+    try {
+      const list = await listPeople();
+      if (authLostRef.current) return null;
+      setPeople(list); setPeopleStatus("ready");
+      return list;
+    } catch (error) {
+      if (isAuthError(error)) handleAuthLoss(); else setPeopleStatus("error");
+      return null;
+    }
+  }
+
+  function choosePerson(person: Person, notice = "") {
+    setSavedPerson(person);
+    setStep("person"); setMoveFocus(true);
+    setSetupMessage(notice); setPreviousSessionId(null); setHeaderMessage("");
+  }
+
+  async function openPerson(personId: string, notice = "") {
+    try {
+      choosePerson(await getPerson(personId), notice);
+    } catch (error) {
+      if (isAuthError(error)) { handleAuthLoss(); return; }
+      setSavedPerson(null); setStep("describe");
+      setHeaderMessage(error instanceof SessionClientError && error.code === "NOT_FOUND" ? "That saved person wasn’t found." : "We couldn’t load that person. Please try again.");
+      void loadPeople();
+    }
+  }
+
+  function leavePerson() {
+    setSavedPerson(null); setSetupMessage("");
+    showStep("describe");
+    if (searchParams.get("person")) router.replace("/practice", { scroll: false });
   }
 
   function handleAuthLoss() {
@@ -192,13 +247,14 @@ export function PracticeWorkspace() {
     authLostRef.current = true;
     abandon("auth_loss");
     clearPrivateSetup();
+    setPeople([]);
     setPhase(null);
     setView("setup");
     setCallMessage(""); setSetupMessage(""); setCleanup(null); setCleanupTarget(null); setPreviousSessionId(null);
     routeToSignIn();
   }
 
-  function showStep(next: "describe" | "review") {
+  function showStep(next: "describe" | "review" | "person") {
     setStep(next);
     setMoveFocus(true);
     setSetupMessage("");
@@ -244,23 +300,35 @@ export function PracticeWorkspace() {
     showStep("describe");
   }
 
-  async function start() {
-    if (startingRef.current || controllerRef.current || sessionIdRef.current || authLostRef.current || generating) return;
+  function start() {
     const role = parseReviewedRole(reviewRole);
     if (!role) return;
+    void launch({ kind: "role", role }, reviewGoal.trim() || FALLBACK_GOAL, (idempotencyKey) => startSession({ role, durationSeconds: DURATION_SECONDS, idempotencyKey }));
+  }
+
+  // Sends only the person's ID and version; private notes and goal stay in the browser.
+  function startPerson() {
+    const person = savedPerson;
+    if (!person) return;
+    void launch({ kind: "person", person }, FALLBACK_GOAL, (idempotencyKey) => startSavedPersonSession({ personId: person.id, expectedVersion: person.version, durationSeconds: DURATION_SECONDS, idempotencyKey }));
+  }
+
+  async function launch(origin: CallOrigin, goal: string, request: (idempotencyKey: string) => Promise<StartResponse>) {
+    if (startingRef.current || controllerRef.current || sessionIdRef.current || authLostRef.current || generating) return;
     startingRef.current = true;
     const attempt = ++attemptRef.current;
     setStarting(true); setSetupMessage(""); setPreviousSessionId(null); setGenerateError(null);
     let joined = false;
     try {
-      const { session, credential } = await startSession({ role, durationSeconds: DURATION_SECONDS, idempotencyKey: crypto.randomUUID() });
+      const { session, credential } = await request(crypto.randomUUID());
       if (attempt !== attemptRef.current) {
         void endSession(session.id, authLostRef.current ? "auth_loss" : "navigation", { keepalive: true }).catch(() => undefined);
         return;
       }
       sessionIdRef.current = session.id;
       connectedRef.current = false;
-      setCallInfo({ name: role.name, goal: reviewGoal.trim() || FALLBACK_GOAL });
+      setCallInfo({ name: origin.kind === "role" ? origin.role.name : origin.person.name, goal });
+      setCallOrigin(origin); setSaveOffer({ ...closedOffer, open: true });
       setMutedState(false); setCameraEnabled(false); setCameraNote(""); setElapsedSeconds(0); setCallMessage(""); setCleanup(null); setCleanupTarget(null);
       setPhase("connecting");
       setView("call");
@@ -278,6 +346,8 @@ export function PracticeWorkspace() {
           setSetupMessage("A previous practice is still open. End it before starting a new one.");
           return;
         }
+        if (origin.kind === "person" && error.code === "VERSION_CONFLICT") { void openPerson(origin.person.id, `${origin.person.name} changed since you opened this page. This is the latest version; start again when you’re ready.`); return; }
+        if (origin.kind === "person" && error.code === "NOT_FOUND") { void openPerson(origin.person.id); return; }
         setSetupMessage(error.code === "NETWORK" || error.code === "MALFORMED_RESPONSE" ? "Practice couldn’t start. Please try again." : error.message);
         return;
       }
@@ -322,10 +392,35 @@ export function PracticeWorkspace() {
   }
 
   function backToSetup() {
+    const origin = callOrigin;
     setPhase(null);
     setView("setup");
-    setStep("review"); setMoveFocus(true);
     setCallMessage(""); setCleanup(null); setCleanupTarget(null); setSetupMessage("");
+    setCallOrigin(null); setSaveOffer(closedOffer);
+    if (origin?.kind === "person") { void openPerson(origin.person.id); return; }
+    setStep("review"); setMoveFocus(true);
+  }
+
+  // Explicit only: a generated/manual role becomes a new person, or updates a same-named one keeping its chips and shared facts.
+  async function saveFromCall() {
+    if (callOrigin?.kind !== "role" || saveOffer.saving || saveOffer.saved) return;
+    const match = people.find((person) => sameName(person.name, callOrigin.role.name));
+    setSaveOffer({ ...saveOffer, saving: true, error: "" });
+    try {
+      const fields = roleToPersonFields(callOrigin.role, match?.traits);
+      const person = match ? await updatePerson(match.id, fields, match.version) : await createPerson(fields);
+      setSaveOffer({ open: true, saving: false, saved: { id: person.id, name: person.name, updated: !!match }, error: "" });
+      void loadPeople();
+    } catch (error) {
+      if (isAuthError(error)) { handleAuthLoss(); return; }
+      const code = error instanceof SessionClientError ? error.code : null;
+      const message = code === "VERSION_CONFLICT" ? `${match?.name ?? "This person"} changed somewhere else, so nothing was saved. We loaded the latest version; choose Update again to apply this call’s setup.`
+        : code === "NOT_FOUND" ? "That saved person no longer exists, so nothing was updated. You can save this as a new person."
+        : code === "USAGE_LIMIT" && error instanceof SessionClientError ? error.message
+        : "We couldn’t save this person. Please try again.";
+      setSaveOffer((offer) => ({ ...offer, saving: false, error: message }));
+      if (code === "VERSION_CONFLICT" || code === "NOT_FOUND") void loadPeople();
+    }
   }
 
   async function signOut() {
@@ -356,6 +451,22 @@ export function PracticeWorkspace() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
+  // The people list backs both the home cards and the same-name check after End.
+  useEffect(() => {
+    if (view === "setup" && step !== "describe") return;
+    if (view === "call" && phase !== "ended") return;
+    void loadPeople();
+    // loadPeople only touches refs and state setters.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, step, phase]);
+
+  useEffect(() => {
+    const personId = searchParams.get("person");
+    if (personId) void openPerson(personId);
+    // Read once on arrival from a person page; later selections happen in state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const onPageHide = () => {
       if (!controllerRef.current && !sessionIdRef.current) return;
@@ -383,8 +494,13 @@ export function PracticeWorkspace() {
     <main id="main">
       {headerMessage && <p role="status" className="notice">{headerMessage}</p>}
       {view === "setup" ? (step === "describe"
-        ? <SetupDescribe situation={situation} goal={intent} privateNotes={privateNotes} onSituationChange={setSituation} onGoalChange={setIntent} onPrivateNotesChange={setPrivateNotes}
-            onGenerate={() => void generate()} onManual={setUpManually} onUseExample={applyExample} generating={generating} disabled={signingOut} error={generateError} focusHeading={moveFocus} />
+        ? <><MyPeople people={people} status={peopleStatus} onPractice={(person) => choosePerson(person)} onRetry={() => void loadPeople()} disabled={signingOut || generating} />
+          <SetupDescribe situation={situation} goal={intent} privateNotes={privateNotes} onSituationChange={setSituation} onGoalChange={setIntent} onPrivateNotesChange={setPrivateNotes}
+            onGenerate={() => void generate()} onManual={setUpManually} onUseExample={applyExample} generating={generating} disabled={signingOut} error={generateError} focusHeading={moveFocus} /></>
+        : step === "person" && savedPerson
+        ? <SavedPersonStart person={savedPerson} onStart={startPerson} onBack={leavePerson} disabled={starting || signingOut} startDisabled={endingPrevious || !!previousSessionId} focusHeading={moveFocus}
+            statusMessage={starting ? "Starting your practice…" : setupMessage || undefined}
+            actions={previousSessionId ? <div className="actions"><button type="button" className="button secondary" disabled={endingPrevious} onClick={() => void endPrevious()}>{endingPrevious ? "Ending previous practice…" : "End previous practice"}</button></div> : undefined} />
         : <SetupReview mode={setupMode} role={reviewRole} goal={reviewGoal} assumptions={assumptions} onRoleChange={setReviewRole} onGoalChange={setReviewGoal}
             onBack={backToDescribe} onRegenerate={situation.trim() ? () => void generate() : undefined} onStart={() => void start()} regenerating={generating}
             disabled={starting || signingOut} startDisabled={endingPrevious || !!previousSessionId} focusHeading={moveFocus}
@@ -396,6 +512,13 @@ export function PracticeWorkspace() {
           remoteMedia={remoteStream ? <StreamVideo stream={remoteStream} /> : null}
           localPreview={localStream ? <StreamVideo stream={localStream} muted /> : undefined}
           onMuteToggle={toggleMute} onCameraToggle={() => void toggleCamera()} onEnd={() => finish("user")} statusMessage={statusMessage || undefined} />
+        {phase === "ended" && callOrigin && saveOffer.open && (() => {
+          const match = callOrigin.kind === "role" ? people.find((person) => sameName(person.name, callOrigin.role.name)) : undefined;
+          return callOrigin.kind === "person"
+            ? <SaveAfterEnd mode="saved" name={callOrigin.person.name} personId={callOrigin.person.id} onSave={() => undefined} onDismiss={() => setSaveOffer(closedOffer)} />
+            : <SaveAfterEnd mode={match && !saveOffer.saved ? "update" : "new"} name={match && !saveOffer.saved ? match.name : callOrigin.role.name} onSave={() => void saveFromCall()} onDismiss={() => setSaveOffer(closedOffer)}
+                saving={saveOffer.saving} ready={peopleStatus !== "loading"} saved={saveOffer.saved} errorMessage={saveOffer.error || undefined} />;
+        })()}
         {(phase === "ended" || phase === "interrupted") && <div className="actions">
           {canRetryCleanup && <button type="button" className="button secondary" onClick={() => cleanupTarget && closeRemote(cleanupTarget.id, cleanupTarget.reason)}>Retry closing session</button>}
           {phase === "ended" && <button type="button" className="button" onClick={backToSetup}>Back to setup</button>}

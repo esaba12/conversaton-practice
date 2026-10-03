@@ -35,7 +35,7 @@ export function SetupDescribe({ situation, goal, privateNotes, onSituationChange
   return (
     <section className={styles.setup} aria-labelledby={`${id}-title`} aria-busy={generating}>
       <div className={styles.intro}>
-        <p className={styles.eyebrow}>A little preparation</p>
+        <p className={styles.eyebrow}>Practice a new conversation</p>
         <h1 id={`${id}-title`} ref={headingRef} tabIndex={-1} className={styles.title}>What conversation<br /><span>is on your mind?</span></h1>
         <p className={styles.lede}>Describe it in your own words. We’ll draft a fictional character and an opening you can review and edit before you start.</p>
         <p className={styles.fine}>Practice with a fictional character. Real conversations may unfold differently.</p>

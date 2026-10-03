@@ -25,7 +25,7 @@ describe("loadPersonContext", () => {
       extras: { traits: { tone: "blunt", familiarity: "close" }, knownAboutUser: ["SHARED-FACT I run on weekends"] },
     });
     const context = buildRoleContext(loaded.role, loaded.extras);
-    expect(context).toContain("SHARED-FACT I run on weekends"); expect(context).toContain("blunt and direct"); expect(context).toContain("knows the user well");
+    expect(context).toContain("SHARED-FACT I run on weekends"); expect(context).toContain("blunt and direct"); expect(context).toContain("speaks familiarly with the user");
   });
 
   it("omits the told-you framing when nothing is shared", async () => {
