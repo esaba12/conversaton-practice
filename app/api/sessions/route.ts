@@ -1,0 +1,11 @@
+import { handle, json, readBody } from "@/lib/api/respond";
+import { requireIdentity } from "@/lib/auth/server";
+import { startRequestSchema } from "@/lib/schemas/session";
+import { startSession } from "@/lib/session/server";
+
+export async function POST(request: Request) {
+  return handle(request, async () => {
+    const { client } = await requireIdentity();
+    return json(await startSession(client, await readBody(request, startRequestSchema)), 201);
+  });
+}

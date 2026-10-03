@@ -10,7 +10,8 @@ export const sessionSchema = z.object({ id: z.uuid(), status: sessionStatusSchem
 export type PracticeSession = z.infer<typeof sessionSchema>;
 
 // HTTP contract. Errors use errorSchema with the listed HTTP status.
-// POST /api/sessions (startRequestSchema) -> 201 startResponseSchema. Replays/an existing lease -> 409 SESSION_ACTIVE with session_id.
+// POST /api/sessions (startRequestSchema) -> 201 startResponseSchema. Replays/an existing lease -> 409 SESSION_ACTIVE with session_id,
+// even when a replayed key's session has since ended; the client then starts with a fresh key.
 // POST /api/sessions/[id]/connected ({}) -> 200 sessionResponseSchema. Terminal/expired -> 409 SESSION_EXPIRED.
 // POST /api/sessions/[id]/end (endRequestSchema) -> 200 sessionResponseSchema; idempotent, retries pending remote cleanup.
 export const startResponseSchema = z.object({ session: sessionSchema, credential: mediaCredentialSchema }).strict();

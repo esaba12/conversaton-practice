@@ -10,11 +10,12 @@ function configuration() {
   if (!key || !pal || !face) throw new AppError("NOT_CONFIGURED", "Live practice is not configured yet.", 503);
   return { key, pal, face };
 }
-async function request(path: string, method: string, body?: unknown) {
+export function assertTavusConfigured() { configuration(); }
+async function request(path: string, method: string, body?: unknown, timeoutMs = 25_000) {
   const { key } = configuration();
   let response: Response;
   try {
-    response = await fetch(`https://tavusapi.com/v2/${path}`, { method, headers: { "x-api-key": key, "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body), cache: "no-store", signal: AbortSignal.timeout(25_000) });
+    response = await fetch(`https://tavusapi.com/v2/${path}`, { method, headers: { "x-api-key": key, "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body), cache: "no-store", signal: AbortSignal.timeout(timeoutMs) });
   } catch { throw new AppError("PROVIDER_UNAVAILABLE", "The call provider could not be reached.", 503, true); }
   if (!response.ok) throw new AppError("PROVIDER_UNAVAILABLE", "The call provider could not complete the request.", 503, true);
   return response;
@@ -32,20 +33,32 @@ export async function createConversation(role: RoleContext, durationSeconds: 180
   const parsed = createdSchema.safeParse(raw);
   if (!parsed.success) {
     const association = z.object({ conversation_id: z.string().min(1) }).safeParse(raw);
-    if (association.success) await endConversation(association.data.conversation_id).catch(() => undefined);
+    if (association.success) await stopConversation(association.data.conversation_id);
     throw new AppError("PROVIDER_UNAVAILABLE", "The provider returned an incomplete call configuration.", 503);
   }
   const data = parsed.data;
   const credential = mediaCredentialSchema.safeParse({ provider: "tavus", roomUrl: data.conversation_url, meetingToken: data.meeting_token, expiresAt: new Date(requestedAt + 110_000).toISOString() });
   if (!credential.success) {
-    await endConversation(data.conversation_id).catch(() => undefined);
+    await stopConversation(data.conversation_id);
     throw new AppError("PROVIDER_UNAVAILABLE", "The provider returned an unsupported call configuration.", 503);
   }
   return { providerId: data.conversation_id, credential: credential.data };
 }
-export async function endConversation(providerId: string) {
-  await request(`conversations/${encodeURIComponent(providerId)}/end`, "POST");
-  const result = await request(`conversations/${encodeURIComponent(providerId)}`, "GET");
+// Cleanup calls use short timeouts so End stays bounded. A failed End POST (e.g. already ended) still verifies status.
+export async function endConversation(providerId: string, timeoutMs = 8_000) {
+  await request(`conversations/${encodeURIComponent(providerId)}/end`, "POST", undefined, timeoutMs).catch(() => undefined);
+  const result = await request(`conversations/${encodeURIComponent(providerId)}`, "GET", undefined, timeoutMs);
   const parsed = z.object({ status: z.string() }).safeParse(await result.json());
   return parsed.success && parsed.data.status === "ended";
+}
+export async function deleteConversation(providerId: string, timeoutMs = 8_000) {
+  await request(`conversations/${encodeURIComponent(providerId)}?hard=true`, "DELETE", undefined, timeoutMs);
+}
+// True only when the remote call is verified ended and then hard-deleted.
+export async function stopConversation(providerId: string) {
+  try {
+    if (!(await endConversation(providerId))) return false;
+    await deleteConversation(providerId);
+    return true;
+  } catch { return false; }
 }
