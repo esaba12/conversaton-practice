@@ -1,7 +1,7 @@
 # G2-01: Generate an editable setup draft from a described situation
 
-Status: ready
-Updated: October 3, 2026, 16:40 EDT
+Status: review
+Updated: October 3, 2026, 16:45 EDT
 Assigned writer: G2-01 background subagent
 Coordinator: Cursor coordinator session
 Gate: G2
@@ -44,13 +44,22 @@ Non-goals: persistence, UI, presets, memory/profile input, reflection.
 
 ## Verification evidence
 
-- Not run yet. Writer records `npm run typecheck` and `npx vitest run tests/unit/setup-generate.test.ts` results (unit/mock mode). Live OpenAI call is coordinator-only after integration.
+Mode: unit/mock only (mocked `fetch`, mocked `@/lib/auth/server`, `vi.stubEnv`). Tested on uncommitted changes over `346b61d`, October 3, 2026 ~16:42 EDT. No live OpenAI call, build, dev server, or Playwright.
+
+- `npx vitest run tests/unit/setup-generate.test.ts`: 1 file, 14 tests passed. Covers strict schema shape; success with `outOfScope` stripped; request body (URL, Bearer key, `AbortSignal`, `store:false`, strict `json_schema` named `practice_setup_draft`, model from env, system message identical to the constant and free of notes, notes inside `<untrusted_input>` in the user message); supplied goal returned unchanged; 401 before body read (`request.bodyUsed === false`) and before fetch; 400 for empty/extra-field/oversized bodies; `NOT_CONFIGURED` for missing key and missing model; refusal → retry → 503 retryable (2 calls); invalid JSON then valid → 200 (2 calls); incomplete + 500 and timeout + schema-invalid → 503 retryable without upstream text (2 calls each); `outOfScope` → 422 non-retryable (1 call); echoed private-note phrase twice → 503 and response never contains it; leaked first attempt then clean → clean result; leak-check normalization unit cases.
+- `npm test`: 6 files, 66 tests passed (full suite including other workers' in-progress files at that moment).
+- `npm run typecheck`: no errors in owned files. One error outside ownership: `app/practice/practice-workspace.tsx(180,76) TS2554` (another worker's in-progress change).
+- Emitted strict schema inspected: root `type: "object"` with no `anyOf`; every object has all properties in `required` and `additionalProperties: false`; no `minLength`/`maxLength`/`$schema`; `enum` and `maxItems: 5` retained. Length/`min(1)` limits are enforced afterwards by `draftModelOutputSchema` (violation → retry → 503).
 
 ## Handoff
 
-- Changed paths and commit(s): pending (coordinator commits)
-- Remaining failures/risks: pending
-- External account action: none
-- Next smallest task: pending
-- Ready for review: no
+- Changed paths and commit(s): `lib/setup/prompt.ts` (new), `lib/setup/generate.ts` (new), `app/api/scenarios/draft/route.ts` (new), `tests/unit/setup-generate.test.ts` (new), this record. Uncommitted; coordinator commits.
+- Prompt version: `SETUP_PROMPT_VERSION = "setup-2026-10-03.1"` in `lib/setup/prompt.ts`. System message carries all rules (docs/07 setup rules, docs/08 content scope → `outOfScope`, private-note non-disclosure, goal-as-metadata, assumptions, field length limits). The user message carries only the JSON-encoded inputs inside `<untrusted_input>`; `<` is escaped as `\u003c` so input text cannot forge the closing delimiter.
+- Leak check (`leaksPrivateNotes`): notes and each role string (`name`, `role`, `style`, `publicContext`, `opening`, each constraint) are NFKC-normalized, lowercased, and split on non-letter/non-digit runs. A match on any five consecutive note words (the whole note if it has fewer than five) inside a single role string is a leak → attempt treated as invalid (retry once, then 503). `goal`/`assumptions` are user-facing and not checked.
+- Behavior choices to review: (1) when the user supplies a goal, the server returns it verbatim instead of the model's goal; (2) `status: "failed"` is treated like `incomplete`; (3) per-attempt timeout 20 s, so worst case ≈ 40 s across two attempts — confirm the deployment function duration allows this; (4) OpenAI non-2xx including 401/429 maps to retryable 503 per the frozen contract, so a bad key shows as `PROVIDER_UNAVAILABLE`, not `NOT_CONFIGURED`.
+- Remaining failures/risks: live model quality (scope classification, notes non-disclosure beyond verbatim 5-word echoes, opening plausibility, novel-situation check from docs/09) is unverified until the coordinator's live call. Paraphrased leaks are prompt-only protection. The leak check can false-positive on very short notes (e.g. a one-word note appearing in the role), which costs a retry/503.
+- Proposed shared-contract changes: none (`OPENAI_API_KEY`/`OPENAI_SETUP_MODEL` already in `.env.example`). docs/05 and docs/07 can cite the prompt version and leak check above.
+- External account action: none for this task (coordinator needs a real `OPENAI_API_KEY` and model ID for the live check).
+- Next smallest task: coordinator live call of `POST /api/scenarios/draft` with a novel situation plus an out-of-scope request, then UI wiring of the editable draft.
+- Ready for review: yes
 - Coordinator integration: pending
