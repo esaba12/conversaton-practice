@@ -6,6 +6,6 @@ import { startSession } from "@/lib/session/server";
 export async function POST(request: Request) {
   return handle(request, async () => {
     const { client } = await requireIdentity();
-    return json(await startSession(client, await readBody(request, startRequestSchema)), 201);
+    return json(await startSession(client, await readBody(request, startRequestSchema, 8192)), 201);
   });
 }

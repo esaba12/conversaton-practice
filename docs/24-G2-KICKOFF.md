@@ -9,6 +9,13 @@ Read this after AGENTS.md and STATUS.md when starting a fresh coordinator contex
 - Residual G1 paths to recheck in G5 (not blockers): lease/auth expiry teardown, 180 s auto-end, pagehide keepalive end, End with server unreachable, live camera preview toggle, two-owner denial through the new HTTP routes.
 - Not started: G2 (generation), G3 (approved memory), G4 (reflection/deletion), G5 (evaluation), submission. Internal submission target **October 4, 11:30 AM America/Detroit**.
 
+## Progress (16:50 EDT, branch `build/g2-generation`)
+
+- `346b61d` contracts frozen (situation limit 1,000 per docs/02, not 1,500).
+- `4fcbb81` G2-02 integrated: start with reviewed role; canonical role fingerprint.
+- `262c04e` G2-01 integrated: `POST /api/scenarios/draft`; `0bf37bf` prompt `.2` after one live generation check (pass; see G2-01 record).
+- G2-03 UI worker still active. Then: privacy review, verification recipe, PR, human live G2 call. Parallel G3/demo preparation prompts: [docs/25](25-PARALLEL-PROMPTS.md).
+
 ## Current app shape
 
 | Path | Role |

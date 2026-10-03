@@ -1,6 +1,24 @@
 # Project status
 
-Updated October 3, 2026, 16:18 EDT. **G1 passed** (live, human-verified signed-in video call on `a8211af`; see [G1-04](docs/tasks/G1-04-integration.md)). G2 editable situation generation is next.
+Updated October 3, 2026, 17:02 EDT. **G1 passed** (`a8211af`, [G1-04](docs/tasks/G1-04-integration.md)). **G2 passed** (human-reported live call on `d42f53d`, [G2-04](docs/tasks/G2-04-integration.md)). G3 approved memory is next.
+
+## G2 passed (17:02 EDT)
+Human live G2 call ~16:56 on `d42f53d`: user reported it "worked well" (collective, not itemized). The database shows one session, live ~54 s, `ended`, cleanup `confirmed`. Evidence: [G2-04](docs/tasks/G2-04-integration.md). Next: merge [PR #15](https://github.com/esaba12/conversaton-practice/pull/15) after CI, close #12–#14, then G3 approved memory. If the G3 preparation agent from [docs/25](docs/25-PARALLEL-PROMPTS.md) is running, review its draft PR, apply its migration, and integrate it. Carry to G5: explicit private-note probe, live out-of-scope check, per-user draft rate limit.
+
+## G2 history (16:45 EDT)
+Branch `build/g2-generation`. Coordinator froze contracts at `346b61d`: `lib/schemas/draft.ts` (draft request/response/model-output), start request union (preset or strict reviewed `role`), `OUT_OF_SCOPE` error code, `readBody` max-length argument, `OPENAI_SETUP_MODEL` in `.env.example`. Local `.env.local` uses `gpt-5.4-mini-2026-03-17` (listed for the key via `GET /v1/models`, HTTP 200; no generation call yet). Situation limit is 1,000 characters per docs/02.
+
+| Task | Issue | Writer | Owned paths |
+| --- | --- | --- | --- |
+| [G2-01](docs/tasks/G2-01-setup-generation.md) generation server | [#12](https://github.com/esaba12/conversaton-practice/issues/12) | background subagent | `lib/setup/**`, `app/api/scenarios/draft/route.ts`, `tests/unit/setup-generate.test.ts` |
+| [G2-02](docs/tasks/G2-02-start-reviewed-role.md) start with reviewed role | [#13](https://github.com/esaba12/conversaton-practice/issues/13) | background subagent | `lib/session/server.ts`, `app/api/sessions/route.ts`, `tests/unit/session-server.test.ts` |
+| [G2-03](docs/tasks/G2-03-setup-review-ui.md) setup/review UI | [#14](https://github.com/esaba12/conversaton-practice/issues/14) | background subagent | `components/presentation/setup-*`, `app/practice/practice-workspace.tsx`, `lib/session/api-client.ts`, `tests/unit/api-client.test.ts` |
+
+Workers do not build, run Playwright, call providers, or write Git. Coordinator integrates one at a time, then runs the verification recipe, one real generation check, PR, and asks the human for the live G2 call.
+
+**16:50:** G2-02 integrated (`4fcbb81`), G2-01 integrated (`262c04e`), prompt `.2` (`0bf37bf`). One live OpenAI generation check passed (two real calls; second 1.7 s; no private-note marker in role); details in G2-01. G2-03 UI still active. docs/05 and docs/07 updated for implemented behavior. Paste-ready prompts for parallel G3 preparation (isolated worktree, unapplied migration) and demo/submission prep: [docs/25](docs/25-PARALLEL-PROMPTS.md). The coordinator still owns STATUS, migrations execution, shared Supabase and the microphone.
+
+**16:58:** G2-03 integrated (`831b122`). Read-only privacy review: no blockers; should-fix and cheap nits applied (prompt `.3`, fixed counterpart boundary line, HMAC fingerprint, `server-only` prompt, notes autocomplete off, bfcache clear). Typecheck, 66 unit tests, build, browser suite (8 pass, 1 production-only skip), signed-out/cross-site HTTP rejection and a signed-in browser-mocked G2 flow check all pass. Evidence: [G2-04](docs/tasks/G2-04-integration.md). Draft [PR #15](https://github.com/esaba12/conversaton-practice/pull/15). **Next: human live G2 call** (checklist in G2-04). Deferred: per-user draft rate limit.
 
 ## Latest user direction
 **16:30 EDT:** user will clear coordinator context and continue at full speed with subagents. Start from [docs/24-G2-KICKOFF.md](docs/24-G2-KICKOFF.md), which has the G2 contracts, worker split, verification recipe, and a paste-ready prompt. Text below this paragraph is older history.

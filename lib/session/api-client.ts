@@ -1,5 +1,7 @@
 import type { z } from "zod";
+import { draftResponseSchema, type DraftRequest, type DraftResponse } from "@/lib/schemas/draft";
 import { errorSchema, type ErrorCode } from "@/lib/schemas/errors";
+import type { RoleContext } from "@/lib/schemas/role-context";
 import { sessionResponseSchema, startResponseSchema, type EndReason, type PracticeSession, type StartResponse } from "@/lib/schemas/session";
 
 export type SessionClientErrorCode = ErrorCode | "NETWORK" | "MALFORMED_RESPONSE";
@@ -27,8 +29,17 @@ async function post<T>(path: string, body: unknown, schema: z.ZodType<T>, init: 
   return parsed.data;
 }
 
-export function startSession(durationSeconds: 180 | 300, idempotencyKey: string = crypto.randomUUID()): Promise<StartResponse> {
-  return post("/api/sessions", { idempotencyKey, preset: "roommate", durationSeconds }, startResponseSchema);
+export function generateDraft(input: DraftRequest): Promise<DraftResponse> {
+  const body: DraftRequest = { situation: input.situation };
+  if (input.goal !== undefined) body.goal = input.goal;
+  if (input.privateNotes !== undefined) body.privateNotes = input.privateNotes;
+  return post("/api/scenarios/draft", body, draftResponseSchema);
+}
+
+// Only the reviewed role leaves the browser; goal and private notes never enter the start request.
+export function startSession({ role, durationSeconds, idempotencyKey = crypto.randomUUID() }: { role: RoleContext; durationSeconds: 180 | 300; idempotencyKey?: string }): Promise<StartResponse> {
+  const { name, role: roleText, style, publicContext, opening, constraints, challenge, pace } = role;
+  return post("/api/sessions", { idempotencyKey, role: { name, role: roleText, style, publicContext, opening, constraints: [...constraints], challenge, pace }, durationSeconds }, startResponseSchema);
 }
 
 export async function markConnected(id: string): Promise<PracticeSession> {

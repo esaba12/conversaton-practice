@@ -8,12 +8,12 @@ Authentication applies to draft generation and session credentials as well as st
 
 | Route | Request essentials | Response / behavior |
 |---|---|---|
-| POST /api/scenarios/draft | situation, optional goal, optional private_notes | editable scenario/persona draft, proposed goal if omitted, and opening; no persistence; user confirms before session start |
+| POST /api/scenarios/draft | situation, optional goal, optional private_notes | editable scenario/persona draft, proposed goal if omitted, and opening; no persistence; user confirms before session start. **Implemented (G2):** `draftRequestSchema` → `draftResponseSchema` `{role, goal, assumptions≤5}` in `lib/schemas/draft.ts`; auth before body/model; 422 `OUT_OF_SCOPE`, 503 `PROVIDER_UNAVAILABLE` (retryable, after one internal retry), 503 `NOT_CONFIGURED` |
 | POST /api/personas | confirmed persona fields | id, version |
 | PATCH /api/personas/:id | expected_version, allowed changes and/or remove_fields | updated record/version or 409; approved-memory removal follows the data spec |
 | GET /api/profile | none | current user's profile |
 | PATCH /api/profile | expected_version, explicit allowed changes and/or remove_fields | updated profile/version or 409; approved-memory removal follows the data spec |
-| POST /api/sessions | confirmed scenario/persona IDs or transient draft, duration, save_mode | session ID, expiry, transport configuration/short-lived credentials |
+| POST /api/sessions | confirmed scenario/persona IDs or transient draft, duration, save_mode | session ID, expiry, transport configuration/short-lived credentials. **Implemented (G1/G2):** `{idempotencyKey, durationSeconds}` plus either `preset: "roommate"` or a strict reviewed `role` (no goal/notes accepted); idempotency fingerprint hashes canonical `{durationSeconds, role}`; saved IDs and save_mode arrive in G3 |
 | POST /api/sessions/:id/connected | connection acknowledgement, provider conversation ID if available | owner-authorized idempotent connecting -> active acknowledgement; expired/terminal session cannot reactivate |
 | POST /api/sessions/:id/end | reason, provider conversation ID if known | idempotent current terminal status: ended, already interrupted, or retained deleted tombstone; never reopens a session |
 | POST /api/sessions/:id/reflect | bounded turn list, optional user reflection | reflection and at most two proposals |
@@ -42,6 +42,7 @@ Server validates proposal provenance independently of JSON shape. Schema validit
 ## Error envelope
 Return code, human-readable message, retryable boolean, request_id.
 Codes: UNAUTHENTICATED, FORBIDDEN, VALIDATION_ERROR, VERSION_CONFLICT, SESSION_ACTIVE, PROVIDER_UNAVAILABLE, USAGE_LIMIT, REFLECTION_UNAVAILABLE, DELETION_PENDING.
+Implemented set (`lib/schemas/errors.ts`) also includes NOT_CONFIGURED, SESSION_EXPIRED, OUT_OF_SCOPE (setup request outside everyday-conversation scope, not retryable) and INTERNAL_ERROR; REFLECTION_UNAVAILABLE is added when G4 implements reflection.
 Do not include prompts, secrets, or provider raw bodies in errors.
 
 ## Actions and authorization
