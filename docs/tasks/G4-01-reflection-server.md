@@ -1,7 +1,7 @@
 # G4-01: Reflection generation server
 
-Status: ready
-Updated: October 3, 2026, 17:50 EDT
+Status: review
+Updated: October 3, 2026, 17:56 EDT
 Assigned writer: G4-01 background subagent
 Coordinator: Cursor cloud coordinator session
 Gate: G4
@@ -45,13 +45,20 @@ Non-goals: UI, persistence, memory proposals, transcript retrieval from Tavus (t
 
 ## Verification evidence
 
-Not run yet.
+Mock-tested only (October 3, 2026, 17:55 EDT, uncommitted working tree on `cursor/g4-reflection-9fec` at `fbcd359`). No live OpenAI or Supabase call was made.
+
+- `npx vitest run tests/unit/reflection-generate.test.ts tests/unit/reflection-contract.test.ts`: 2 files, 20 tests passed (15 new in `reflection-generate.test.ts`).
+- `npm run typecheck`: passed with no errors across the checkout, including other workers' in-progress files at that moment.
+- ESLint: not run (the repository has no `eslint.config.*`).
+- Covered by the new tests: exact strict JSON schema shape (all fields required, `additionalProperties: false`, no `minLength`/`maxLength`/`$schema`/`anyOf`, nullable lines as `type: ["string", "null"]`); 401 before params are awaited, before the body is read, and before storage or fetch; 403 cross-origin; 400 for `privateNotes`, `role`, `sessionId`, speaker `pal`, an over-long turn, goal, empty self-reflection, a body over 48,000 characters, invalid JSON and a bad ID; 404 for a missing (including another owner's, hidden by RLS) or deleted session; 409 `SESSION_ACTIVE` for connecting/active/ending; sanitized retryable 503 `PROVIDER_UNAVAILABLE` on a storage error or unknown status; the owner-RLS query shape (`practice_sessions`, `select("id,status")`, `eq("id", id)`); the request has `store: false`, the configured model, the strict schema, the system prompt unchanged, the goal/self-reflection/turns only inside one `<untrusted_input>` block (a forged closing tag is escaped), and no session ID; fallback to `OPENAI_SETUP_MODEL`; `NOT_CONFIGURED` without a key or any model; refusal, incomplete, non-2xx, timeout, invalid JSON, extra key and over-long line each retried once, then retryable 503 `REFLECTION_UNAVAILABLE` without provider text; recovery on the retry; support-exit and insufficient-evidence backstops; the no-user-turn short circuit makes no fetch and does not count toward the cap; 429 `USAGE_LIMIT` after `MAX_REFLECTIONS_PER_SESSION` successful generations, with a failed generation not counted and another session unaffected; responses parse with `reflectResponseSchema`.
 
 ## Handoff
 
-- Changed paths and commit(s):
-- Remaining failures/risks:
+- Changed paths and commit(s): new `lib/reflection/prompt.ts` (`REFLECTION_PROMPT_VERSION = "reflection-2026-10-03.1"`), `lib/reflection/generate.ts`, `lib/reflection/session.ts`, `app/api/sessions/[id]/reflect/route.ts`, `tests/unit/reflection-generate.test.ts`, and this record. Uncommitted; the coordinator is the Git writer.
+- Behavior notes for docs/05 and docs/07: order is identity, then ID, then body (≤ 48,000 characters), then session status, then the no-user-turn short circuit, then the cap, then configuration and the model. The cap reserves a slot before the model call and releases it when generation fails, so only successful generations count (each failed request still costs up to two model calls). The cap is an in-memory map per server process, holding at most 1,000 sessions with the oldest evicted; it resets on restart and is not shared across instances. `SESSION_ACTIVE` carries `session_id` set to the requested session (the caller's own live session), matching the existing errorSchema convention.
+- Shared-file changes proposed: none required. `generate.ts` rewrites Zod's nullable `anyOf: [{type: "string"}, {type: "null"}]` into `type: ["string", "null"]` locally instead of changing `toStrictSchema` in `lib/setup/generate.ts`; the coordinator may move that into the shared helper if another schema needs nullables.
+- Remaining failures/risks: OpenAI strict-mode acceptance of the produced schema (`type: ["string", "null"]` fields) is not live-verified; the reflection prompt's quality, its support-exit judgment and its avoidance of grades are untested against a real model; the model ID is unconfirmed until `OPENAI_REFLECTION_MODEL` or `OPENAI_SETUP_MODEL` is set; the per-process cap is not a durable or cross-instance limit.
 - External account action: none
 - Next smallest task: coordinator integration, then one real reflection call with a synthetic transcript.
-- Ready for review:
+- Ready for review: yes
 - Coordinator integration: pending
