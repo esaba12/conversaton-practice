@@ -1,11 +1,13 @@
 # Project status
 
-Updated October 3, 2026, for the Cursor handoff. **G1 foundation is active; no product gate has passed.**
+Updated October 3, 2026, 16:18 EDT. **G1 passed** (live, human-verified signed-in video call on `a8211af`; see [G1-04](docs/tasks/G1-04-integration.md)). G2 editable situation generation is next.
 
 ## Latest user direction
 The user is switching to Cursor because of rate limits, confirms the frontend worker is done, and requested all ready work merged and fully documented. No new feature work is part of this handoff turn. Start with [the complete Cursor handoff and paste-ready prompt](docs/23-CURSOR-HANDOFF.md). Keep the confirmed FaceTime-style live-video product, editable generated setups, required sign-in, Supabase, Tavus CVI + ElevenLabs TTS, and OpenAI setup/reflection defaults.
 
 ## Current work and ownership
+**Latest (16:10 EDT):** branch `build/g1-session-media` at `a8211af` integrates G1-01 server routes, G1-02 Daily controller and G1-03 practice workspace (all three workers done, in review → integrated). Start practice is now enabled for signed-in users and creates a real Tavus call. Typecheck, 38 unit tests, production build and 8 browser checks pass; signed-out/cross-site HTTP rejection observed. Details in [G1-04](docs/tasks/G1-04-integration.md). **16:17: human signed-in live call passed** (responsive talking video, ~five exchanges, interruption, mic released on End, mid-call sign-out clean; DB row ended + cleanup confirmed). Residual teardown paths (expiry, time limit, pagehide, unreachable server, two-owner HTTP on new routes) are listed in G1-04 for G5. Next: merge [PR #10](https://github.com/esaba12/conversaton-practice/pull/10) after CI, then freeze G2 draft/role-context contracts and dispatch G2 workers. Real email confirmation now verified locally (~16:13; first link expired, second succeeded). Loopback preflight server on 3010 has exited and is no longer needed.
+
 - Handoff checkout: `/Users/ethansaba/code/therapist`, **main**. Foundation PR #8, including frontend PR #7, merged to main at `c178d37832cfe4540c62b5f071902730ed27affa` on October 3 at 14:44 EDT. Subsequent Cursor handoff changes are documentation only. Historical source revisions: scaffold `a601a0e`, provider/database `fe27967`, frontend integration `cf32199`, workspace/Auth `c48cecf`.
 - External frontend: `.worktrees/g1-frontend`, branch `agent/g1-frontend`, base `a601a0e`, port 3003. Owns only presentation components, development preview route, one frontend test and [its task record](docs/tasks/G1-03-frontend-preview.md). Its [PR #7](https://github.com/esaba12/conversaton-practice/pull/7) was reviewed and merged at `cf32199`, then included in main by PR #8. The user confirms this worker is done; its clean worktree at `9943679` has no outstanding commits relative to the merged foundation and is preserved. Coordinator wired its setup into the protected workspace.
 - Coordinator owns shared contracts, app wiring, auth/media/backend, dependencies, numbered specs, migration execution, provider resources and STATUS.
@@ -39,7 +41,7 @@ Private test-mode conversation creation returned ended plus a meeting token; Tav
 Isolated live preflight is running at **http://127.0.0.1:3010** (process session 14951 at launch). It starts a real three-minute call only on explicit click. User was asked to test five exchanges, interruption, End/microphone release, and two fictional contexts. **No human result received yet.** Restart command:
 `node_modules/.bin/node --env-file=.env.local scripts/preflight/video-server.mjs`
 
-This harness is intentionally separate from the authenticated application, binds loopback, and is not a G1 pass. Do not run automated call-start/camera actions while the user is testing.
+**Human result (14:54 EDT):** usable. Video and responsive speech work; lip sync is slightly off on the stock face. The user reported the rest of the checklist as working collectively, not item by item. Recorded in [G1-00](docs/tasks/G1-00-foundation.md). This harness is intentionally separate from the authenticated application, binds loopback, and is not a G1 pass.
 
 ## Actual verification
 October 3, original checkout; checks ran during development based on `a601a0e` and were integrated through `c48cecf`/`d7bc7af` into main merge `c178d37`. Per-task records retain exact modes/revisions; these are no longer uncommitted feature changes:
@@ -54,7 +56,7 @@ October 3, original checkout; checks ran during development based on `a601a0e` a
 - Installed Next.js cookies/proxy/authentication/route guides reviewed; preserve its generated AGENTS.md rules block.
 
 ## Next steps and real blockers
-1. Record the human live-video preflight result; repair actual provider/media failures before freezing integration contracts.
+1. Done: human preflight recorded as usable with imperfect lip sync. No provider repair needed before freezing contracts; lip sync is a known limitation, not a blocker.
 2. Continue from main on a new focused branch in Cursor. PRs #7 and #8 are merged; G1 issues remain open until full acceptance. Follow docs/23 for the exact implementation map and next task.
 3. Verify actual email delivery/confirmation callback; real password/UI sign-in already passed with confirmed fixtures. Default Supabase SMTP may restrict recipients/rate; do not burn quota with repeated synthetic signup attempts or claim public email readiness.
 4. Freeze media/session contracts, then dispatch/review application auth/session routes and media-controller work against the integrated frontend props.

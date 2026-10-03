@@ -26,7 +26,9 @@ The user is switching editors because of rate limits and requested all ready wor
 | Paths | Responsibility |
 | --- | --- |
 | `app/auth/**`, `lib/auth/**`, `proxy.ts` | Sign-in/signup/callback, Supabase SSR clients and identity guard |
-| `app/practice/page.tsx`, `workspace-preview.tsx` | Server authorization and current disabled-call setup; sign-out control |
+| `app/practice/page.tsx`, `practice-workspace.tsx` | Server authorization; client workspace driving setup → live call → End with local-first teardown and sign-out |
+| `app/api/sessions/**`, `lib/session/server.ts`, `lib/data/sessions.ts`, `lib/api/respond.ts` | Authenticated start/connected/end routes over the session RPCs and Tavus (added after handoff on `build/g1-session-media`) |
+| `lib/media/daily-controller.ts`, `lib/session/api-client.ts` | Browser Daily controller and typed route client (added after handoff) |
 | `components/presentation/practice.tsx` and CSS Modules | `PracticeSetup` / `PracticeCall`, pure props and supplied media nodes; no Auth, fetch or media acquisition |
 | `app/design-preview/page.tsx`, `practice-preview.tsx` | Development-only synthetic UI fixture; production returns 404 |
 | `lib/schemas/**`, `fixtures/roommate.ts` | Strict public-only role context, identity/session/error/media contracts and fictional example |
@@ -36,7 +38,7 @@ The user is switching editors because of rate limits and requested all ready wor
 | `tests/unit/**`, `tests/browser/**` | Deterministic contract/provider tests and browser presentation/access checks |
 | `website/` | Previously deployed static preview, separate from the Next.js app |
 
-The app currently has **no implemented `/api/sessions` start/connected/end routes**. Do not mistake tested provider helpers or SQL RPCs for that integration. The `MediaController` TypeScript contract is provisional and lacks the final application event/wiring agreement; revise it only after the bounded live preflight.
+At handoff the app had **no implemented `/api/sessions` start/connected/end routes**; they were added afterwards on `build/g1-session-media` (see STATUS). Do not mistake tested provider helpers or SQL RPCs for that integration. The `MediaController` TypeScript contract is provisional and lacks the final application event/wiring agreement; revise it only after the bounded live preflight.
 
 ## Local configuration and accounts
 
