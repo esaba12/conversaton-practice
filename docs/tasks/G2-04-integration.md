@@ -1,7 +1,7 @@
 # G2-04: Integrate and verify editable situation generation
 
-Status: active — integrated and checked; human live G2 call pending
-Updated: October 3, 2026, 16:58 EDT
+Status: integrated — G2 passed (human-reported live call)
+Updated: October 3, 2026, 17:02 EDT
 Assigned writer: coordinator
 Coordinator: Cursor coordinator session
 Gate: G2
@@ -48,6 +48,11 @@ All October 3, 2026, local macOS, Node 22.23.3, `/Users/ethansaba/code/therapist
 
 Not yet verified: real `/api/scenarios/draft` over HTTP with a signed-in user; live Tavus call with a generated/edited role; that edits change counterpart behavior; interruption with a custom role; private note absent from spoken replies; out-of-scope classification live; keyboard-only and mobile walkthrough of the new screens.
 
-## Human live G2 check (pending)
+## Human live G2 check — passed (human-reported)
 
-Sign in at http://127.0.0.1:3000 → describe a novel situation (not roommate) with a distinctive private note → Generate → edit one field (e.g. name or style) → Start → a few exchanges showing the edited persona → interrupt once → End. Report: generation usable? edit reflected? interruption? any private-note content in replies? mic released?
+- October 3, 2026, ~16:56 EDT, mode **live**, outcome **pass** (human-reported), tested on `d42f53d` tree via the dev server at http://127.0.0.1:3000 with prompt `setup-2026-10-03.3`, model `gpt-5.4-mini-2026-03-17`, Tavus CVI + ElevenLabs TTS.
+- The user ran the checklist below and reported "I think it worked well". The report was collective, not item by item: edit reflected, interruption, private-note absence and mic release were not individually confirmed.
+- Database corroboration (`supabase db query --linked`, read-only): one session in the window, created 20:55:59Z, connected 20:56:04Z, live ~54 s, `status=ended`, `cleanup=confirmed` (Tavus end + hard delete verified). No situation, notes, role or transcript stored.
+- Limitations: no recorded per-item observations; out-of-scope classification and per-user rate limiting still unverified; G5 should re-run the private-note probe with an explicit question to the character.
+
+Checklist given to the user: sign in at http://127.0.0.1:3000 → describe a novel situation (not roommate) with a distinctive private note → Generate → edit one field (e.g. name or style) → Start → a few exchanges showing the edited persona → interrupt once → End. Report: generation usable? edit reflected? interruption? any private-note content in replies? mic released?

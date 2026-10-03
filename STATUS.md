@@ -1,8 +1,11 @@
 # Project status
 
-Updated October 3, 2026, 16:18 EDT. **G1 passed** (live, human-verified signed-in video call on `a8211af`; see [G1-04](docs/tasks/G1-04-integration.md)). G2 editable situation generation is next.
+Updated October 3, 2026, 17:02 EDT. **G1 passed** (`a8211af`, [G1-04](docs/tasks/G1-04-integration.md)). **G2 passed** (human-reported live call on `d42f53d`, [G2-04](docs/tasks/G2-04-integration.md)). G3 approved memory is next.
 
-## G2 in progress (16:45 EDT)
+## G2 passed (17:02 EDT)
+Human live G2 call ~16:56 on `d42f53d`: user reported it "worked well" (collective, not itemized). The database shows one session, live ~54 s, `ended`, cleanup `confirmed`. Evidence: [G2-04](docs/tasks/G2-04-integration.md). Next: merge [PR #15](https://github.com/esaba12/conversaton-practice/pull/15) after CI, close #12–#14, then G3 approved memory. If the G3 preparation agent from [docs/25](docs/25-PARALLEL-PROMPTS.md) is running, review its draft PR, apply its migration, and integrate it. Carry to G5: explicit private-note probe, live out-of-scope check, per-user draft rate limit.
+
+## G2 history (16:45 EDT)
 Branch `build/g2-generation`. Coordinator froze contracts at `346b61d`: `lib/schemas/draft.ts` (draft request/response/model-output), start request union (preset or strict reviewed `role`), `OUT_OF_SCOPE` error code, `readBody` max-length argument, `OPENAI_SETUP_MODEL` in `.env.example`. Local `.env.local` uses `gpt-5.4-mini-2026-03-17` (listed for the key via `GET /v1/models`, HTTP 200; no generation call yet). Situation limit is 1,000 characters per docs/02.
 
 | Task | Issue | Writer | Owned paths |
