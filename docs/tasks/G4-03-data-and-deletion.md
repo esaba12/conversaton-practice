@@ -1,7 +1,7 @@
 # G4-03: "Your data" page with truthful provider cleanup status and practice-data deletion
 
-Status: ready
-Updated: October 3, 2026, 17:50 EDT
+Status: review
+Updated: October 3, 2026, 17:57 EDT
 Assigned writer: G4-03 background subagent
 Coordinator: Cursor cloud coordinator session
 Gate: G4
@@ -46,13 +46,20 @@ Non-goals: Auth account deletion, deleting session metadata rows (no migration i
 
 ## Verification evidence
 
-Not run yet.
+Mock-tested only (October 3, 2026, 17:56 EDT, shared checkout on `cursor/g4-reflection-9fec`). No build, dev server, browser, live database or provider call was run.
+
+- `npm run typecheck`: passed with no errors (including other workers' in-progress files at that moment).
+- `npx vitest run tests/unit/practice-data.test.ts tests/unit/session-server.test.ts`: 2 files, 35 tests passed (12 in `practice-data.test.ts`, 23 in `session-server.test.ts`).
+- `tests/unit/practice-data.test.ts` covers: 401 on GET and DELETE before the body is read or storage is touched; 403 cross-origin before identity; GET selects exactly `id, status, cleanup, created_at, ended_at`, orders `created_at` desc, limits 50, normalizes timestamps, drops extra row fields, and returns a sanitized 503 for malformed rows or raw database errors; DELETE without/with wrong, padded, extra-field or oversized confirmation returns 400 with no RPC or query; DELETE calls `person_delete({p_id})` per person, then `about_me_delete({p_id})` per fact, then `private_prep_put({p_notes: ""})`, using only `select` reads; NOT_FOUND counts as already deleted; a failing RPC does not stop later deletions and shows up in `remaining`; failed private-prep clear is reported as remaining; session counts (`total`, `cleanupConfirmed`, `cleanupOutstanding`); a FORBIDDEN marker mid-deletion stops with 401; an unreadable inventory returns 503 with no RPC; client calls for list, delete (exact phrase body) and cleanup retry (`POST /api/sessions/{id}/end` with `{ reason: "user" }`), malformed-response rejection and typed errors.
+- UI (`/practice/data`) was type-checked only; not rendered in a browser.
 
 ## Handoff
 
-- Changed paths and commit(s):
-- Remaining failures/risks:
+- Changed paths and commit(s): no commits (coordinator is the only Git writer). `app/api/sessions/route.ts` (added `GET`; `POST` unchanged), new `app/api/practice-data/route.ts`, `lib/data/practice-data.ts`, `lib/practice-data/api-client.ts`, `app/practice/data/page.tsx`, `app/practice/data/data-workspace.tsx`, `components/presentation/data-overview.tsx`, `components/presentation/data.module.css`, `tests/unit/practice-data.test.ts`, this record.
+- Behavior notes: deletion runs sequentially through owner RPCs and is not one transaction; `deleted` counts RPC successes plus NOT_FOUND; `remaining` comes from a fresh owner-RLS re-read after all attempts. If the re-read fails the route returns 503 (the client then says some data may remain and offers a retry; the operation is idempotent). The "What is stored" counts reuse the existing `GET /api/about-me`, `GET /api/people` and `GET /api/private-prep` calls (private notes are loaded into the owner's own browser only to show saved/none).
+- Proposed shared-file changes: header link to `/practice/data` (owned by the other worker); coordinator updates docs/02, docs/05 (new `GET /api/sessions`, `DELETE /api/practice-data`) and docs/08 (what the page states about Tavus, ElevenLabs and OpenAI).
+- Remaining failures/risks: session counts read `cleanup` for all owner rows without a limit, so above PostgREST's default 1000-row cap they would undercount; the re-read of people/facts is also uncapped but bounded by the 50/30 limits. Concurrent creates during deletion are reported in `remaining`. Live RLS behavior, provider cleanup retry against Tavus and the page's rendering/keyboard path are unverified.
 - External account action: none
-- Next smallest task: coordinator integration, then a live two-user HTTP check on the human's machine (GET isolation, delete counts).
-- Ready for review:
+- Next smallest task: coordinator integration, then a live two-user HTTP check on the human's machine (GET isolation, delete counts) and a browser pass of `/practice/data`.
+- Ready for review: yes
 - Coordinator integration: pending
