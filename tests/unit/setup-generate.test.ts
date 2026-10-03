@@ -7,6 +7,7 @@ vi.mock("@/lib/auth/server", () => identity);
 import { POST } from "@/app/api/scenarios/draft/route";
 import { DRAFT_FORMAT_NAME, draftJsonSchema, leaksPrivateNotes } from "@/lib/setup/generate";
 import { SETUP_SYSTEM_PROMPT } from "@/lib/setup/prompt";
+import { resetDraftLimitsForTests } from "@/lib/setup/rate-limit";
 
 const role = { name: "Jordan", role: "Your manager", style: "Brief and direct.", publicContext: "You manage the user's team and have a busy week.", opening: "Hey, you wanted to talk?", constraints: ["Has ten minutes before a meeting"], challenge: "neutral", pace: "conversational" };
 const output = (patch: Record<string, unknown> = {}) => ({ outOfScope: false, role, goal: "Ask for Friday off and offer coverage", assumptions: ["The meeting is in person"], ...patch });
@@ -25,6 +26,7 @@ async function errorOf(response: Response, status: number) {
 }
 
 beforeEach(() => {
+  resetDraftLimitsForTests();
   vi.stubEnv("OPENAI_API_KEY", "unit-key"); vi.stubEnv("OPENAI_SETUP_MODEL", "unit-model");
   identity.requireIdentity.mockResolvedValue({ client: {}, identity: { id: "11111111-1111-4111-8111-111111111111", isAnonymous: false } });
 });
@@ -149,6 +151,24 @@ describe("POST /api/scenarios/draft", () => {
     provider(() => ok(leaked), () => ok(output()));
     const json = await (await POST(post(body))).json();
     expect(JSON.stringify(json)).not.toContain("shaking");
+  });
+
+  it("never returns a distinctive private-note marker when the model behaves, with or without a goal", async () => {
+    const marker = "ZEBRA-QUARTZ-7731";
+    const notes = { ...body, privateNotes: `Reminder ${marker}: breathe before answering` };
+    const fetchMock = provider(() => ok(output()), () => ok(output()));
+    for (const request of [notes, { ...notes, goal: "Ask clearly for Friday off" }]) {
+      const response = await POST(post(request));
+      expect(response.status).toBe(200);
+      const text = await response.text();
+      expect(text).not.toContain(marker);
+      expect(JSON.parse(text).goal).not.toContain("breathe");
+    }
+    for (const [, init] of fetchMock.mock.calls as unknown as Array<[string, RequestInit]>) {
+      const sent = JSON.parse(String(init.body));
+      expect(sent.input[0].content).not.toContain(marker);
+      expect(sent.input[1].content).toContain(marker);
+    }
   });
 });
 

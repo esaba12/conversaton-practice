@@ -10,7 +10,7 @@ G3 routes for About-me facts, saved people, per-person shared facts, private pre
 
 | Route | Request essentials | Response / behavior |
 |---|---|---|
-| POST /api/scenarios/draft | situation, optional goal, optional private_notes | editable scenario/persona draft, proposed goal if omitted, and opening; no persistence; user confirms before session start. **Implemented (G2):** `draftRequestSchema` → `draftResponseSchema` `{role, goal, assumptions≤5}` in `lib/schemas/draft.ts`; auth before body/model; 422 `OUT_OF_SCOPE`, 503 `PROVIDER_UNAVAILABLE` (retryable, after one internal retry), 503 `NOT_CONFIGURED` |
+| POST /api/scenarios/draft | situation, optional goal, optional private_notes | editable scenario/persona draft, proposed goal if omitted, and opening; no persistence; user confirms before session start. **Implemented (G2):** `draftRequestSchema` → `draftResponseSchema` `{role, goal, assumptions≤5}` in `lib/schemas/draft.ts`; auth before body/model; 422 `OUT_OF_SCOPE`, 503 `PROVIDER_UNAVAILABLE` (retryable, after one internal retry), 503 `NOT_CONFIGURED`. **G5:** 429 `USAGE_LIMIT` after `DRAFT_RATE_LIMIT` (8 per 10 minutes per user, per server process, counted after auth and validation and before the model call) |
 | POST /api/personas | confirmed persona fields | id, version |
 | PATCH /api/personas/:id | expected_version, allowed changes and/or remove_fields | updated record/version or 409; approved-memory removal follows the data spec |
 | GET /api/profile | none | current user's profile |
