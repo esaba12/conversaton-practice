@@ -23,6 +23,7 @@ export type PracticeSession = z.infer<typeof sessionSchema>;
 // POST /api/sessions (startRequestSchema, body ≤ 8192 chars) -> 201 startResponseSchema. Replays/an existing lease -> 409 SESSION_ACTIVE with session_id,
 // even when a replayed key's session has since ended; the client then starts with a fresh key.
 // Saved-person start: 404 NOT_FOUND (missing or another owner's person), 409 VERSION_CONFLICT (stale expectedVersion), before any provider call.
+// The version check precedes the lease check, so a retry after the person changed gets VERSION_CONFLICT: reload, then start with a fresh key.
 // POST /api/sessions/[id]/connected ({}) -> 200 sessionResponseSchema. Terminal/expired -> 409 SESSION_EXPIRED.
 // POST /api/sessions/[id]/end (endRequestSchema) -> 200 sessionResponseSchema; idempotent, retries pending remote cleanup.
 export const startResponseSchema = z.object({ session: sessionSchema, credential: mediaCredentialSchema }).strict();

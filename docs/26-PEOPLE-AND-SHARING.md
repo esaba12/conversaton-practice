@@ -74,6 +74,8 @@ Exact contracts: `lib/schemas/people.ts` (shapes and HTTP contract), `lib/schema
 - **Private prep** has its own `GET/PUT /api/private-prep`; empty notes delete the row. One row per owner, shown on person pages under "Never shared".
 - **Caps:** 30 facts and 50 people per owner (`USAGE_LIMIT` 409).
 - **Session attribution deferred.** Sessions do not yet store `person_id`/`person_version`; the person version is part of the start's idempotency fingerprint instead.
+- **Provider disclosure.** Shared facts and the person's fields are sent to Tavus as call context for that practice (subject to provider retention, docs/08). Private prep and unshared facts are never sent.
+- **Future migrations** that replace, drop or re-own these functions must first `grant people_executor to postgres` and revoke it again afterwards, as this migration does. `service_role` keeps Supabase's default table/function privileges intentionally (test administration only; no service-role runtime).
 - **Pages live under `/practice/…`** (`/practice/people/[id]`, `/practice/about-me`) to reuse the existing proxy and sign-in guard.
 
 ## Paste-ready G3 coordinator prompt
@@ -116,6 +118,10 @@ record only checks actually run.
 Submission target: Oct 4, 11:30 AM America/Detroit.
 ```
 
+## Later, not this gate
+
+Appearance presets are decided and not built (October 3, 17:23 EDT; [docs/00](00-DECISIONS-AND-VIABILITY.md)). A saved person will eventually have a preset stock face and premade voice. G3 does not add that picker, those fields, or extra provider characters.
+
 ## Out of scope for G3
 
-Voice/avatar choice per person, drag-to-reorder, importing contacts or real chats, inferring facts from conversation, automatic memory writes, and group conversations.
+Appearance presets, drag-to-reorder, importing contacts or real chats, inferring facts from conversation, automatic memory writes, and group conversations.
