@@ -1,12 +1,12 @@
 # Project status
 
-Updated October 3, 2026, 14:39 America/Detroit. **G1 foundation is active; no product gate has passed.**
+Updated October 3, 2026, 14:43 America/Detroit. **G1 foundation is active; no product gate has passed.**
 
 ## Latest user direction
 Build now, keep documentation/GitHub current, and ask only for actual account actions or ambiguity. The user requested a second, externally launched frontend agent; its worktree and prompt are ready. Keep the confirmed FaceTime-style live-video product, editable generated setups, required sign-in, Supabase, Tavus CVI + ElevenLabs TTS, and OpenAI setup/reflection defaults.
 
 ## Current work and ownership
-- Coordinator checkout: `/Users/ethansaba/code/therapist`, branch `build/g1-foundation`. Scaffold `a601a0e`, provider/database foundation `fe27967`, and reviewed frontend merge `cf32199` are committed/pushed. Workspace wiring and final evidence are being recorded on the same branch.
+- Coordinator checkout: `/Users/ethansaba/code/therapist`, branch `build/g1-foundation`. Scaffold `a601a0e`, provider/database foundation `fe27967`, frontend merge `cf32199`, and workspace/Auth integration `c48cecf` are committed/pushed. Remaining handoff changes are documentation only.
 - External frontend: `.worktrees/g1-frontend`, branch `agent/g1-frontend`, base `a601a0e`, port 3003. Owns only presentation components, development preview route, one frontend test and [its task record](docs/tasks/G1-03-frontend-preview.md). Its [PR #7](https://github.com/esaba12/conversaton-practice/pull/7) was reviewed and merged into foundation at `cf32199`; the external worktree remains preserved. Coordinator has wired its setup component into the protected workspace.
 - Coordinator owns shared contracts, app wiring, auth/media/backend, dependencies, numbered specs, migration execution, provider resources and STATUS.
 - Research agents completed provider/API and database reviews. One authored the two coordinator-reviewed migrations and rollback assertions; no worker ran SQL.
@@ -17,7 +17,7 @@ Build now, keep documentation/GitHub current, and ask only for actual account ac
 - Supabase SSR 0.12.7 and client 2.117.2; Daily 0.87.0; Zod 4.6.5; Vitest 4.1.11; Playwright 1.63.0. Vitest was patched after npm audit; subsequent installation reported zero vulnerabilities.
 - Landing page, email/password sign-in/account-creation form, confirmation callback, cookie-refresh proxy, protected workspace shell. Real password sign-in and sign-out passed in Chromium using temporary confirmed fictional accounts; email delivery/confirmation callback still need verification. The workspace explicitly says calls are disabled.
 - Allowlisted fictional roommate context, strict request/media/state schemas and tested server Tavus adapter. Private notes/history are rejected by role schema.
-- GitHub Actions typecheck/unit/build/browser workflow passes on integrated revision `cf32199`: [run 37144707035](https://github.com/esaba12/conversaton-practice/actions/runs/37144707035). Foundation draft [PR #8](https://github.com/esaba12/conversaton-practice/pull/8) is open; gate remains pending.
+- GitHub Actions typecheck/unit/build/browser workflow passes on final code revision `c48cecf`: [run 37145104163](https://github.com/esaba12/conversaton-practice/actions/runs/37145104163), completed 14:42 EDT. Foundation draft [PR #8](https://github.com/esaba12/conversaton-practice/pull/8) is open; gate remains pending.
 - Integrated app is running at http://127.0.0.1:3000 (launch session 16025). Development-only presentation fixture: /design-preview. This does not start media or pass G1.
 - Original static public preview remains at https://conversation-practice-site.vercel.app and is separate from the app.
 
