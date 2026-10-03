@@ -3,6 +3,8 @@
 Updated October 3, 2026, 16:18 EDT. **G1 passed** (live, human-verified signed-in video call on `a8211af`; see [G1-04](docs/tasks/G1-04-integration.md)). G2 editable situation generation is next.
 
 ## Latest user direction
+**16:30 EDT:** user will clear coordinator context and continue at full speed with subagents. Start from [docs/24-G2-KICKOFF.md](docs/24-G2-KICKOFF.md), which has the G2 contracts, worker split, verification recipe, and a paste-ready prompt. Text below this paragraph is older history.
+
 The user is switching to Cursor because of rate limits, confirms the frontend worker is done, and requested all ready work merged and fully documented. No new feature work is part of this handoff turn. Start with [the complete Cursor handoff and paste-ready prompt](docs/23-CURSOR-HANDOFF.md). Keep the confirmed FaceTime-style live-video product, editable generated setups, required sign-in, Supabase, Tavus CVI + ElevenLabs TTS, and OpenAI setup/reflection defaults.
 
 ## Current work and ownership
