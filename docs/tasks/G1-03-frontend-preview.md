@@ -1,10 +1,10 @@
 # G1 frontend presentation: isolated external agent
 
-Status: review
+Status: integrated — presentation task complete; full live UI gate remains pending
 Gate: G1 presentation only; no live integration acceptance
 Owner: user-launched frontend agent
 Issue: https://github.com/esaba12/conversaton-practice/issues/4
-PR: https://github.com/esaba12/conversaton-practice/pull/7 (draft; base `build/g1-foundation`)
+PR: https://github.com/esaba12/conversaton-practice/pull/7 (merged to foundation at cf32199, included in main by PR #8 at c178d37)
 Base: `a601a0eaea6cd84b68050687fa1ebfd6fb85a39f` (verified clean before edits)
 Branch: `agent/g1-frontend`
 Worktree: `/Users/ethansaba/code/therapist/.worktrees/g1-frontend`

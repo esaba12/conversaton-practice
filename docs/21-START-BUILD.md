@@ -1,6 +1,6 @@
 # Resume the active build
 
-Read STATUS.md first, then AGENTS.md, README.md, current build gate and task. The build is active on `build/g1-foundation`; do not repeat account/key setup or initialize another app.
+Read STATUS.md first, then AGENTS.md, README.md, current build gate and task. Foundation and frontend are merged to main. Read [the Cursor handoff](23-CURSOR-HANDOFF.md), verify current Git state, then use a new focused branch; do not repeat account/key setup or initialize another app.
 
 ## Local app
 Use Node 22 (`.nvmrc`). `npm ci` installs frozen dependencies including a local Node binary for npm scripts. Preserve existing ignored `.env.local`; `.env.example` describes safe names only.

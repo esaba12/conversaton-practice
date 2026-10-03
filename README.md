@@ -18,7 +18,7 @@ The core loop is: prepare -> review persona -> practice -> reflect -> approve me
 ## Read in this order
 
 On restart, begin with [STATUS.md](STATUS.md), [project instructions](AGENTS.md), the active gate in [the build plan](docs/10-BUILD-PLAN.md), and your assigned [task record](docs/tasks/TEMPLATE.md). Read the PRD and affected contracts before changing code. The full reference index follows; do not repeat product discovery on every task.
-For the first implementation session, follow [the final startup checklist](docs/21-START-BUILD.md).
+For setup/resume commands, follow [the startup checklist](docs/21-START-BUILD.md). For the editor transition and exact next implementation task, read [the Cursor handoff](docs/23-CURSOR-HANDOFF.md).
 
 1. [Decisions and viability](docs/00-DECISIONS-AND-VIABILITY.md)
 2. [Product requirements](docs/01-PRD.md)
