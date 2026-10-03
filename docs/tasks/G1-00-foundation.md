@@ -1,64 +1,44 @@
-# G1-00: Establish the foundation for three independent workers
+# G1-00: Application and provider foundation
 
-Status: active
-Updated: October 3, 2026, America/Detroit
-Assigned writer: coordinator
-Gate: G1 preparation; does not pass G1
-GitHub issue: [#1](https://github.com/esaba12/conversaton-practice/issues/1)
-Pull request: not opened; CI: not run
-Requirements/tests: P04, P05, P09, P12, P13; T01, T03, T09, T10, T12, T13 contract coverage
+Status: active — human video feasibility and final media contract freeze pending
+Owner: coordinator
+Gate: G1 foundation; no product gate passed
+Issue: https://github.com/esaba12/conversaton-practice/issues/1
+PR: foundation draft pending
+Branch: build/g1-foundation
+Base: 4dc34a1; preservation e98fa75; tested scaffold a601a0e; current changes pending commit
+Worktree: /Users/ethansaba/code/therapist
+Ports: app 3000; browser tests 3100; isolated video preflight 3010; external UI 3003
 
-## Assignment and isolation
+## Ownership and scope
+Coordinator owns root configuration/lockfile, app wiring/auth shell, shared schemas, fixtures, provider adapter, preflight scripts, CI, numbered specs and STATUS. SQL authoring was delegated only under [G1-00C](G1-00C-session-schema.md); coordinator reviewed/executed. External frontend is isolated under [its task](G1-03-frontend-preview.md), with no shared writes.
 
-- Base ref + SHA: pending coordinator baseline; no SHA assigned.
-- Branch/worktree: proposed `main` in `/Users/ethansaba/code/therapist`; verify before work.
-- Port: proposed 3000; no server started by this brief.
-- Dependencies: committed baseline; supported Next.js runtime and Supabase Auth integration. Vercel is the recommended app host.
-- Account readiness: the fresh Supabase project is configured locally and Auth health returned HTTP 200; real sign-in, migration access, and database isolation remain untested. ElevenLabs and avatar streaming credentials/access need verification. Contract/scaffold work can proceed independently.
+G1 foundation establishes the smallest sign-in/session/video contract, not later generation/memory features. Presentation can develop against inert props before live media freeze.
 
-All paths below are proposed. The coordinator freezes exact ownership and records the
-foundation commit before changing dependent tasks from `planned` to `ready`.
+## Completed foundation work
+- Pinned Next 16.3.8, React 19.3.0, Node 22.23.3, TypeScript 5.9.3, Supabase SSR/client, Daily 0.87.0 and Zod 4.6.5. Lockfile committed. Vitest updated to patched 4.1.11 after initial audit; zero vulnerabilities then reported.
+- Added real scripts and CI for typecheck, unit tests, production build and browser checks.
+- Added sign-in/signup UI, callback, cookie-refresh proxy, verified nonanonymous workspace guard and explicitly disabled-call shell. Actual browser sign-in/email/callback not yet tested.
+- Shared strict schemas separate identity, persisted session state, public-only fictional context, sanitized errors and provisional bounded media credentials.
+- Linked selected fresh Supabase project; verified empty schema before ordered migrations. Owner-readable session metadata, direct-write denial, capability-gated RPCs and durable one-active-owner lease exist.
+- Fixed observed Auth-schema delegation failure with an additive narrowly privileged identity-helper migration; public mutation functions remain restricted/RLS-constrained.
+- Provisioned server capability hash; raw secret stays only in ignored local environment.
+- Configured immutable Tavus PAL with stock face and premade ElevenLabs voice, explicit ElevenLabs TTS and perception off. Test-mode private conversation accepted and hard-deleted.
+- Loopback-only real-call harness is available on 3010 with two fictional contexts, camera off/local-only, immediate local teardown and separate provider cleanup results.
+- User received isolated frontend worktree/prompt; frontend PR #7 is available for coordinator review.
 
-- Scaffold/config: `package.json`, `package-lock.json`, `.gitignore`, `.env.example`, `tsconfig.json`, `next-env.d.ts`, `next.config.ts`, `postcss.config.mjs`, `eslint.config.mjs`, `vitest.config.ts`, `playwright.config.ts`, `tests/setup.ts`.
-- CI: `.github/workflows/ci.yml`, after app scripts/lockfile exist; shared repository templates remain coordinator-owned.
-- Initial entrypoints/tokens: `app/layout.tsx`, `app/page.tsx`, `app/globals.css`.
-- Shared contracts: `lib/schemas/auth.ts`, `lib/schemas/session.ts`, `lib/schemas/media.ts`, `lib/schemas/errors.ts`, `lib/schemas/role-context.ts`.
-- Fictional fixture: `fixtures/roommate.ts`; handoff record: this file.
-- Shared resources: coordinator owns dependency changes, numbered specs, STATUS, cloud/provider configuration, migration execution, and final entrypoints. Worker paths are in G1-01 through G1-03.
+## Actual checks
+October 3, 2026, America/Detroit, original checkout a601a0e plus current changes:
+- 14:24: `npm run typecheck && npm test && npm run build`: exit 0, 9 unit tests and production build pass. Static/unit evidence only.
+- Chromium `npm run test:ui`: exit 0, 2 signed-out/entry browser checks pass. No live-media mock claim.
+- `supabase db push --dry-run` identified only intended migration; coordinator applied both ordered migrations. Initial SQL assertion failed on missing executor auth-schema usage, repaired additively.
+- `supabase db query --linked --file supabase/tests/session_foundation.sql`: exit 0 after repair; rollback-only ownership/capability/idempotency/expiry/late-bind assertions pass.
+- `node_modules/.bin/node --env-file=.env.local scripts/preflight/auth-database-check.mjs`: exit 0. Two real confirmed fictional Auth identities signed in, verified JWT ownership and simultaneous acquisition checks passed; all users/session fixtures removed. No email or provider call. [Evidence](G1-00D-auth-database-check.md).
+- `node_modules/.bin/node --env-file=.env.local scripts/preflight/provider-setup.mjs`: exit 0. Live API PAL creation/readback plus test-mode private conversation/deletion pass. No audiovisual proof.
+- Loopback preflight screenshot inspected without starting a call. Installed Next cookies/proxy/auth/route guides and Daily types reviewed.
+- CI pending foundation draft; frontend PR's checks belong to its own revision.
 
-## Scope and acceptance
+## Remaining acceptance
+Human live preflight must establish usable synchronized speech/video, interruption, two isolated contexts and actual media release before media contracts freeze. Full G1 then requires authenticated app integration, real UI Auth, readiness acknowledgement and End/auth-loss/navigation teardown through application routes. Credential expiry and app lease expiry remain separate. No raw transcript/media persistence; provider transcripts and downstream deletion limitations are explicit.
 
-- [ ] Scaffold once with a supported, pinned runtime/dependency set and meaningful typecheck/unit/browser/build scripts; record actual versions and commands.
-- [ ] Add GitHub Actions for the actual typecheck, relevant deterministic tests, and production build; run on PRs without live provider secrets. Record the real run/result, keeping live video/audio/account acceptance separate.
-- [ ] Complete a bounded media feasibility preflight under [the live video contract](../22-LIVE-VIDEO.md): the core is a FaceTime-style, real-time talking AI counterpart. Evaluate ElevenLabs plus avatar streaming; LiveAvatar is a candidate under official-documentation research, not a selected or proven integration. Record the timebox, actual evidence, account blockers, and decision before freezing provider contracts.
-- [ ] Verify consequential auth/media/database API choices against installed types and official docs. Establish a trusted server-side path for public-only per-session context without mutating a shared agent prompt. Confirm interruption stops both speech and stale lip-synced video, server-issued credentials, authoritative provider ID association, and cleanup across both services. Unverified vendor behavior remains an explicit blocker; internal contracts do not prove SDK support.
-- [ ] Freeze verified identity, owner-scoped session credential/start/connected/end, sanitized errors, browser media adapter, UI props/events, and public-only role-context contracts. The media worker owns stream controllers and all camera/microphone acquisition; UI consumes stream references and emits controls. Assign the connected acknowledgement receiver/caller and verify how each provider session ID binds to the authorized app session; client-supplied IDs alone cannot authorize provider retrieval/deletion. Define readiness only when usable counterpart audio and live video are present.
-- [ ] Persisted states are `connecting`, `active`, `ending`, `ended`, `interrupted`, `deleted`. UI phases `draft`, `ready`, `reflecting`, `closed` are separate. Define transitions, idempotency, lease expiry, and late-event rejection.
-- [ ] Establish G1 minimal database design: verified Supabase Auth user IDs, owner-scoped session leases and cleanup metadata protected by RLS, and atomic database RPCs. Broader profiles/personas/approved memory remain G3. A database outage must not become an anonymous or process-memory ownership fallback.
-- [ ] Define local teardown on End, sign-out, auth expiry, navigation/unmount, and partial/failed connection independently of any network request: stop playback, detach streams, cancel reconnects, and release microphone and any active camera tracks. Never block local release on server acknowledgement; track pending remote cleanup truthfully for both services.
-- [ ] Define warm/minimal/crisp FaceTime-style UI tokens, accessible controls, explicit mock indication, and the fixed public fictional-roommate fixture. Optional user-camera preview is off by default and local-only: no upload, provider publication, recording, or camera permission prerequisite to practice.
-- [ ] Preserve the live video gate: voice-only playback, a static portrait, prerecorded footage, and mock media cannot satisfy G1.
-- [ ] Freeze each worker's exact paths, dependencies, shared resources, test seams, ports, and base SHA; only then dispatch up to three parallel workers.
-
-## Documentation and contract handoff
-
-Coordinator updates affected sections of docs/03, 04, 05, 06, 09, 10, 12, 18, 22 and STATUS;
-record provider/service selections as selections, not working integrations. `.env.example`
-contains placeholders and server/client scope, never secrets. Document startup, migration
-execution ownership, and the exact supported auth callback origins.
-
-## Verification evidence
-
-October 3, 2026, 13:56 America/Detroit, original checkout on `build/g1-foundation`, `e98fa75` plus scaffold: `npm run typecheck`, `npm test` (5 contract tests), `npm run build` all exited 0. Mode static/unit; outcome pass. Node 22.23.3 used by npm scripts. No live authentication/video acceptance. `supabase db query --linked` read-only schema check passed: intended fresh project has Auth schema and zero public tables. No migration applied. External frontend presentation task is isolated by `G1-03-frontend-preview.md`; media contracts are still provisional.
-
-- Mode/outcome: `not-run` / `not-run` for all implementation checks.
-- Date/time, tested SHA/dirty state, environment/directory, command/steps, exit code, observation/artifact: pending execution; no application evidence exists in this brief.
-- Planned checks: bounded provider feasibility evidence, frozen typecheck/test/build commands, shared-contract review, clean install from lockfile. Real authentication/database/responsive video/audio checks belong to G1-04.
-
-## Handoff
-
-- Changed implementation paths/commits: none recorded; task planning only.
-- Remaining risk: provider feasibility/access, runtime/hosting decisions, and unverified migration access can change proposed paths before freezing. Supabase is selected; an avatar provider has not yet been selected or proven.
-- Next action: coordinator establishes baseline and foundation; workers remain unassigned and planned.
-- Ready for review/integrated revision: no / pending.
-- Follow [workflow](../19-AGENT-WORKFLOW.md) and [documentation standard](../20-DOCUMENTATION-STANDARD.md).
+Next smallest action: record human preflight result, review/integrate frontend presentation, complete draft PR/CI, then dispatch application media/auth tasks against accepted contracts. Do not advance to G2 or count test mode as a working live call.

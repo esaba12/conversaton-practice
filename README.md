@@ -58,11 +58,11 @@ First stretch after all core gates pass: bounded iMessage rehearsal using Photon
 
 ## What has and has not been done
 
-This folder supplies specifications, acceptance gates, research, development tooling, and the deployed static product preview in `website/`. Context7 is installed locally; the two staged vendor skills are now active in this session. Recheck MCP activation on restart. See [tooling status](tooling/README.md). The authenticated video-call application and provider integrations have not been built.
+This folder supplies specifications, acceptance gates, research, development tooling, and the deployed static product preview in `website/`. Context7 is installed locally; the two staged vendor skills are now active in this session. Recheck MCP activation on restart. See [tooling status](tooling/README.md). The authenticated scaffold and provider API preflight now exist; live audiovisual integration and the full application gates remain pending. See STATUS.md for actual evidence.
 
 ## Defaults and unresolved items
 
-Current direction: Next.js App Router, TypeScript, npm, ElevenLabs Agents, Supabase Auth/PostgreSQL, required account sign-in, and a server-side structured-output model for setup/reflection. The user returned to Supabase because AWS credits will not arrive in time. Vercel is the recommended app hosting path given the already deployed public site; the authenticated app is not deployed. See docs/18-DESIGN-AND-AWS.md. Default demo: setting a cleaning boundary with a fictional roommate.
+Current direction: Next.js App Router, TypeScript, npm, Tavus CVI with explicit ElevenLabs TTS, Supabase Auth/PostgreSQL, required sign-in, and server-side structured output for setup/reflection. Vercel is the recommended app host; the authenticated app is not deployed. See docs/18-DESIGN-AND-AWS.md. Default demo: setting a cleaning boundary with a fictional roommate.
 
 Confirmed event strategy: Actually Intelligent plus both listed ElevenLabs categories, subject to organizer confirmation of category stacking. Submission is before noon Sunday, October 4, America/Detroit; judging uses a three-minute pitch. See docs/16-MHACKS-STRATEGY.md.
 

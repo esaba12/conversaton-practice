@@ -13,7 +13,7 @@ The coordinator owns STATUS.md, shared contracts, dependencies, and integration.
 
 ## Account readiness
 The user returned to Supabase because AWS credits will not arrive in time and supplied a fresh project. Local configuration and Auth health are verified; sign-in/database integration remains untested. Account creation, billing, and sponsor redemption remain user actions; no other app's project is being reused.
-- First: Supabase Auth sign-in plus live avatar/conversation access. The first feasibility candidate needs a paid ElevenLabs plan and separate LiveAvatar API access; verify account eligibility before integration. See docs/22-LIVE-VIDEO.md.
+- First: Supabase Auth sign-in plus Tavus CVI and explicit ElevenLabs TTS. Read access, PAL creation and test-mode acceptance are verified; real speech/video remain pending. No LiveAvatar account is needed. See docs/22-LIVE-VIDEO.md.
 - Next: the configured structured-output provider (OpenAI by default) for situation generation in G2.
 - Before G1 acceptance: Supabase PostgreSQL for owner-scoped session leases and minimal cleanup metadata, with owners derived from verified Supabase Auth users. G3 extends this foundation with saved profiles/personas and transactional memory. The AWS backend plan is superseded; anonymous entry remains out of scope. Internal mocks are labeled development-only and do not count as working authentication.
 - Application hosting remains undecided. The user separately authorized a quick public product website for AWS credits; that static preview is deployed at https://conversation-practice-site.vercel.app. This does not select the app's hosting path or pass an application gate.
@@ -29,7 +29,7 @@ Choose repository, account owners, and selected deployment path. Keep the projec
 - [ ] Establish required account sign-in and server authorization before exposing persona/setup/practice actions.
 - [ ] Add minimal durable users/session/cleanup metadata with owner isolation and an atomic one-active-session lease; reserve broader domain persistence for G3.
 - [ ] Create one fictional roommate preset: cleaning boundary, deflects with jokes, friendly underneath.
-- [ ] Verify live video feasibility: trusted per-session persona input, provider credentials/IDs, synchronized response, interruption, and teardown. Configure one ElevenLabs base agent and stock avatar without mutating shared prompts per user.
+- [ ] Verify live video feasibility: trusted per-session persona input, provider credentials/IDs, synchronized response, interruption, and teardown. Configure an immutable Tavus PAL with stock face and explicit ElevenLabs speech, without mutating shared prompts per user.
 - [ ] Add server session credential route and browser media adapter; one managed call transport with optional local-only camera preview.
 - [ ] Have a real five-turn video conversation with a responsive, lip-synced fictional counterpart.
 - [ ] End stops current/future audio and video, releases microphone/camera, and initiates verified remote session cleanup.

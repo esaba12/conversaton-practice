@@ -2,8 +2,8 @@
 
 ## Selected stack
 - Next.js App Router + TypeScript, npm and a committed lockfile.
-- Tailwind and a small component set; custom design based on the UX specification.
-- ElevenLabs Agents for conversation, with a live avatar transport for required synchronized video. First feasibility candidate: LiveAvatar managed connector and its browser SDK; see docs/22-LIVE-VIDEO.md. Do not run a parallel ElevenLabs React audio session in connector mode.
+- Plain CSS/CSS Modules and small presentational components, based on the UX specification.
+- Tavus CVI full mode with explicit ElevenLabs TTS and Daily browser transport. See docs/22-LIVE-VIDEO.md. No parallel ElevenLabs Agents or LiveAvatar pipeline.
 - Supabase PostgreSQL and Supabase Auth. The user reverted the AWS plan because credits are unavailable in time and supplied a fresh Supabase project. Local configuration/Auth health are verified; sign-in/database access remain untested.
 - Required non-anonymous account sign-in before all workspace actions; no guest workspace.
 - Vercel is the recommended application host alongside the existing static preview. The authenticated app is not deployed; verify and pin compatible Next.js/Node versions during foundation.
@@ -48,6 +48,10 @@ Use `@supabase/ssr` with request-scoped cookie clients. Verify identity server-s
 Runtime server clients carry the signed-in user's JWT and a publishable project key; ordinary app requests never use service-role/secret keys that bypass RLS. Browser code handles sign-in and calls application routes; all protected tables and RPCs must remain safe if a caller reaches Supabase directly. Set grants and owner policies for each operation, derive ownership from `auth.uid()`, and reject anonymous Auth claims. Enforce the same-owner relationship for linked rows. Test signed-out, anonymous, cross-owner, and concurrent requests; separate migration credentials from runtime. [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security).
 
 Session leases and memory approval execute atomically in reviewed PostgreSQL functions called through RPC. Prefer `security invoker`; any necessary definer function needs explicit owner checks, a restricted role, fixed search path, qualified relations, and limited execute grants. Function/table privileges must prevent callers bypassing version checks or editing trusted provider-association metadata. Freeze that privilege design before dispatch; an application route alone is not a database boundary. [Database functions](https://supabase.com/docs/guides/database/functions).
+
+### G1 database boundary
+
+`public.practice_sessions` is owner-readable with direct client DML revoked. Five narrow RPCs acquire a lease, bind the trusted provider ID, acknowledge readiness, end, and update cleanup. Every mutation requires the current nonanonymous user JWT plus a global server capability, whose hash is provisioned administratively in a private table. A caller-chosen capability cannot establish server trust. Public mutation functions use a restricted NOLOGIN/NOBYPASSRLS executor that does not own the tables; fixed search paths and RLS retain owner isolation. No runtime service-role key, room credentials, transcripts or prompts are stored in the table. See the ordered migrations and SQL test evidence in G1-00C.
 
 ## State machine
 Persisted live-session statuses: `connecting`, `active`, `ending`, `ended`, `interrupted`, `deleted`.
