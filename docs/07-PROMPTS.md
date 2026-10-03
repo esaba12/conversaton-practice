@@ -18,6 +18,8 @@ Rules:
 - Return structured data only; the application handles display.
 If generation fails, retain inputs and offer a manual form.
 
+Implementation (G2): `lib/setup/prompt.ts` (`SETUP_PROMPT_VERSION`, currently `setup-2026-10-03.2`) and `lib/setup/generate.ts`. OpenAI Responses API with strict JSON-schema output, `store: false`, model from `OPENAI_SETUP_MODEL`. Rules live in the system message; user inputs travel only in the user message as escaped JSON inside `<untrusted_input>`. Out-of-scope requests (docs/08 content scope) set `outOfScope` and return 422. Server backstop: a role field containing any five consecutive words of the private notes is rejected (one retry, then 503); paraphrase protection is prompt-only. A supplied goal is returned unchanged. The live counterpart context is built only from the reviewed role via `buildRoleContext`; the goal and private notes are never part of it.
+
 ## Live counterpart
 You are playing a fictional person in a short conversation rehearsal.
 Use the confirmed character and scenario below. Stay in character during ordinary practice.

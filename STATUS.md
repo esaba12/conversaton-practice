@@ -13,6 +13,8 @@ Branch `build/g2-generation`. Coordinator froze contracts at `346b61d`: `lib/sch
 
 Workers do not build, run Playwright, call providers, or write Git. Coordinator integrates one at a time, then runs the verification recipe, one real generation check, PR, and asks the human for the live G2 call.
 
+**16:50:** G2-02 integrated (`4fcbb81`), G2-01 integrated (`262c04e`), prompt `.2` (`0bf37bf`). One live OpenAI generation check passed (two real calls; second 1.7 s; no private-note marker in role); details in G2-01. G2-03 UI still active. docs/05 and docs/07 updated for implemented behavior. Paste-ready prompts for parallel G3 preparation (isolated worktree, unapplied migration) and demo/submission prep: [docs/25](docs/25-PARALLEL-PROMPTS.md). The coordinator still owns STATUS, migrations execution, shared Supabase and the microphone.
+
 ## Latest user direction
 **16:30 EDT:** user will clear coordinator context and continue at full speed with subagents. Start from [docs/24-G2-KICKOFF.md](docs/24-G2-KICKOFF.md), which has the G2 contracts, worker split, verification recipe, and a paste-ready prompt. Text below this paragraph is older history.
 
