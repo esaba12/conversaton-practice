@@ -49,12 +49,34 @@ try {
       await page.getByLabel("Password", { exact: true }).fill(credentials[0].password);
       await page.getByRole("button", { name: "Sign in", exact: true }).click();
       await page.waitForURL("**/practice", { timeout: 20_000 });
-      assert(await page.getByRole("button", { name: "Start practice", exact: true }).isDisabled(), "verified workspace remains call-disabled");
+      // G2 setup flow with draft and start intercepted in the browser: no model or call-provider requests.
+      const marker = "purple umbrella private marker";
+      const draftRole = { name: "Jordan", role: "Your fictional shift lead", style: "Brisk but fair.", publicContext: "You schedule weekend shifts at a cafe.", opening: "Hey, got a minute? I'm finishing the schedule.", constraints: ["Has five minutes."], challenge: "neutral", pace: "conversational" };
+      let draftBody, startBody;
+      await page.route("**/api/scenarios/draft", async route => { draftBody = route.request().postDataJSON(); await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ role: draftRole, goal: "Ask to swap one Saturday shift.", assumptions: ["You work at the same cafe."] }) }); });
+      await page.route("**/api/sessions", async route => { startBody = route.request().postDataJSON(); await route.abort(); });
+      await page.getByLabel("The situation").fill("I want to ask my fictional shift lead to swap one Saturday shift.");
+      await page.getByLabel(/Private preparation notes/).fill(`I get nervous. ${marker}`);
+      await page.getByRole("button", { name: "Generate setup", exact: true }).click();
+      await page.getByLabel("Name", { exact: true }).waitFor({ timeout: 10_000 });
+      assert(draftBody?.privateNotes?.includes(marker), "private notes sent only to draft generation");
+      assert(await page.getByLabel("Name", { exact: true }).inputValue() === "Jordan", "generated draft shown for review");
+      await page.getByLabel("Name", { exact: true }).fill("Riley");
+      await mkdir("artifacts/local", { recursive: true });
+      await page.screenshot({ path: "artifacts/local/g2-review.png", fullPage: true });
+      await page.getByRole("button", { name: "Start practice", exact: true }).click();
+      await page.waitForFunction(() => document.body.innerText.includes("couldn"), null, { timeout: 10_000 }).catch(() => undefined);
+      assert(startBody && startBody.role?.name === "Riley", "start carries the edited role");
+      assert(Object.keys(startBody).sort().join() === "durationSeconds,idempotencyKey,role", "start body has only allowlisted keys");
+      assert(!JSON.stringify(startBody).includes(marker) && !JSON.stringify(startBody).includes("Saturday shift."), "private notes and goal absent from start");
+      await page.unroute("**/api/sessions");
+      await page.unroute("**/api/scenarios/draft");
+      console.log("PASS: signed-in describe → generated draft (browser-mocked) → edit → start body contains only the edited role.");
       await page.getByRole("button", { name: "Sign out", exact: true }).click();
       await page.waitForURL("**/auth/sign-in", { timeout: 20_000 });
       await page.goto("http://127.0.0.1:3000/practice");
       await page.waitForURL("**/auth/sign-in", { timeout: 20_000 });
-      console.log("PASS: real browser sign-in, SSR-protected workspace, integrated setup, sign-out and denied re-entry.");
+      console.log("PASS: real browser sign-in, SSR-protected workspace, sign-out and denied re-entry.");
     } finally { await browser.close(); }
   } else {
   const [first, second] = clients;
