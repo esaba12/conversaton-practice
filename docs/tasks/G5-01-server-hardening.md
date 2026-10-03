@@ -1,6 +1,6 @@
 # G5-01: Per-user draft rate limit and automated private-note probe
 
-Status: review
+Status: integrated
 Updated: October 3, 2026, 19:10 EDT
 Assigned writer: background subagent (G5-01)
 Coordinator: Cursor coordinator session
@@ -64,6 +64,6 @@ Client End with the server unreachable (`tests/unit/api-client.test.ts`): `NETWO
   - docs/05 needs the 429 `USAGE_LIMIT` row (coordinator).
 - Next smallest task: G5-02 maps the 429 to a user message; coordinator updates docs/05.
 - Ready for review: yes
-- Coordinator integration: pending
+- Coordinator integration: integrated on `build/g5-hardening` (see [G5-04](G5-04-integration.md) for commits and verification)
 
 The writer owns this handoff; the coordinator records integration and updates STATUS.

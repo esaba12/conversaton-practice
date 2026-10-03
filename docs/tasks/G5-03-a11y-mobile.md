@@ -1,6 +1,6 @@
 # G5-03: Accessibility and mobile pass of setup, people, About me, reflection and Your data
 
-Status: review
+Status: integrated
 Updated: October 3, 2026, 19:14 EDT
 Assigned writer: background subagent (G5-03)
 Coordinator: Cursor coordinator session
@@ -69,6 +69,6 @@ Static code review only. No build, browser, Playwright, dev server or provider c
   - Status messages in the editor, About me and Never shared are `role="status"` elements inserted with their text. Most screen readers announce this, but it is less reliable than a persistent region. Unchanged to keep the diff minimal.
   - Nothing browser-verified at 320/390 px; coordinator mock browser run recommended.
 - Ready for review: yes
-- Coordinator integration: pending
+- Coordinator integration: integrated on `build/g5-hardening` (see [G5-04](G5-04-integration.md) for commits and verification)
 
 The writer owns this handoff; the coordinator records integration and updates STATUS.

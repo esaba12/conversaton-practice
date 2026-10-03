@@ -85,6 +85,27 @@ Required: T01-T15, core browser flow, real synchronized-video exchange and compl
 A failed privacy/ownership gate blocks public demo with personal information.
 Record detailed results in the owning task record using [the documentation standard](20-DOCUMENTATION-STANDARD.md), including revision, mode, outcome, date, provider model/voice, video provider/avatar configuration, browser, observed failures, and fixes. The coordinator summarizes integrated gate evidence in STATUS.md. Unrun tests remain unrun; passing mock checks do not pass a live gate.
 
+## G5 coverage status (October 3, 2026, 19:20 EDT)
+By the user's 19:00 decision, gates advance on automated evidence and stay labelled "live not verified" until the human reports a live check. Evidence: [G5-04](tasks/G5-04-integration.md). "Real-Auth" means `scripts/preflight/auth-database-check.mjs` with two fictional fixture users against the dev server and the linked Supabase project. "Test media" means the development-only fake controller (`lib/media/controller-factory.ts`), which proves workspace logic, not Daily/Tavus behavior.
+
+| ID | Automated evidence | Live |
+| --- | --- | --- |
+| T01 | Unit (role context, draft prompt/leak retry, reflect body); real-Auth start and reflect bodies carry no notes; one real setup-model call with a note marker absent from the role | Counterpart not probed live for notes |
+| T02 | Unit (strict role/person schemas, invalid fields rejected) | N/A |
+| T03 | Real-Auth `--g3`, `--g3-ui`, `--g5-ui` (people, facts, prep, sessions, reflect, End, delete-all) | N/A |
+| T04–T07 | Superseded: no memory proposals are built; G3 sharing uses version-checked writes (stale 409 in `--g3-ui`) | N/A |
+| T08 | Reflections are never stored; delete-all reports `remaining` (unit, real-Auth counts) | Not run |
+| T09 | Unit (Daily controller teardown); test media: End, End unreachable + Retry, expiry, 180 s auto-end, sign-out mid-call each release media and call End once with the right reason | G1 human call (End, mic release); other paths not live |
+| T10 | Unit (body caps, draft limit 8/10 min, reflection cap 3); real-DB concurrent lease | N/A |
+| T11 | Unit (invalid/refused model output → manual fallback) | N/A |
+| T12 | Unit (credential boundary); production build contains no test-media override global | N/A |
+| T13 | Real-Auth signed-out 401s and page redirects; sign-out mid-call (test media) | G1 human mid-call sign-out |
+| T14 | Unit (camera never published, tracks stop); test media: camera request stays with the controller | G1 human camera check not itemized |
+| T15 | Unit (ready needs audio+video; video loss → failed) | Video loss not exercised live |
+| T16 | Real-Auth `--g3-ui` (keyboard, drag-and-drop), `--g5-ui` (mouse click), SQL assertions | Counterpart use of shared facts not live |
+
+Also automated in G5: Your data cleanup labels and Retry, reflection Skip/Done and request body, duplicate same-named save after a failed list load, 390/320 px layouts of `/practice`, a person page, About me and Your data. Deferred: session `person_id` attribution (needs a change to the G1 start RPC). Live-pending for the human: everything in the live video matrix beyond the G1/G2 calls, reflection from a real call, and the behavior probes.
+
 ## Gate coverage
 G1 covers P04/P05/P09/P12/P13 and the applicable T01/T03/T09/T10/T12/T13/T14/T15 boundaries for the preset, identity, session, and media endpoints. Real sign-in, database ownership/lease behavior, five live synchronized audio/video exchanges, and complete media teardown are required; mocked auth/media, audio-only fallback, static portraits, and prerecorded replies cannot substitute. G2 extends context, validation, generation, and fresh-session coverage. G3 adds the full domain/approval/version checks. G4 adds reflection/deletion races. G5 verifies the complete release gate on the integrated application. Early-gate evidence is scoped to the routes/features then implemented, not a claim that later requirements have passed.
 

@@ -1,6 +1,6 @@
 # G5-02: Practice workspace hardening (test media seam, duplicate save, draft limit message)
 
-Status: review
+Status: integrated
 Updated: October 3, 2026, 19:20 EDT
 Assigned writer: background subagent (G5-02)
 Coordinator: Cursor coordinator session
@@ -55,6 +55,6 @@ Writer: run `npm run typecheck` and `npm test` only; record exact results here.
 - Remaining failures/risks: (1) `SetupDescribe` (not owned) always appends "Your description is still here. You can try again or fill in the setup yourself." to non-out-of-scope errors, so the draft limit still shows mild retry wording after the server message. Proposed: add a `retry?: boolean` to `SetupDescribeError` and hide that sentence (keep "Set up manually") when false. (2) The test-media notice appears after hydration (effect), not in server HTML; the script should wait for it. (3) A save dismissed mid-save is reopened on success (pre-existing).
 - Next smallest task: coordinator mock-browser run of the workspace with `TEST_MEDIA_GLOBAL`; optional `SetupDescribe` retry flag.
 - Ready for review: yes
-- Coordinator integration: pending
+- Coordinator integration: integrated on `build/g5-hardening` (see [G5-04](G5-04-integration.md) for commits and verification)
 
 The writer owns this handoff; the coordinator records integration and updates STATUS.
