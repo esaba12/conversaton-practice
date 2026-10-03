@@ -2,6 +2,17 @@
 
 Updated October 3, 2026, 16:18 EDT. **G1 passed** (live, human-verified signed-in video call on `a8211af`; see [G1-04](docs/tasks/G1-04-integration.md)). G2 editable situation generation is next.
 
+## G2 in progress (16:45 EDT)
+Branch `build/g2-generation`. Coordinator froze contracts at `346b61d`: `lib/schemas/draft.ts` (draft request/response/model-output), start request union (preset or strict reviewed `role`), `OUT_OF_SCOPE` error code, `readBody` max-length argument, `OPENAI_SETUP_MODEL` in `.env.example`. Local `.env.local` uses `gpt-5.4-mini-2026-03-17` (listed for the key via `GET /v1/models`, HTTP 200; no generation call yet). Situation limit is 1,000 characters per docs/02.
+
+| Task | Issue | Writer | Owned paths |
+| --- | --- | --- | --- |
+| [G2-01](docs/tasks/G2-01-setup-generation.md) generation server | [#12](https://github.com/esaba12/conversaton-practice/issues/12) | background subagent | `lib/setup/**`, `app/api/scenarios/draft/route.ts`, `tests/unit/setup-generate.test.ts` |
+| [G2-02](docs/tasks/G2-02-start-reviewed-role.md) start with reviewed role | [#13](https://github.com/esaba12/conversaton-practice/issues/13) | background subagent | `lib/session/server.ts`, `app/api/sessions/route.ts`, `tests/unit/session-server.test.ts` |
+| [G2-03](docs/tasks/G2-03-setup-review-ui.md) setup/review UI | [#14](https://github.com/esaba12/conversaton-practice/issues/14) | background subagent | `components/presentation/setup-*`, `app/practice/practice-workspace.tsx`, `lib/session/api-client.ts`, `tests/unit/api-client.test.ts` |
+
+Workers do not build, run Playwright, call providers, or write Git. Coordinator integrates one at a time, then runs the verification recipe, one real generation check, PR, and asks the human for the live G2 call.
+
 ## Latest user direction
 **16:30 EDT:** user will clear coordinator context and continue at full speed with subagents. Start from [docs/24-G2-KICKOFF.md](docs/24-G2-KICKOFF.md), which has the G2 contracts, worker split, verification recipe, and a paste-ready prompt. Text below this paragraph is older history.
 
