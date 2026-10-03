@@ -10,6 +10,7 @@ import { POST as start } from "@/app/api/sessions/route";
 import { POST as connect } from "@/app/api/sessions/[id]/connected/route";
 import { POST as end } from "@/app/api/sessions/[id]/end/route";
 import { startFingerprint } from "@/lib/session/server";
+const SECRET = "s".repeat(40);
 
 const id = "11111111-1111-4111-8111-111111111111", other = "22222222-2222-4222-8222-222222222222";
 const key = "33333333-3333-4333-8333-333333333333";
@@ -44,7 +45,7 @@ function tavus(overrides: { create?: () => Promise<Response>; remove?: () => Pro
 const calls = (name: string) => rpc.mock.calls.filter(([called]) => called === name).map(([, args]) => args);
 
 beforeEach(() => {
-  vi.stubEnv("SESSION_SERVER_SECRET", "s".repeat(40));
+  vi.stubEnv("SESSION_SERVER_SECRET", SECRET);
   vi.stubEnv("TAVUS_API_KEY", "unit-secret"); vi.stubEnv("TAVUS_PAL_ID", "unit-pal"); vi.stubEnv("TAVUS_FACE_ID", "unit-face");
   handlers = {}; active = [];
   rpc = vi.fn(async (name: string, args: Record<string, unknown>) => { const result = handlers[name]?.(args) ?? { error: { code: "XX000", message: "unhandled" } }; return { data: result.data ?? null, error: result.error ?? null }; });
@@ -103,7 +104,7 @@ describe("session routes", () => {
     expect(sent.custom_greeting).toBe(reviewed.opening);
     expect(sent.properties.max_call_duration).toBe(300);
     expect(Object.keys(sent).sort()).toEqual(["audio_only", "conversational_context", "custom_greeting", "face_id", "max_participants", "pal_id", "participant_tags", "properties", "require_auth"]);
-    expect(calls("practice_acquire")[0]).toMatchObject({ p_duration: 300, p_fingerprint: startFingerprint(reviewed, 300) });
+    expect(calls("practice_acquire")[0]).toMatchObject({ p_duration: 300, p_fingerprint: startFingerprint(reviewed, 300, SECRET) });
   });
 
   it("rejects private or unknown fields at the schema boundary before storage or the provider", async () => {
@@ -132,16 +133,16 @@ describe("session routes", () => {
   it("fingerprints the resolved role canonically", async () => {
     const reordered = Object.fromEntries(Object.entries(reviewed).reverse()) as RoleContext;
     expect(JSON.stringify(reordered)).not.toBe(JSON.stringify(reviewed));
-    expect(startFingerprint(reordered, 180)).toBe(startFingerprint(reviewed, 180));
-    expect(startFingerprint(reviewed, 180)).not.toBe(startFingerprint(roommate, 180));
-    expect(startFingerprint(reviewed, 180)).not.toBe(startFingerprint(reviewed, 300));
-    expect(startFingerprint({ ...reviewed, constraints: [...reviewed.constraints].reverse() }, 180)).not.toBe(startFingerprint(reviewed, 180));
+    expect(startFingerprint(reordered, 180, SECRET)).toBe(startFingerprint(reviewed, 180, SECRET));
+    expect(startFingerprint(reviewed, 180, SECRET)).not.toBe(startFingerprint(roommate, 180, SECRET));
+    expect(startFingerprint(reviewed, 180, SECRET)).not.toBe(startFingerprint(reviewed, 300, SECRET));
+    expect(startFingerprint({ ...reviewed, constraints: [...reviewed.constraints].reverse() }, 180, SECRET)).not.toBe(startFingerprint(reviewed, 180, SECRET));
     handlers.practice_acquire = () => marker("SESSION_ACTIVE");
     await start(post("/api/sessions", startBody));
     await start(post("/api/sessions", { idempotencyKey: key, role: reordered, durationSeconds: 180 }));
     const [preset, custom] = calls("practice_acquire").map((args) => args.p_fingerprint);
-    expect(preset).toBe(startFingerprint(roommate, 180));
-    expect(custom).toBe(startFingerprint(reviewed, 180));
+    expect(preset).toBe(startFingerprint(roommate, 180, SECRET));
+    expect(custom).toBe(startFingerprint(reviewed, 180, SECRET));
   });
 
   it("surfaces the database's fingerprint conflict when a key is replayed with a different role", async () => {

@@ -56,7 +56,7 @@ export function SetupDescribe({ situation, goal, privateNotes, onSituationChange
         <div className={`${styles.field} ${styles.privateField}`}>
           <div className={styles.labelRow}><label htmlFor={`${id}-notes`}>Private preparation notes <span className={styles.optional}>Optional</span></label><span id={`${id}-notes-count`} className={styles.count}>{privateNotes.length} / {NOTES_MAX}</span></div>
           <p id={`${id}-notes-hint`} className={styles.privateTag}>Never shared with the character</p>
-          <textarea id={`${id}-notes`} rows={3} maxLength={NOTES_MAX} value={privateNotes} disabled={busy} aria-describedby={`${id}-notes-hint ${id}-notes-count`} onChange={(event) => onPrivateNotesChange(event.target.value)} />
+          <textarea id={`${id}-notes`} rows={3} autoComplete="off" spellCheck={false} maxLength={NOTES_MAX} value={privateNotes} disabled={busy} aria-describedby={`${id}-notes-hint ${id}-notes-count`} onChange={(event) => onPrivateNotesChange(event.target.value)} />
         </div>
 
         {generating && <p className={styles.status} role="status">Drafting your setup…</p>}

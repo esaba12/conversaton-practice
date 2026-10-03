@@ -15,6 +15,8 @@ Workers do not build, run Playwright, call providers, or write Git. Coordinator 
 
 **16:50:** G2-02 integrated (`4fcbb81`), G2-01 integrated (`262c04e`), prompt `.2` (`0bf37bf`). One live OpenAI generation check passed (two real calls; second 1.7 s; no private-note marker in role); details in G2-01. G2-03 UI still active. docs/05 and docs/07 updated for implemented behavior. Paste-ready prompts for parallel G3 preparation (isolated worktree, unapplied migration) and demo/submission prep: [docs/25](docs/25-PARALLEL-PROMPTS.md). The coordinator still owns STATUS, migrations execution, shared Supabase and the microphone.
 
+**16:58:** G2-03 integrated (`831b122`). Read-only privacy review: no blockers; should-fix and cheap nits applied (prompt `.3`, fixed counterpart boundary line, HMAC fingerprint, `server-only` prompt, notes autocomplete off, bfcache clear). Typecheck, 66 unit tests, build, browser suite (8 pass, 1 production-only skip), signed-out/cross-site HTTP rejection and a signed-in browser-mocked G2 flow check all pass. Evidence: [G2-04](docs/tasks/G2-04-integration.md). **Next: human live G2 call** (checklist in G2-04). Deferred: per-user draft rate limit.
+
 ## Latest user direction
 **16:30 EDT:** user will clear coordinator context and continue at full speed with subagents. Start from [docs/24-G2-KICKOFF.md](docs/24-G2-KICKOFF.md), which has the G2 contracts, worker split, verification recipe, and a paste-ready prompt. Text below this paragraph is older history.
 

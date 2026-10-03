@@ -1,6 +1,7 @@
+import "server-only";
 import type { DraftRequest } from "@/lib/schemas/draft";
 
-export const SETUP_PROMPT_VERSION = "setup-2026-10-03.2";
+export const SETUP_PROMPT_VERSION = "setup-2026-10-03.3";
 
 // Private notes and the goal travel only in the user message, never in the system instruction.
 export const SETUP_SYSTEM_PROMPT = [
@@ -23,7 +24,7 @@ export const SETUP_SYSTEM_PROMPT = [
   "- `pace`: patient or conversational; default to conversational.",
   "",
   "Private notes:",
-  "- privateNotes are the user's private preparation (fears, background, coaching reminders). They may shape only what the counterpart plausibly knows as the user would openly share it.",
+  "- privateNotes are the user's private preparation (fears, background, coaching reminders). Use them only to understand the user's situation; they must not add facts, feelings, traits, or details to any `role` field. Build the role from the situation alone.",
   "- Never quote, paraphrase, summarize, or reveal privateNotes in any `role` field. The counterpart must not know the user's fears, feelings, or coaching notes, and no `role` field may mention that private notes, coaching, or a rehearsal exist.",
   "",
   "Goal:",

@@ -1,5 +1,5 @@
 import "server-only";
-import { createHash } from "node:crypto";
+import { createHmac } from "node:crypto";
 import { roommate } from "@/fixtures/roommate";
 import * as sessions from "@/lib/data/sessions";
 import type { Db, SessionRow } from "@/lib/data/sessions";
@@ -32,8 +32,9 @@ function canonical(value: unknown): string {
   }
   return JSON.stringify(value);
 }
-export function startFingerprint(role: RoleContext, durationSeconds: 180 | 300) {
-  return createHash("sha256").update(canonical({ durationSeconds, role })).digest("hex");
+// Keyed so a stored fingerprint cannot confirm a guessed role.
+export function startFingerprint(role: RoleContext, durationSeconds: 180 | 300, secret: string) {
+  return createHmac("sha256", secret).update(canonical({ durationSeconds, role })).digest("hex");
 }
 
 export async function startSession(db: Db, input: z.output<typeof startRequestSchema>): Promise<StartResponse> {
@@ -41,7 +42,7 @@ export async function startSession(db: Db, input: z.output<typeof startRequestSc
   assertTavusConfigured();
   // Only the allowlisted role reaches the provider; no other client field is forwarded.
   const role = roleContextSchema.parse("role" in input ? input.role : roommate);
-  const fingerprint = startFingerprint(role, input.durationSeconds);
+  const fingerprint = startFingerprint(role, input.durationSeconds, secret);
   let acquired: Awaited<ReturnType<typeof sessions.acquire>>;
   try { acquired = await sessions.acquire(db, secret, input.idempotencyKey, fingerprint, input.durationSeconds); }
   catch (error) {

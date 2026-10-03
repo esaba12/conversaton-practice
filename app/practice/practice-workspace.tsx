@@ -362,10 +362,14 @@ export function PracticeWorkspace() {
       abandon("navigation");
       if (phaseRef.current && phaseRef.current !== "ended") setPhase("ended");
     };
+    // A back/forward-cache restore may follow a sign-out elsewhere; never resurface private setup text.
+    const onPageShow = (event: PageTransitionEvent) => { if (event.persisted) clearPrivateSetup(); };
     window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("pageshow", onPageShow);
     const { data } = createBrowserAuthClient().auth.onAuthStateChange((event) => { if (event === "SIGNED_OUT") handleAuthLoss(); });
     return () => {
       window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("pageshow", onPageShow);
       data.subscription.unsubscribe();
       abandon("navigation");
     };
