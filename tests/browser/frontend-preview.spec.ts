@@ -37,7 +37,7 @@ test.describe("development presentation preview", () => {
   test("missing media, mute, camera and interrupted states stay truthful", async ({ page }) => {
     await page.getByRole("button", { name: "Call view" }).click();
     await page.getByLabel("Call state").selectOption("live");
-    await expect(page.getByRole("status")).toHaveText("Video unavailable");
+    await expect(page.locator("[data-phase]")).toHaveText("Video unavailable");
     await expect(page.getByRole("heading", { name: "Counterpart video is unavailable." })).toBeVisible();
     await page.getByRole("button", { name: "Mute microphone", exact: true }).click();
     await expect(page.getByRole("button", { name: "Unmute microphone", exact: true })).toHaveAttribute("data-active", "true");

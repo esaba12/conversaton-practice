@@ -180,6 +180,11 @@ try {
       await b.page.screenshot({ path: "artifacts/local/g3-foreign.png", fullPage: true });
       console.log("PASS: UI saved-person start body is {durationSeconds, expectedVersion, idempotencyKey, personId} (browser-intercepted, no provider call); B's person page shows none of A's data.");
     } finally { await browser.close(); }
+  } else if (process.argv.includes("--g5-ui")) {
+    const { chromium } = await import("@playwright/test");
+    const { runG5 } = await import("./g5-checks.mjs");
+    await mkdir("artifacts/local", { recursive: true });
+    await runG5({ chromium, credentials, clients, rpc, assert });
   } else if (process.argv.includes("--ui-only")) {
     const { chromium } = await import("@playwright/test");
     const browser = await chromium.launch();

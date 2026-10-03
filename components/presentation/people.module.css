@@ -8,6 +8,8 @@
 .meta { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; font-variant-numeric: tabular-nums; }
 .lede { margin: 0; max-width: 560px; color: var(--muted); font-size: 15px; line-height: 1.75; }
 .sectionTitle { margin: 0; font-size: 19px; font-weight: 500; letter-spacing: -0.5px; }
+.sectionTitle:focus { outline: none; }
+.sectionTitle:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
 
 .home { max-width: 1120px; margin: 0 auto; padding: 40px 32px 0; color: var(--ink); overflow-wrap: anywhere; }
 .homeHead { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px; margin-bottom: 16px; }
@@ -39,7 +41,7 @@
 .zone[data-over="true"] { outline: 2px dashed var(--sage); outline-offset: 2px; }
 .zone h3 { margin: 0; font-size: 14px; font-weight: 600; }
 .zoneList { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
-.factChip { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; max-width: 100%; padding: 8px 12px; border: 1px solid #c9cec5; border-radius: 10px; background: var(--surface); color: var(--ink); font-size: 13px; line-height: 1.4; text-align: left; cursor: grab; }
+.factChip { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; max-width: 100%; padding: 8px 12px; border: 1px solid #c9cec5; border-radius: 10px; background: var(--surface); color: var(--ink); font-size: 13px; line-height: 1.4; text-align: left; overflow-wrap: anywhere; cursor: grab; }
 .factChip:disabled { cursor: not-allowed; color: #7a8078; }
 .factChip span { color: var(--sage); }
 .announce { margin: 0; min-height: 1.6em; font-size: 13px; color: var(--muted); }
@@ -49,10 +51,10 @@
 
 .factList { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .factRow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
-.factRow > p { flex: 1 1 220px; margin: 0; font-size: 14px; line-height: 1.6; }
-.factRow input { flex: 1 1 220px; min-height: 44px; padding: 10px 12px; border: 1px solid #aeb5ac; border-radius: 8px; font-size: 14px; }
+.factRow > p { flex: 1 1 200px; min-width: 0; margin: 0; font-size: 14px; line-height: 1.6; }
+.factRow input { flex: 1 1 200px; min-width: 0; min-height: 44px; padding: 10px 12px; border: 1px solid #aeb5ac; border-radius: 8px; font-size: 14px; }
 .addRow { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
-.addRow > div { flex: 1 1 260px; }
+.addRow > div { flex: 1 1 260px; min-width: 0; }
 .editForm { flex: 1 1 100%; }
 
 .dangerZone { display: grid; gap: 10px; padding-top: 16px; border-top: 1px solid var(--border); }

@@ -86,6 +86,14 @@ describe("session API client", () => {
     expect(init.keepalive).toBe(true);
     expect(JSON.parse(init.body)).toEqual({ reason: "navigation" });
   });
+  it("rejects a keepalive end with a typed NETWORK error when the server is unreachable", async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new TypeError("Failed to fetch"));
+    vi.stubGlobal("fetch", fetchMock);
+    const error = await endSession(sessionId, "navigation", { keepalive: true }).catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(SessionClientError);
+    expect(error).toMatchObject({ code: "NETWORK", retryable: true });
+    expect(fetchMock.mock.calls[0][1].keepalive).toBe(true);
+  });
 });
 
 describe("draft API client", () => {

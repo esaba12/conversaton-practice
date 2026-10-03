@@ -22,12 +22,20 @@ export type AboutMeEditorProps = {
 export function AboutMeEditor({ facts, loading = false, busy = false, onAdd, onEdit, onDelete, statusMessage, errorMessage }: AboutMeEditorProps) {
   const id = useId();
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  const pendingFocus = useRef<string | null>(null);
   const [text, setText] = useState("");
   const [editing, setEditing] = useState<{ id: string; text: string } | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
   useEffect(() => { headingRef.current?.focus(); }, []);
   const full = facts.length >= MAX_ABOUT_ME_FACTS;
   const canAdd = text.trim().length > 0 && !full && !busy && !loading;
+  // The row's buttons replace the edit form or confirm prompt; focus returns once they render enabled.
+  useEffect(() => {
+    const button = pendingFocus.current && listRef.current?.querySelector<HTMLButtonElement>(`[data-row="${pendingFocus.current}"]`);
+    if (button && !button.disabled) { pendingFocus.current = null; button.focus(); }
+  });
+  const closeEditor = (factId: string) => { pendingFocus.current = `edit-${factId}`; setEditing(null); };
 
   return <>
     <div className={styles.heading}>
@@ -48,22 +56,22 @@ export function AboutMeEditor({ facts, loading = false, busy = false, onAdd, onE
       </form>
       {statusMessage && <p className={setup.status} role="status">{statusMessage}</p>}
       {errorMessage && <p className={setup.error} role="alert">{errorMessage}</p>}
-      {loading ? <p className={setup.hint} role="status">Loading your facts…</p> : facts.length === 0 ? <p className={setup.hint}>No facts yet.</p> : <ul className={styles.factList}>
+      {loading ? <p className={setup.hint} role="status">Loading your facts…</p> : facts.length === 0 ? <p className={setup.hint}>No facts yet.</p> : <ul ref={listRef} className={styles.factList}>
         {facts.map((fact) => <li key={fact.id} className={styles.factRow}>
-          {editing?.id === fact.id ? <form className={`${styles.addRow} ${styles.editForm}`} onSubmit={async (event) => { event.preventDefault(); if (editing.text.trim() && await onEdit(fact.id, editing.text.trim())) setEditing(null); }} noValidate>
+          {editing?.id === fact.id ? <form className={`${styles.addRow} ${styles.editForm}`} onSubmit={async (event) => { event.preventDefault(); if (editing.text.trim() && await onEdit(fact.id, editing.text.trim())) closeEditor(fact.id); }} noValidate>
             <label className="sr-only" htmlFor={`${id}-edit-${fact.id}`}>Edit fact</label>
             <input id={`${id}-edit-${fact.id}`} type="text" maxLength={FACT_MAX} value={editing.text} disabled={busy} autoFocus onChange={(event) => setEditing({ id: fact.id, text: event.target.value })} />
             <button type="submit" className={styles.smallButton} disabled={busy || !editing.text.trim()}>Save fact</button>
-            <button type="button" className={setup.secondaryButton} onClick={() => setEditing(null)}>Cancel</button>
+            <button type="button" className={setup.secondaryButton} onClick={() => closeEditor(fact.id)}>Cancel</button>
           </form> : <>
             <p>{fact.text}</p>
             {confirming === fact.id ? <>
-              <span className={setup.hint}>Delete? People who know it will forget it.</span>
-              <button type="button" className={styles.dangerButton} disabled={busy} onClick={() => { setConfirming(null); onDelete(fact.id); }} aria-label={`Confirm delete: ${fact.text}`}>Delete</button>
-              <button type="button" className={setup.secondaryButton} onClick={() => setConfirming(null)}>Cancel</button>
+              <span id={`${id}-confirm-${fact.id}`} className={setup.hint}>Delete? People who know it will forget it.</span>
+              <button type="button" className={styles.dangerButton} disabled={busy} onClick={() => { setConfirming(null); onDelete(fact.id); }} aria-label={`Confirm delete: ${fact.text}`} aria-describedby={`${id}-confirm-${fact.id}`}>Delete</button>
+              <button type="button" className={setup.secondaryButton} autoFocus aria-describedby={`${id}-confirm-${fact.id}`} onClick={() => { pendingFocus.current = `delete-${fact.id}`; setConfirming(null); }}>Cancel</button>
             </> : <>
-              <button type="button" className={setup.secondaryButton} disabled={busy} onClick={() => { setConfirming(null); setEditing({ id: fact.id, text: fact.text }); }} aria-label={`Edit: ${fact.text}`}>Edit</button>
-              <button type="button" className={styles.dangerButton} disabled={busy} onClick={() => setConfirming(fact.id)} aria-label={`Delete: ${fact.text}`}>Delete</button>
+              <button type="button" className={setup.secondaryButton} data-row={`edit-${fact.id}`} disabled={busy} onClick={() => { setConfirming(null); setEditing({ id: fact.id, text: fact.text }); }} aria-label={`Edit: ${fact.text}`}>Edit</button>
+              <button type="button" className={styles.dangerButton} data-row={`delete-${fact.id}`} disabled={busy} onClick={() => setConfirming(fact.id)} aria-label={`Delete: ${fact.text}`}>Delete</button>
             </>}
           </>}
         </li>)}

@@ -21,7 +21,11 @@ export type DraftResponse = z.infer<typeof draftResponseSchema>;
 export const draftModelOutputSchema = z.object({ outOfScope: z.boolean(), ...draftResponseSchema.shape }).strict();
 export type DraftModelOutput = z.infer<typeof draftModelOutputSchema>;
 
+// Per signed-in user, per server process (not shared across instances or restarts). A request is counted before the model call.
+export const DRAFT_RATE_LIMIT = { max: 8, windowMs: 10 * 60_000 } as const;
+
 // HTTP contract. Errors use errorSchema with the listed HTTP status.
 // POST /api/scenarios/draft (draftRequestSchema, body ≤ 4096 chars) -> 200 draftResponseSchema. No persistence.
 // 401 UNAUTHENTICATED before any model call; 400 VALIDATION_ERROR; 422 OUT_OF_SCOPE (not retryable, offer an ordinary scenario);
+// 429 USAGE_LIMIT (not retryable now; more than DRAFT_RATE_LIMIT.max requests in the window, checked after auth and validation, before any model call);
 // 503 PROVIDER_UNAVAILABLE retryable (network, refusal, or invalid output after one retry); 503 NOT_CONFIGURED.

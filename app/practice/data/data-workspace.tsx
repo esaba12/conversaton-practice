@@ -64,7 +64,7 @@ export function DataWorkspace() {
 
   async function removeAll() {
     if (deleting || retrying) return false;
-    setDeleting(true); setMessage({});
+    setDeleting(true); setMessage({}); setResult(null);
     try {
       const response = await deletePracticeData();
       setResult(response);

@@ -87,11 +87,12 @@ export function PersonWorkspace({ personId }: { personId: string | null }) {
     const fact = facts.find((item) => item.id === factId);
     if (!person || !fact || sharing) return;
     const next = share ? [...person.sharedFactIds, factId] : person.sharedFactIds.filter((item) => item !== factId);
-    setSharing(true); setAnnouncement(share ? `Sharing with ${name}…` : `Removing from ${name}…`);
+    // Cleared rather than "Sharing…" so each move is announced once, even when the result text repeats.
+    setSharing(true); setAnnouncement("");
     try {
       // Only the version and shared set change; unsaved field edits stay in the form.
       setPerson(await setSharedFacts(person.id, next, person.version));
-      setAnnouncement(share ? `${name} now knows: ${fact.text}` : `${name} no longer knows: ${fact.text}`);
+      setAnnouncement(share ? `Shared “${fact.text}” with ${name}.` : `Stopped sharing “${fact.text}” with ${name}.`);
     } catch (error) {
       const code = codeOf(error);
       if (code === "UNAUTHENTICATED") { authLost(); return; }

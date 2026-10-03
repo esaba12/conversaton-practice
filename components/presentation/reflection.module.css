@@ -9,7 +9,8 @@
 .field textarea:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .panel .hint { font-size: 12px; }
 .result { display: grid; gap: 12px; padding: 16px; border-radius: 10px; background: #f3f6f0; border: 1px solid #b8c7b5; }
-.result:empty { display: none; }
+/* Stays in the accessibility tree while empty so the first result is announced; the negative margin cancels the grid gap. */
+.result:empty { padding: 0; border: 0; margin-bottom: -14px; }
 .result h3 { margin: 0 0 4px; font-size: 13px; font-weight: 600; color: var(--sage); }
 .result p { color: var(--ink); }
 .panel .evidence { justify-self: start; padding: 5px 9px; border-radius: 5px; background: #eee8d7; color: #665126; font-size: 12px; font-weight: 600; }

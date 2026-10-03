@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useEffect, useId, useRef } from "react";
 import type { Reflection } from "@/lib/schemas/reflection";
 import styles from "./reflection.module.css";
 
@@ -22,7 +22,16 @@ export type ReflectionPanelProps = {
 // Deliberately no score, grade or rating: only an observed action, a takeaway and a next step.
 export function ReflectionPanel({ selfReflection, onSelfReflectionChange, onReflect, onDone, pending = false, reflection = null, error = null, noSpeech = false }: ReflectionPanelProps) {
   const id = useId();
+  const requestRef = useRef<HTMLButtonElement>(null);
+  const doneRef = useRef<HTMLButtonElement>(null);
   const canRequest = !reflection && (!error || error.retry);
+  // The request button is disabled while pending and removed after a result, which drops focus to the page.
+  const requested = useRef(false);
+  useEffect(() => {
+    if (pending) { requested.current = true; return; }
+    if (!requested.current || (document.activeElement && document.activeElement !== document.body)) return;
+    (requestRef.current ?? doneRef.current)?.focus();
+  }, [pending, reflection, error]);
   const lines = reflection && !reflection.supportExit ? ([["What you did", reflection.observedAction], ["Takeaway", reflection.takeaway], ["Next time", reflection.nextStep]] as const).filter(([, text]) => text) : [];
 
   return (
@@ -45,8 +54,8 @@ export function ReflectionPanel({ selfReflection, onSelfReflectionChange, onRefl
       </div>
       {error && <div className={styles.error} role="alert"><p>{error.message}</p></div>}
       <div className="actions">
-        {canRequest && <button type="button" className={styles.primary} disabled={pending} aria-busy={pending} onClick={onReflect}>{pending ? "Reflecting…" : error ? "Try again" : "Get a short reflection"}</button>}
-        <button type="button" className={styles.secondary} onClick={onDone}>{reflection ? "Done" : "Skip"}</button>
+        {canRequest && <button type="button" ref={requestRef} className={styles.primary} disabled={pending} aria-busy={pending} onClick={onReflect}>{pending ? "Reflecting…" : error ? "Try again" : "Get a short reflection"}</button>}
+        <button type="button" ref={doneRef} className={styles.secondary} onClick={onDone}>{reflection ? "Done" : "Skip"}</button>
       </div>
     </section>
   );
