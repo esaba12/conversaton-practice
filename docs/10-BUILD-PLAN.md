@@ -98,7 +98,7 @@ Verify receipt and required fields, charge devices, and prepare the headset and 
 Keep the live video call, situation generation, and the core loop first. Defer Relay and Photon for the solo MVP. Gemini can replace the setup/reflection provider before that layer is implemented, but do not maintain two providers. Notability requires genuine Pro usage, a tools tag, a usage note, and two screenshots. Figma eligibility and prize stacking remain questions for organizers.
 
 ## Scope cuts
-Cut in order: Photon/other extra channels -> decorative UI motion -> extra avatars/voices -> optional repeat-practice shortcut -> automated reflection (keep self-reflection and explicit preference review). Recovery from a failed connection remains required.
+Cut in order: Photon/other extra channels -> decorative UI motion -> the appearance preset catalog (docs/00; still unbuilt) -> optional repeat-practice shortcut -> automated reflection (keep self-reflection and explicit preference review). Recovery from a failed connection remains required. Do not start the preset catalog during the open G3 gate.
 Do not cut situation generation, responsive synchronized counterpart video/audio, editable persona, approved-memory boundary, End, or ownership protection.
 If database setup blocks progress, continue isolated development with a labeled mock and record the blocker. G1/G3 cannot pass without their real ownership and persistence checks; do not present a local mock as an authenticated multi-user integration.
 

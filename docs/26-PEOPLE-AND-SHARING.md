@@ -62,7 +62,25 @@ All routes require sign-in before reading the body, and are owner-scoped. A diff
 4. A second signed-in user cannot list, read, edit, share into, or start a practice with the first user's people or facts (T03).
 5. A stale `expectedVersion` returns 409 without a partial write (T05).
 
+## As built (coordinator, October 3, 17:25 EDT)
+
+Exact contracts: `lib/schemas/people.ts` (shapes and HTTP contract), `lib/schemas/role-context.ts` (`traitChipsSchema`, `buildRoleContext(role, { traits, knownAboutUser })`), `lib/schemas/session.ts` (saved-person start). Database: `supabase/migrations/20261003211000_people_sharing.sql`, assertions in `supabase/tests/people_sharing.sql`. Differences from the proposal above:
+
+- **Hard delete, no `deleted_at`.** Deleting a person or fact removes the row and its links; nothing lingers.
+- **Writes only through RPCs.** Authenticated users can `SELECT` their own rows; all writes go through `SECURITY DEFINER` RPCs owned by the restricted `people_executor` role (NOLOGIN, NOBYPASSRLS, owner RLS). Identity comes from the postgres-owned `practice_private.require_user()`, which also takes a per-owner advisory lock so caps and version checks are race-free.
+- **Cross-owner links are structurally impossible.** `person_shared_facts` uses composite foreign keys `(person_id, owner_id)` and `(fact_id, owner_id)`.
+- **Version bumps** on person edit, on any change to the shared set, and when a shared fact is edited or deleted (what that person knows changed).
+- **Context path** is the single `person_context(p_id, p_expected_version)` function: `SECURITY INVOKER` under owner RLS, returns the person's fields and the text of its shared facts, and never references `private_prep`.
+- **Private prep** has its own `GET/PUT /api/private-prep`; empty notes delete the row. One row per owner, shown on person pages under "Never shared".
+- **Caps:** 30 facts and 50 people per owner (`USAGE_LIMIT` 409).
+- **Session attribution deferred.** Sessions do not yet store `person_id`/`person_version`; the person version is part of the start's idempotency fingerprint instead.
+- **Provider disclosure.** Shared facts and the person's fields are sent to Tavus as call context for that practice (subject to provider retention, docs/08). Private prep and unshared facts are never sent.
+- **Future migrations** that replace, drop or re-own these functions must first `grant people_executor to postgres` and revoke it again afterwards, as this migration does. `service_role` keeps Supabase's default table/function privileges intentionally (test administration only; no service-role runtime).
+- **Pages live under `/practice/…`** (`/practice/people/[id]`, `/practice/about-me`) to reuse the existing proxy and sign-in guard.
+
 ## Paste-ready G3 coordinator prompt
+
+Historical: this prompt started the G3 build (done). For a fresh context use [docs/27](27-G3-HANDOFF.md).
 
 ```text
 Continue as coordinator in /Users/ethansaba/code/therapist on main.
@@ -102,6 +120,10 @@ record only checks actually run.
 Submission target: Oct 4, 11:30 AM America/Detroit.
 ```
 
+## Later, not this gate
+
+Appearance presets are decided and not built (October 3, 17:23 EDT; [docs/00](00-DECISIONS-AND-VIABILITY.md)). A saved person will eventually have a preset stock face and premade voice. G3 does not add that picker, those fields, or extra provider characters.
+
 ## Out of scope for G3
 
-Voice/avatar choice per person, drag-to-reorder, importing contacts or real chats, inferring facts from conversation, automatic memory writes, and group conversations.
+Appearance presets, drag-to-reorder, importing contacts or real chats, inferring facts from conversation, automatic memory writes, and group conversations.

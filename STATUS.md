@@ -1,6 +1,24 @@
 # Project status
 
-Updated October 3, 2026, 17:02 EDT. **G1 passed** (`a8211af`, [G1-04](docs/tasks/G1-04-integration.md)). **G2 passed** (human-reported live call on `d42f53d`, [G2-04](docs/tasks/G2-04-integration.md)). G3 approved memory is next.
+Updated October 3, 2026, 17:45 EDT. **G1 passed** (`a8211af`, [G1-04](docs/tasks/G1-04-integration.md)). **G2 passed** (human-reported live call on `d42f53d`, [G2-04](docs/tasks/G2-04-integration.md)). **G3 built, integrated and CI-green; awaiting the human live call** on `build/g3-people` (draft [PR #20](https://github.com/esaba12/conversaton-practice/pull/20)).
+
+**Fresh coordinator context: start from [docs/27-G3-HANDOFF.md](docs/27-G3-HANDOFF.md)**. It has the current state, next steps (live G3 call → merge → G4 → G5 → demo), the verification recipe and a paste-ready prompt.
+
+## Appearance presets (17:23 EDT, docs only)
+The user wants a saved person to look and sound like the relationship, chosen from a short catalog of stock faces and premade voices. No photo upload, likeness, or voice cloning. Recorded in [docs/00](docs/00-DECISIONS-AND-VIABILITY.md). Not part of the open G3 build: do not add a picker, schema fields, or extra PALs until G3 is accepted. Current calls stay on the one configured face and voice.
+
+## G3 build (17:25 EDT)
+Contracts frozen at `7bb796b`: `lib/schemas/people.ts` (About-me facts, people with trait chips + version, shared facts, private prep, HTTP contract), `traitChipsSchema`/`roleExtrasSchema` and `buildRoleContext(role, { traits, knownAboutUser })` in `lib/schemas/role-context.ts`, saved-person start branch `{ idempotencyKey, personId, expectedVersion, durationSeconds }`, `NOT_FOUND` error code, `lib/data/rpc.ts` marker mapping. Migration `20261003211000_people_sharing.sql` **applied** to linked project `rcktybngebovyopregnt` (`supabase db push --linked --yes`, Docker catalog-cache warning only). `supabase/tests/people_sharing.sql` **pass** (two owners, cross-owner read/edit/share/context denied, stale version → `VERSION_CONFLICT` with no partial write, private prep absent from `person_context`, caps, direct DML denied, privilege shape); negative control confirmed failures surface; no fixtures persisted; G1 `session_foundation.sql` re-run pass.
+
+| Task | Issue | Writer | Owned paths |
+| --- | --- | --- | --- |
+| [G3-01](docs/tasks/G3-01-people-data-routes.md) data + routes | [#17](https://github.com/esaba12/conversaton-practice/issues/17) | background subagent | `lib/data/people.ts`, `app/api/about-me/**`, `app/api/people/**`, `app/api/private-prep/route.ts`, `tests/unit/people-routes.test.ts` |
+| [G3-02](docs/tasks/G3-02-start-saved-person.md) saved-person start | [#18](https://github.com/esaba12/conversaton-practice/issues/18) | background subagent | `lib/data/person-context.ts`, `lib/session/server.ts`, `lib/media/tavus.ts`, session/tavus/person-context tests |
+| [G3-03](docs/tasks/G3-03-people-ui.md) UI | [#19](https://github.com/esaba12/conversaton-practice/issues/19) | background subagent | `app/practice/practice-workspace.tsx`, `app/practice/people/**`, `app/practice/about-me/**`, `components/presentation/people-*`, `lib/people/api-client.ts`, `lib/session/api-client.ts`, client tests |
+
+Coordinator owns schemas, migration, `scripts/preflight/**`, STATUS and numbered specs; integrates one worker at a time, runs the verification recipe and the two-user check, opens the PR, then asks the human for the live G3 call.
+
+**17:42 EDT — all three workers integrated** (`120f3c2` G3-02, `b51bd69` G3-01, `1133e16` G3-03) plus privacy-review follow-ups (`71e837d`; no blockers). Typecheck, 103 unit tests, production build, browser suite (8 pass, 1 production-only skip), G2 regression and the new `auth-database-check.mjs --g3` (real JWTs) and `--g3-ui` (two signed-in browser sessions: owner 404s, cross-owner sharing denied, stale 409, keyboard and drag-and-drop sharing, chip edit, Never shared not shareable, saved-person start body is ID + version only) all pass. Evidence and the human checklist: [G3-04](docs/tasks/G3-04-integration.md). **Next: human live G3 call.** Not yet verified live: a successful saved-person Tavus start, the counterpart using only shared facts, tone change after a chip edit, Save/Update after a real End. Carry to G5: session `person_id` attribution, mobile/screen-reader walkthrough of the new pages.
 
 ## G3 redefined by user (17:05 EDT)
 G3 = saved people with a chip editor, an About-me profile, per-person drag-and-drop sharing of what each person knows about you (keyboard path required), a separate never-shareable private section, and an explicit "Save this person / Update" after End. Reflection-generated memory proposals move to G4 or later. Design, acceptance and the paste-ready G3 coordinator prompt: [docs/26](docs/26-PEOPLE-AND-SHARING.md). docs/01, 02, 04, 05, 09 (new T16), 10 and AGENTS.md point there. docs/25 Prompt A is superseded; Prompt B (demo prep) still applies.

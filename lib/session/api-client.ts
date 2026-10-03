@@ -10,10 +10,11 @@ export class SessionClientError extends Error {
   constructor(public code: SessionClientErrorCode, message: string, public status: number | null, public retryable: boolean, public sessionId?: string) { super(message); this.name = "SessionClientError"; }
 }
 
-async function post<T>(path: string, body: unknown, schema: z.ZodType<T>, init: { keepalive?: boolean } = {}): Promise<T> {
+export async function requestJson<T>(method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE", path: string, body: unknown, schema: z.ZodType<T>, init: { keepalive?: boolean } = {}): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), credentials: "same-origin", cache: "no-store", keepalive: init.keepalive ?? false });
+    const payload = body === undefined ? {} : { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
+    response = await fetch(path, { method, ...payload, credentials: "same-origin", cache: "no-store", keepalive: init.keepalive ?? false });
   } catch {
     throw new SessionClientError("NETWORK", "The server could not be reached.", null, true);
   }
@@ -29,6 +30,10 @@ async function post<T>(path: string, body: unknown, schema: z.ZodType<T>, init: 
   return parsed.data;
 }
 
+function post<T>(path: string, body: unknown, schema: z.ZodType<T>, init: { keepalive?: boolean } = {}): Promise<T> {
+  return requestJson("POST", path, body, schema, init);
+}
+
 export function generateDraft(input: DraftRequest): Promise<DraftResponse> {
   const body: DraftRequest = { situation: input.situation };
   if (input.goal !== undefined) body.goal = input.goal;
@@ -40,6 +45,11 @@ export function generateDraft(input: DraftRequest): Promise<DraftResponse> {
 export function startSession({ role, durationSeconds, idempotencyKey = crypto.randomUUID() }: { role: RoleContext; durationSeconds: 180 | 300; idempotencyKey?: string }): Promise<StartResponse> {
   const { name, role: roleText, style, publicContext, opening, constraints, challenge, pace } = role;
   return post("/api/sessions", { idempotencyKey, role: { name, role: roleText, style, publicContext, opening, constraints: [...constraints], challenge, pace }, durationSeconds }, startResponseSchema);
+}
+
+// A saved person sends only its ID and version; the server loads its fields and shared facts.
+export function startSavedPersonSession({ personId, expectedVersion, durationSeconds, idempotencyKey = crypto.randomUUID() }: { personId: string; expectedVersion: number; durationSeconds: 180 | 300; idempotencyKey?: string }): Promise<StartResponse> {
+  return post("/api/sessions", { idempotencyKey, personId, expectedVersion, durationSeconds }, startResponseSchema);
 }
 
 export async function markConnected(id: string): Promise<PracticeSession> {

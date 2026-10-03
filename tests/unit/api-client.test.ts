@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { roommate } from "@/fixtures/roommate";
 import type { RoleContext } from "@/lib/schemas/role-context";
 import { startRequestSchema } from "@/lib/schemas/session";
-import { SessionClientError, endSession, generateDraft, markConnected, startSession } from "@/lib/session/api-client";
+import { SessionClientError, endSession, generateDraft, markConnected, startSavedPersonSession, startSession } from "@/lib/session/api-client";
 
 afterEach(() => { vi.unstubAllGlobals(); });
 const sessionId = "5b8f1f1e-6d2a-4c1b-9a51-0d4b9b6f2a11";
@@ -62,6 +62,21 @@ describe("session API client", () => {
   it("reports network failure as retryable", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
     await expect(endSession(sessionId, "user")).rejects.toMatchObject({ code: "NETWORK", retryable: true });
+  });
+  it("starts a saved person with only the key, person ID, version, and duration", async () => {
+    const fetchMock = stubFetch(Response.json({ session, credential }, { status: 201 }));
+    await expect(startSavedPersonSession({ personId: requestId, expectedVersion: 4, durationSeconds: 180, idempotencyKey: key })).resolves.toEqual({ session, credential });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect([url, init.method]).toEqual(["/api/sessions", "POST"]);
+    const body = JSON.parse(init.body);
+    expect(body).toEqual({ idempotencyKey: key, personId: requestId, expectedVersion: 4, durationSeconds: 180 });
+    expect(startRequestSchema.safeParse(body).success).toBe(true);
+  });
+  it("surfaces saved-person 404 and stale-version 409 as typed errors", async () => {
+    stubFetch(Response.json({ code: "NOT_FOUND", message: "Not found.", retryable: false, request_id: requestId }, { status: 404 }));
+    await expect(startSavedPersonSession({ personId: requestId, expectedVersion: 1, durationSeconds: 180 })).rejects.toMatchObject({ code: "NOT_FOUND", status: 404 });
+    stubFetch(Response.json({ code: "VERSION_CONFLICT", message: "Changed.", retryable: false, request_id: requestId }, { status: 409 }));
+    await expect(startSavedPersonSession({ personId: requestId, expectedVersion: 1, durationSeconds: 180 })).rejects.toMatchObject({ code: "VERSION_CONFLICT", status: 409 });
   });
   it("passes keepalive and the reason when ending", async () => {
     const fetchMock = stubFetch(Response.json({ session: { ...session, status: "ended", cleanup: "pending" } }));

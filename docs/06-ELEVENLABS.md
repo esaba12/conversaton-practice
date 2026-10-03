@@ -7,7 +7,7 @@ The coordinator owns one immutable Tavus PAL, a verified stock face and a premad
 
 Perception is off. Patient turn-taking, high interruptibility and no idle engagement are configured, but behavior still needs live verification. No provider database tools, documents or memory identities are configured.
 
-Each private call receives only an allowlisted fictional role/context/opening, with `participant_tags: []`. No shared PAL prompt mutation. Different voice/flow settings require another immutable configuration. The counterpart never receives private preparation, fears, profiles or prior simulated history.
+Each private call receives only an allowlisted fictional role/context/opening, with `participant_tags: []`. No shared PAL prompt mutation. Different voice/flow settings require another immutable configuration. A preset voice catalog is decided and not created (docs/00); do not add PALs for it during G3. The counterpart never receives private preparation, fears, profiles or prior simulated history.
 
 ## Browser and lifecycle
 Pinned transport: Daily 0.87.0. `createCallObject({videoSource:false,audioSource:true})` owns the call microphone and suppresses outgoing camera. Optional preview separately acquires video-only tracks and never supplies them to Daily. UI consumes media and emits controls; it does not acquire tracks.

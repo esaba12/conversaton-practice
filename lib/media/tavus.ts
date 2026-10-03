@@ -1,7 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { AppError } from "@/lib/schemas/errors";
-import { buildRoleContext, type RoleContext } from "@/lib/schemas/role-context";
+import { buildRoleContext, type RoleContext, type RoleExtras } from "@/lib/schemas/role-context";
 import { mediaCredentialSchema } from "@/lib/schemas/media";
 
 const createdSchema = z.object({ conversation_id: z.string().min(1), conversation_url: z.url(), meeting_token: z.string().min(1) });
@@ -20,15 +20,15 @@ async function request(path: string, method: string, body?: unknown, timeoutMs =
   if (!response.ok) throw new AppError("PROVIDER_UNAVAILABLE", "The call provider could not complete the request.", 503, true);
   return response;
 }
-export function conversationBody(role: RoleContext, durationSeconds: 180 | 300) {
+export function conversationBody(role: RoleContext, durationSeconds: 180 | 300, extras?: RoleExtras) {
   const { pal, face } = configuration();
-  return { pal_id: pal, face_id: face, audio_only: false, require_auth: true, max_participants: 2, participant_tags: [], conversational_context: buildRoleContext(role), custom_greeting: role.opening,
+  return { pal_id: pal, face_id: face, audio_only: false, require_auth: true, max_participants: 2, participant_tags: [], conversational_context: buildRoleContext(role, extras), custom_greeting: role.opening,
     properties: { max_call_duration: durationSeconds, participant_left_timeout: 10, participant_absent_timeout: 120, enable_recording: false, auto_start_recording: false, enable_closed_captions: false, languages: ["en"] } };
 }
-export async function createConversation(role: RoleContext, durationSeconds: 180 | 300) {
+export async function createConversation(role: RoleContext, durationSeconds: 180 | 300, extras?: RoleExtras) {
   // No automatic POST retry: a timeout can have created a billable remote call.
   const requestedAt = Date.now();
-  const response = await request("conversations", "POST", conversationBody(role, durationSeconds));
+  const response = await request("conversations", "POST", conversationBody(role, durationSeconds, extras));
   const raw: unknown = await response.json();
   const parsed = createdSchema.safeParse(raw);
   if (!parsed.success) {

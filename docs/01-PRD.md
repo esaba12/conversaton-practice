@@ -29,7 +29,7 @@ Sign-in is a prerequisite for the entire workspace, including setup generation, 
 |---|---|---|
 | P01 | Three presets | Professor, roommate, and declining a request are usable without generation |
 | P02 | Situation generation | A new user-described situation produces an editable persona, scenario, goal suggestion when needed, and opening; actual generation must work for MVP acceptance. Manual fallback handles individual failures; no silent invention of real-person facts |
-| P03 | Persona editing | Form supports role, style, voice, familiarity, and constraints. G3: categorical trait chips (tone, formality, talkativeness, familiarity) plus short text fields; voice choice deferred (docs/26) |
+| P03 | Persona editing | Form supports role, style, voice, familiarity, and constraints. G3: categorical trait chips (tone, formality, talkativeness, familiarity) plus short text fields. Face and voice stay the single stock pair during G3; a preset catalog is decided for later (docs/00) |
 | P04 | Live video conversation | Five responsive exchanges complete with real ElevenLabs audio and synchronized talking-counterpart video; interruption stops the superseded speech and matching speaking animation; voice-only, a static portrait, or prerecorded replies cannot pass |
 | P05 | Session controls | Connecting/live/interrupted states, separate mic mute and camera toggle, persistent End, permission failure, and recovery from failed audio/video connection; a repeat-practice shortcut is optional |
 | P06 | Profile | Explicit goals and pace preferences persist for current authenticated user. **G3 (docs/26):** an About-me list of short shareable facts persists for the user; private preparation notes are a separate section that can never be shared |

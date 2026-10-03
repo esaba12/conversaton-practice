@@ -17,6 +17,7 @@ Build a live conversation rehearsal prototype with video chats for MHacks. Read 
 - Confirmed core experience: FaceTime-style calls with a visible, talking fictional AI counterpart. Real synchronized video is required in G1; audio-only or prerecorded/static fallback cannot pass. Follow docs/22-LIVE-VIDEO.md. The former blanket avatar exclusion is superseded. Tavus CVI + ElevenLabs TTS is the current setup route; provider access and live behavior remain unverified.
 - Prioritize live conversation, editable personas, approved memory, and a natural session ending.
 - G3 (user decision, October 3, 17:05): saved people with a chip editor, an About-me profile, and per-person drag-and-drop sharing (with a keyboard path) of what each person knows about the user. Saving after a practice is an explicit step. See docs/26-PEOPLE-AND-SHARING.md.
+- Appearance (user decision, October 3, 17:23): a saved person may later use a preset stock face and premade voice. No photo upload, generated likeness, or voice cloning. Not part of the in-progress G3 build. See docs/00-DECISIONS-AND-VIABILITY.md.
 - No group conversations, voice cloning, social scores, or branching replay in the MVP.
 - Keep application implementation small; do not add runtime orchestration frameworks, vector databases, or custom speech pipelines. This does not restrict coding subagents or worktrees used to build the app.
 
