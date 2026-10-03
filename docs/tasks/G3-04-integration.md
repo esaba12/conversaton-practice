@@ -8,7 +8,7 @@ Gate: G3
 Requirements/tests: G3 acceptance 1–5 (docs/26), T01, T03, T05, T16
 GitHub issue: [#17](https://github.com/esaba12/conversaton-practice/issues/17), [#18](https://github.com/esaba12/conversaton-practice/issues/18), [#19](https://github.com/esaba12/conversaton-practice/issues/19)
 Pull request: [#20](https://github.com/esaba12/conversaton-practice/pull/20) (draft)
-CI run: not run
+CI run: [run 37155697794](https://github.com/esaba12/conversaton-practice/actions/runs/37155697794) pass (typecheck/unit/build/browser)
 
 ## Integration
 
