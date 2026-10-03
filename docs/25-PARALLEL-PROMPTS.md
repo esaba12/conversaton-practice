@@ -2,18 +2,18 @@
 
 Written October 3, 2026, 16:50 EDT by the G2 coordinator. The G2 coordinator session stays in `/Users/ethansaba/code/therapist` on `build/g2-generation` and owns STATUS.md, `lib/schemas/**` existing files, migrations execution, the shared Supabase project and the microphone. These prompts start **separate** agents that must not touch that checkout.
 
-Gate rule (AGENTS.md, docs/10): G3 feature work integrates only after G2 passes. Preparation in an isolated worktree is allowed: plan, contracts proposal, unapplied migration, repository code and unit tests, reviewed by the coordinator before anything merges or any SQL runs.
+G2 passed and merged at `6682823`, so G3 is the active gate. Preparation in an isolated worktree is allowed: plan, contracts proposal, unapplied migration, repository code and unit tests, reviewed by the coordinator before anything merges or any SQL runs.
 
 ## Prompt A — G3 approved-memory preparation (recommended)
 
 ```text
 You are the G3 preparation lead for /Users/ethansaba/code/therapist (MHacks
-conversation-rehearsal prototype). Another coordinator is finishing G2 in the
+conversation-rehearsal prototype). G2 passed and merged to main (6682823). Another coordinator works in the
 main checkout; do NOT edit, build in, or run git commands that write in
 /Users/ethansaba/code/therapist itself.
 
 Setup: create your own worktree from the G2 branch:
-  git -C /Users/ethansaba/code/therapist worktree add .worktrees/g3-memory -b agent/g3-memory build/g2-generation
+  git -C /Users/ethansaba/code/therapist worktree add .worktrees/g3-memory -b agent/g3-memory main
 Work only in /Users/ethansaba/code/therapist/.worktrees/g3-memory. Run
 `npm ci` there if node_modules is missing. Use dev port 3013 only if needed.
 
@@ -55,7 +55,7 @@ Not allowed: applying migrations or any SQL on the shared project, editing
 STATUS.md or numbered specs (propose changes in G3-00), live provider calls,
 using the microphone, Playwright against port 3000, pushing to main, force
 operations. You may commit to agent/g3-memory and push it, and open a DRAFT
-PR against build/g2-generation (or main once G2 merges) titled "G3 prep
+PR against main titled "G3 prep
 (unapplied migration)" plus GitHub issues for G3-01..03 in
 esaba12/conversaton-practice. Never stage .env.local or secrets; copy
 .env.local into the worktree only if a check truly needs it.
@@ -73,7 +73,7 @@ You prepare the MHacks demo and submission for /Users/ethansaba/code/therapist
 Another coordinator is building in that checkout; do not edit code, build,
 run the app, use the microphone, or write git there.
 
-Setup: git -C /Users/ethansaba/code/therapist worktree add .worktrees/demo-prep -b agent/demo-prep build/g2-generation
+Setup: git -C /Users/ethansaba/code/therapist worktree add .worktrees/demo-prep -b agent/demo-prep main
 Work only in .worktrees/demo-prep, docs only.
 
 Read AGENTS.md, STATUS.md, README.md, docs/01-PRD.md, docs/11-DEMO-AND-SUBMISSION.md,
