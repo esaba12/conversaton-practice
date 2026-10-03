@@ -80,6 +80,8 @@ Exact contracts: `lib/schemas/people.ts` (shapes and HTTP contract), `lib/schema
 
 ## Paste-ready G3 coordinator prompt
 
+Historical: this prompt started the G3 build (done). For a fresh context use [docs/27](27-G3-HANDOFF.md).
+
 ```text
 Continue as coordinator in /Users/ethansaba/code/therapist on main.
 Read AGENTS.md, STATUS.md, docs/26-PEOPLE-AND-SHARING.md (the G3 design,

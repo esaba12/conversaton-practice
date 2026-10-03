@@ -1,6 +1,8 @@
 # Project status
 
-Updated October 3, 2026, 17:25 EDT. **G1 passed** (`a8211af`, [G1-04](docs/tasks/G1-04-integration.md)). **G2 passed** (human-reported live call on `d42f53d`, [G2-04](docs/tasks/G2-04-integration.md)). **G3 in progress** on `build/g3-people`.
+Updated October 3, 2026, 17:45 EDT. **G1 passed** (`a8211af`, [G1-04](docs/tasks/G1-04-integration.md)). **G2 passed** (human-reported live call on `d42f53d`, [G2-04](docs/tasks/G2-04-integration.md)). **G3 built, integrated and CI-green; awaiting the human live call** on `build/g3-people` (draft [PR #20](https://github.com/esaba12/conversaton-practice/pull/20)).
+
+**Fresh coordinator context: start from [docs/27-G3-HANDOFF.md](docs/27-G3-HANDOFF.md)**. It has the current state, next steps (live G3 call → merge → G4 → G5 → demo), the verification recipe and a paste-ready prompt.
 
 ## Appearance presets (17:23 EDT, docs only)
 The user wants a saved person to look and sound like the relationship, chosen from a short catalog of stock faces and premade voices. No photo upload, likeness, or voice cloning. Recorded in [docs/00](docs/00-DECISIONS-AND-VIABILITY.md). Not part of the open G3 build: do not add a picker, schema fields, or extra PALs until G3 is accepted. Current calls stay on the one configured face and voice.
