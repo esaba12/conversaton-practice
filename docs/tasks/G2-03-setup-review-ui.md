@@ -1,7 +1,7 @@
 # G2-03: Describe, generate, review/edit, then start
 
-Status: ready
-Updated: October 3, 2026, 16:40 EDT
+Status: integrated
+Updated: October 3, 2026, 16:47 EDT
 Assigned writer: G2-03 background subagent
 Coordinator: Cursor coordinator session
 Gate: G2
@@ -42,13 +42,22 @@ Non-goals: saved personas/profiles (G3), reflection, presets beyond one optional
 
 ## Verification evidence
 
-- Not run yet. Writer records typecheck/unit results. Browser checks are coordinator-only.
+Mode: unit/static only. Uncommitted changes over `346b61d`; no build, dev server, Playwright, or provider/network calls.
+
+- `npx vitest run tests/unit/api-client.test.ts` — 1 file, 11 tests passed. Covers: start body has exactly `idempotencyKey`, `role`, `durationSeconds` and parses with `startRequestSchema`; a role object carrying extra `goal`/`privateNotes` keys is stripped to the 8 role keys and the raw body contains neither value; fresh idempotency key per call; 409 `SESSION_ACTIVE` session id; malformed responses; network retryable; end keepalive; `generateDraft` posts situation/goal/privateNotes only to `/api/scenarios/draft`, omits absent optionals, rejects a draft role with extra fields, surfaces `OUT_OF_SCOPE` (422) and `PROVIDER_UNAVAILABLE` (503) codes/messages.
+- `npm run typecheck` — passed (whole repo, including other workers' in-progress files at the time of the run).
+- `npm test` — 6 files, 66 tests passed.
+- ESLint: not run (no `eslint.config.*` in the repo).
+- Not verified: rendered UI, keyboard/focus flow, mobile layout, screen-reader announcements, live draft route, and live start with a reviewed role. These need coordinator browser/live checks.
 
 ## Handoff
 
-- Changed paths and commit(s): pending (coordinator commits)
-- Remaining failures/risks: pending
+- Changed paths (uncommitted): `lib/session/api-client.ts`, `tests/unit/api-client.test.ts`, `app/practice/practice-workspace.tsx`, new `components/presentation/setup-describe.tsx`, `components/presentation/setup-review.tsx`, `components/presentation/setup.module.css`, this record.
+- UI flow: `/practice` opens **Describe** (situation required ≤1000 with counter; "What do you want to say or do?" optional ≤200; "Private preparation notes" optional ≤1000, tagged "Never shared with the character"). "Generate setup" calls `generateDraft` and shows "Drafting your setup…" (`role="status"`, `aria-busy`). Success opens **Review**, labeled "Generated draft — review and edit", with controlled fields: Name, Role, How they talk (style), What this character knows (publicContext), Opening line, constraints (add/remove, up to 5; blank rows ignored), Challenge and Pace radios, and "Your goal" tagged "Not shared with the character". Assumptions show read-only under "Assumptions to check". Start is disabled until `roleContextSchema` parses, with a "Still needed: …" hint. Failure (network/503/malformed/other) keeps inputs and shows "We couldn’t generate a setup right now." in a `role="alert"` region plus a "Set up manually" button. `OUT_OF_SCOPE` shows the server message plus an everyday-conversation suggestion and no extra manual button. "Enter setup manually" and "Use roommate example" links are always available; they open Review labeled "Manual setup — not generated" (empty fields, neutral/patient, goal prefilled from the user's intent) or "Example setup — not generated" (fixture). "Back" returns to Describe with inputs kept. "Regenerate" (shown when a situation exists) replaces the draft, or on failure keeps the current setup and shows an alert. Start sends `startSession({ role, durationSeconds: 180, idempotencyKey: crypto.randomUUID() })`. The call view receives the started role's name and goal (fallback goal "Say what matters to you."). "Back to setup" after End returns to Review with the same role. Sign-out and auth loss (`SIGNED_OUT`/401) clear situation, intent, notes, the review role/goal/assumptions, the call name/goal, and any in-flight generation. Nothing is written to storage. Heading focus moves on step changes. Media, teardown, and auth-loss ordering are unchanged.
+- Browser-test impact: no current `tests/browser/**` spec covers signed-in `/practice`, so none should break. The signed-in setup no longer uses `PracticeSetup` (design preview still does; exports unchanged). New accessible names for future specs: buttons "Generate setup", "Enter setup manually", "Use roommate example", "Set up manually", "Start practice", "Back", "Regenerate", "Add constraint", "Remove constraint N", "End previous practice"; labels "The situation", "What do you want to say or do? Optional", "Private preparation notes Optional", "Name", "Role", "How they talk", "What this character knows", "Opening line", "Your goal", "Constraint N"; radio groups "Challenge" (Supportive/Neutral/Mild pushback) and "Pace" (Patient/Conversational). Note: the review heading "What this character knows" is now a label, not an `h3`.
+- Remaining failures/risks: (1) The UI is not browser-verified. (2) Sign-out clears setup content immediately, even if sign-out then fails (privacy-first). (3) Regenerate discards edits made in review. (4) The goal isn't required to start; an empty goal shows the fallback text in the call. (5) The server must accept the `role` start branch (G2-02) and the draft route (G2-01) before a live run.
+- Proposed shared changes: docs/02 Persona review currently lists directness/formality/talkativeness/voice; this UI uses the frozen `roleContextSchema` fields (style, challenge, pace) instead. Coordinator may want to align docs/02.
 - External account action: none
-- Next smallest task: pending
-- Ready for review: no
+- Next smallest task: coordinator browser check of describe → generate (mocked route) → review → start, plus manual and out-of-scope paths and keyboard/mobile; then a live run once G2-01/G2-02 are integrated.
+- Ready for review: yes
 - Coordinator integration: pending

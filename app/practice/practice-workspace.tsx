@@ -2,16 +2,22 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { PracticeCall, PracticeSetup, type PracticeCallProps } from "@/components/presentation/practice";
+import { PracticeCall, type PracticeCallProps } from "@/components/presentation/practice";
+import { SetupDescribe, type SetupDescribeError } from "@/components/presentation/setup-describe";
+import { SetupReview, emptyRole, parseReviewedRole, type SetupMode } from "@/components/presentation/setup-review";
 import { roommate } from "@/fixtures/roommate";
 import { createBrowserAuthClient } from "@/lib/auth/browser";
 import { createDailyController } from "@/lib/media/daily-controller";
+import type { DraftRequest } from "@/lib/schemas/draft";
 import type { MediaController, MediaEvent } from "@/lib/schemas/media";
+import type { RoleContext } from "@/lib/schemas/role-context";
 import type { EndReason, PracticeSession } from "@/lib/schemas/session";
-import { SessionClientError, endSession, markConnected, startSession } from "@/lib/session/api-client";
+import { SessionClientError, endSession, generateDraft, markConnected, startSession } from "@/lib/session/api-client";
 
 const DURATION_SECONDS = 180;
-const GOAL = "Make a clear request about sharing kitchen chores.";
+const EXAMPLE_GOAL = "Make a clear request about sharing kitchen chores.";
+const FALLBACK_GOAL = "Say what matters to you.";
+const GENERATION_FAILED = "We couldn’t generate a setup right now.";
 
 type Phase = PracticeCallProps["phase"];
 type Cleanup = { state: "closing" } | { state: "closed"; cleanup: PracticeSession["cleanup"] } | { state: "unreachable" };
@@ -65,6 +71,20 @@ export function PracticeWorkspace() {
   const [cleanupTarget, setCleanupTarget] = useState<CleanupTarget | null>(null);
   const [signingOut, setSigningOut] = useState(false);
   const [headerMessage, setHeaderMessage] = useState("");
+  // Setup content is transient: never persisted, and private notes go only to generateDraft.
+  const [step, setStep] = useState<"describe" | "review">("describe");
+  const [moveFocus, setMoveFocus] = useState(false);
+  const [situation, setSituation] = useState("");
+  const [intent, setIntent] = useState("");
+  const [privateNotes, setPrivateNotes] = useState("");
+  const [reviewRole, setReviewRole] = useState<RoleContext>(emptyRole);
+  const [reviewGoal, setReviewGoal] = useState("");
+  const [assumptions, setAssumptions] = useState<string[]>([]);
+  const [setupMode, setSetupMode] = useState<SetupMode>("manual");
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<SetupDescribeError | null>(null);
+  const [callInfo, setCallInfo] = useState({ name: "", goal: "" });
+  const generationRef = useRef(0);
 
   // Refs carry the authoritative call state so media/auth callbacks never act on stale renders.
   const controllerRef = useRef<MediaController | null>(null);
@@ -160,30 +180,87 @@ export function PracticeWorkspace() {
     router.refresh();
   }
 
+  function clearPrivateSetup() {
+    generationRef.current++;
+    setStep("describe"); setSituation(""); setIntent(""); setPrivateNotes("");
+    setReviewRole(emptyRole); setReviewGoal(""); setAssumptions([]); setSetupMode("manual");
+    setGenerating(false); setGenerateError(null); setCallInfo({ name: "", goal: "" });
+  }
+
   function handleAuthLoss() {
     if (authLostRef.current) return;
     authLostRef.current = true;
     abandon("auth_loss");
+    clearPrivateSetup();
     setPhase(null);
     setView("setup");
     setCallMessage(""); setSetupMessage(""); setCleanup(null); setCleanupTarget(null); setPreviousSessionId(null);
     routeToSignIn();
   }
 
+  function showStep(next: "describe" | "review") {
+    setStep(next);
+    setMoveFocus(true);
+    setSetupMessage("");
+  }
+
+  async function generate() {
+    if (generating || authLostRef.current || !situation.trim()) return;
+    const generation = ++generationRef.current;
+    const request: DraftRequest = { situation: situation.trim() };
+    if (intent.trim()) request.goal = intent.trim();
+    if (privateNotes.trim()) request.privateNotes = privateNotes.trim();
+    setGenerating(true); setGenerateError(null); setSetupMessage("");
+    try {
+      const draft = await generateDraft(request);
+      if (generation !== generationRef.current) return;
+      setReviewRole(draft.role); setReviewGoal(draft.goal); setAssumptions(draft.assumptions); setSetupMode("generated");
+      showStep("review");
+    } catch (error) {
+      if (generation !== generationRef.current) return;
+      if (error instanceof SessionClientError && error.code === "UNAUTHENTICATED") { handleAuthLoss(); return; }
+      if (error instanceof SessionClientError && error.code === "OUT_OF_SCOPE") setGenerateError({ message: error.message, outOfScope: true });
+      else setGenerateError({ message: GENERATION_FAILED, outOfScope: false });
+    } finally {
+      if (generation === generationRef.current) setGenerating(false);
+    }
+  }
+
+  function setUpManually() {
+    if (generating) return;
+    setReviewRole(emptyRole); setReviewGoal(intent.trim()); setAssumptions([]); setSetupMode("manual"); setGenerateError(null);
+    showStep("review");
+  }
+
+  function applyExample() {
+    if (generating) return;
+    setReviewRole(roommate); setReviewGoal(EXAMPLE_GOAL); setAssumptions([]); setSetupMode("example"); setGenerateError(null);
+    showStep("review");
+  }
+
+  function backToDescribe() {
+    if (generating) return;
+    setGenerateError(null);
+    showStep("describe");
+  }
+
   async function start() {
-    if (startingRef.current || controllerRef.current || sessionIdRef.current || authLostRef.current) return;
+    if (startingRef.current || controllerRef.current || sessionIdRef.current || authLostRef.current || generating) return;
+    const role = parseReviewedRole(reviewRole);
+    if (!role) return;
     startingRef.current = true;
     const attempt = ++attemptRef.current;
-    setStarting(true); setSetupMessage(""); setPreviousSessionId(null);
+    setStarting(true); setSetupMessage(""); setPreviousSessionId(null); setGenerateError(null);
     let joined = false;
     try {
-      const { session, credential } = await startSession(DURATION_SECONDS, crypto.randomUUID());
+      const { session, credential } = await startSession({ role, durationSeconds: DURATION_SECONDS, idempotencyKey: crypto.randomUUID() });
       if (attempt !== attemptRef.current) {
         void endSession(session.id, authLostRef.current ? "auth_loss" : "navigation", { keepalive: true }).catch(() => undefined);
         return;
       }
       sessionIdRef.current = session.id;
       connectedRef.current = false;
+      setCallInfo({ name: role.name, goal: reviewGoal.trim() || FALLBACK_GOAL });
       setMutedState(false); setCameraEnabled(false); setCameraNote(""); setElapsedSeconds(0); setCallMessage(""); setCleanup(null); setCleanupTarget(null);
       setPhase("connecting");
       setView("call");
@@ -247,6 +324,7 @@ export function PracticeWorkspace() {
   function backToSetup() {
     setPhase(null);
     setView("setup");
+    setStep("review"); setMoveFocus(true);
     setCallMessage(""); setCleanup(null); setCleanupTarget(null); setSetupMessage("");
   }
 
@@ -254,6 +332,7 @@ export function PracticeWorkspace() {
     setSigningOut(true); setHeaderMessage("");
     authLostRef.current = true;
     releaseMedia();
+    clearPrivateSetup();
     const id = takeSessionId();
     if (id) await endSession(id, "auth_loss").catch(() => undefined);
     try {
@@ -299,11 +378,17 @@ export function PracticeWorkspace() {
   return <><header className="site-header"><Link className="wordmark" href="/">Conversation practice<span className="mark" aria-hidden="true">↗</span></Link><button type="button" className="button secondary" disabled={signingOut} onClick={() => void signOut()}>{signingOut ? "Signing out…" : "Sign out"}</button></header>
     <main id="main">
       {headerMessage && <p role="status" className="notice">{headerMessage}</p>}
-      {view === "setup" ? <>
-        {previousSessionId && <div className="actions"><button type="button" className="button secondary" disabled={endingPrevious} onClick={() => void endPrevious()}>{endingPrevious ? "Ending previous practice…" : "End previous practice"}</button></div>}
-        <PracticeSetup counterpartName={roommate.name} role={roommate.role} publicContext={roommate.publicContext} goal={GOAL} onStart={() => void start()} disabled={starting || endingPrevious || signingOut || !!previousSessionId} statusMessage={starting ? "Starting your practice…" : setupMessage || undefined} />
-      </> : <>
-        <PracticeCall counterpartName={roommate.name} goal={GOAL} phase={phase} muted={muted} cameraEnabled={cameraEnabled} elapsedSeconds={elapsedSeconds} durationSeconds={DURATION_SECONDS}
+      {view === "setup" ? (step === "describe"
+        ? <SetupDescribe situation={situation} goal={intent} privateNotes={privateNotes} onSituationChange={setSituation} onGoalChange={setIntent} onPrivateNotesChange={setPrivateNotes}
+            onGenerate={() => void generate()} onManual={setUpManually} onUseExample={applyExample} generating={generating} disabled={signingOut} error={generateError} focusHeading={moveFocus} />
+        : <SetupReview mode={setupMode} role={reviewRole} goal={reviewGoal} assumptions={assumptions} onRoleChange={setReviewRole} onGoalChange={setReviewGoal}
+            onBack={backToDescribe} onRegenerate={situation.trim() ? () => void generate() : undefined} onStart={() => void start()} regenerating={generating}
+            disabled={starting || signingOut} startDisabled={endingPrevious || !!previousSessionId} focusHeading={moveFocus}
+            statusMessage={starting ? "Starting your practice…" : setupMessage || undefined}
+            errorMessage={generateError ? (generateError.outOfScope ? `${generateError.message} Try describing an everyday conversation instead.` : `${generateError.message} Your current setup is unchanged.`) : undefined}
+            actions={previousSessionId ? <div className="actions"><button type="button" className="button secondary" disabled={endingPrevious} onClick={() => void endPrevious()}>{endingPrevious ? "Ending previous practice…" : "End previous practice"}</button></div> : undefined} />
+      ) : <>
+        <PracticeCall counterpartName={callInfo.name} goal={callInfo.goal} phase={phase} muted={muted} cameraEnabled={cameraEnabled} elapsedSeconds={elapsedSeconds} durationSeconds={DURATION_SECONDS}
           remoteMedia={remoteStream ? <StreamVideo stream={remoteStream} /> : null}
           localPreview={localStream ? <StreamVideo stream={localStream} muted /> : undefined}
           onMuteToggle={toggleMute} onCameraToggle={() => void toggleCamera()} onEnd={() => finish("user")} statusMessage={statusMessage || undefined} />
