@@ -4,6 +4,15 @@ Updated October 3, 2026, 17:45 EDT. **G1 passed** (`a8211af`, [G1-04](docs/tasks
 
 **Fresh coordinator context: start from [docs/27-G3-HANDOFF.md](docs/27-G3-HANDOFF.md)**. It has the current state, next steps (live G3 call → merge → G4 → G5 → demo), the verification recipe and a paste-ready prompt.
 
+## G4 build started in parallel (17:52 EDT, cloud coordinator)
+The human's live G3 report has not been received yet; G3 stays unpassed and PR #20 unmerged. To keep pace, the G4 contracts are frozen on `cursor/g4-reflection-9fec` (branched from the `build/g3-people` head `6930688` because `main` lacks G3). It is not merged ahead of G3. Design, contracts and worker split: [G4-04](docs/tasks/G4-04-integration.md). No migration in G4. This coordinator runs in a cloud VM without Supabase/provider credentials and with read-only `gh`. Database checks, real-Auth scripts, live calls, issue creation/closing and merging PR #20 must happen on the human's machine or GitHub UI.
+
+| Task | Writer | Owned paths |
+| --- | --- | --- |
+| [G4-01](docs/tasks/G4-01-reflection-server.md) reflection server | background subagent | `lib/reflection/{prompt,generate,session}.ts`, `app/api/sessions/[id]/reflect/route.ts`, test |
+| [G4-02](docs/tasks/G4-02-reflection-ui.md) reflection UI + transcript capture in the workspace | background subagent | `app/practice/practice-workspace.tsx`, `components/presentation/reflection-*`, `lib/reflection/api-client.ts`, test |
+| [G4-03](docs/tasks/G4-03-data-and-deletion.md) Your data / deletion / cleanup status | background subagent | `app/api/sessions/route.ts` (GET), `app/api/practice-data/route.ts`, `lib/data/practice-data.ts`, `app/practice/data/**`, `components/presentation/data-*`, `lib/practice-data/api-client.ts`, test |
+
 ## Appearance presets (17:23 EDT, docs only)
 The user wants a saved person to look and sound like the relationship, chosen from a short catalog of stock faces and premade voices. No photo upload, likeness, or voice cloning. Recorded in [docs/00](docs/00-DECISIONS-AND-VIABILITY.md). Not part of the open G3 build: do not add a picker, schema fields, or extra PALs until G3 is accepted. Current calls stay on the one configured face and voice.
 

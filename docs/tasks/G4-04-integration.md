@@ -1,7 +1,7 @@
 # G4-04: Integrate and verify reflection, transcript capture and "Your data"
 
-Status: active — workers dispatched
-Updated: October 3, 2026, 17:52 EDT
+Status: review — integrated; awaiting privacy review follow-ups and the human live G4 check
+Updated: October 3, 2026, 18:05 EDT
 Assigned writer: coordinator
 Coordinator: Cursor cloud coordinator session
 Gate: G4 ("end-to-end flow closes with a short optional reflection"; docs/10)
@@ -37,6 +37,33 @@ This coordinator runs in a Cursor cloud VM (`/workspace`) without `.env.local`, 
 - October 3, 2026, ~17:48 EDT — contracts — unit — pass. Cloud VM, Node 22.14.0, `/workspace`, uncommitted on `cursor/g4-reflection-9fec`: `npm run typecheck` pass; `npx vitest run tests/unit/reflection-contract.test.ts tests/unit/daily-controller.test.ts tests/unit/contracts.test.ts` 3 files, 29 tests pass.
 - Baseline before changes (`6930688`): `npm run typecheck` pass; `npm test` 9 files, 103 tests pass.
 
-## Human live G4 checklist (after integration)
+## Integration
 
-Pending integration.
+| Commit | Content |
+| --- | --- |
+| `fbcd359` | Frozen contracts, utterance capture in the Daily controller, task records |
+| `ef117b2` | [G4-01](G4-01-reflection-server.md) reflection route, prompt, generation, per-session cap |
+| `5f4d67a` | [G4-03](G4-03-data-and-deletion.md) Your data page, `GET /api/sessions`, `DELETE /api/practice-data` |
+| `598accd` | [G4-02](G4-02-reflection-ui.md) reflection panel, in-memory transcript, header link |
+
+Coordinator review notes: the worker choices are accepted. A failed generation releases its slot, so it doesn't use up one of the three. The 409 carries `session_id`. The empty-transcript short circuit runs after the session check, so a deleted session still gets 404. G4-01 rewrites Zod's nullable `anyOf` to `type: [T, "null"]` inside its own file; whether OpenAI strict mode accepts it is checked by the first real call.
+
+## Integrated verification (cloud VM, Node 22.14.0, `/workspace`, `598accd`)
+
+- ~18:01 EDT — unit — pass. `npm run typecheck` pass; `npm test` 13 files, 141 tests pass.
+- ~18:01 EDT — build — pass. `npm run build` (Next 16.3.8) lists the new dynamic routes `/api/practice-data`, `/api/sessions/[id]/reflect` and `/practice/data`.
+- ~18:02 EDT — browser mock — pass. `npm run test:ui` (Playwright 1.63.0, headless Chromium, its own dev server on port 3100): 8 passed, 1 production-only skipped.
+- ~18:02 EDT — visual — static fixture. Rendered `ReflectionPanel` (idle with no speech, partial result, retryable error, support exit) and `DataOverview` (three cleanup states, partial-deletion result) on a temporary, uncommitted dev-only page at 900 px and 375 px. Screenshots: `/opt/cursor/artifacts/screenshots/g4-reflection-and-data.png` and `g4-mobile.png`. Layout and wording look as intended. This used fixture props, not real data or sign-in.
+- Not runnable here (no credentials): signed-in flows, a real reflection call, the real `GET /api/sessions` and `DELETE /api/practice-data` against Supabase, two-user isolation of the new routes, and live Tavus utterance events.
+
+## Human live G4 checklist
+
+On your machine, at `cursor/g4-reflection-9fec` with the dev server on port 3000. Optionally set `OPENAI_REFLECTION_MODEL`; it falls back to `OPENAI_SETUP_MODEL`.
+
+1. Sign in → practice a new generated conversation with a goal → speak at least three times → End.
+2. In "Reflect (optional)", type a short note → **Get a short reflection**. Check that it arrives within about 20 s, shows "What you did", "Takeaway" and "Next time" with no score or grade, and refers to something you actually said. Then press Done; the panel should disappear.
+3. Start and End another short call. This time press **Skip** and confirm the flow closes cleanly (Back to setup works).
+4. Open **Your data** in the header. Check that the sessions show "Deleted at provider" (or a truthful pending/not-confirmed state with Retry cleanup) and that the counts match your About-me facts and people.
+5. Optional, destructive: **Delete all practice data** with the phrase, using a throwaway account or after the demo data is no longer needed. Check the deleted and remaining counts.
+6. Report: did the reflection arrive and match what you said? Any score, or anything private (notes, About-me facts) in it? Did Skip/Done close cleanly? Were the cleanup labels correct? Was the mic released after each End?
+7. Read-only database check (run and paste): `supabase db query --linked "select status, cleanup, ended_at is not null as ended from practice_sessions order by created_at desc limit 5"`. Then `select count(*) from information_schema.columns where table_schema='public' and column_name ilike '%transcript%'` should return 0.
