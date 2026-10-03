@@ -1,6 +1,6 @@
 # Product requirements
 
-Confirmed user correction (October 3): FaceTime-style practice with a visible talking AI counterpart is the product's core draw. Real, responsive counterpart video synchronized with speech is mandatory; voice-only practice or a static portrait cannot pass G1. This supersedes the former blanket avatar exclusion. The video provider remains undecided pending documented feasibility research; see [live video contract](22-LIVE-VIDEO.md).
+Confirmed user correction (October 3): FaceTime-style practice with a visible talking AI counterpart is the product's core draw. Real, responsive counterpart video synchronized with speech is mandatory; voice-only practice or a static portrait cannot pass G1. This supersedes the former blanket avatar exclusion. Tavus CVI with ElevenLabs TTS is selected, with live behavior pending verification; see [live video contract](22-LIVE-VIDEO.md).
 
 ## User and job
 Initial user: an adult college student who wants to practice expressing something in an upcoming everyday interaction.

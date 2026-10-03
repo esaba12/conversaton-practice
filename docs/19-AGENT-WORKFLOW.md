@@ -59,7 +59,7 @@ Workers update only their task record and assigned implementation files. The coo
 | --- | --- | --- |
 | [G1-00 foundation](tasks/G1-00-foundation.md) | Scaffold, lockfile, shared identity/session/voice contracts, minimal durable metadata design | First implementation task |
 | [G1-01 auth/session](tasks/G1-01-auth-session.md) | Sign-in, server authorization, owner-scoped session and cleanup metadata, server credentials | Integrated foundation and agreed contracts |
-| [G1-02 voice](tasks/G1-02-voice.md) | Browser ElevenLabs adapter, connection state, microphone lifecycle | Integrated foundation and agreed credential contract |
+| [G1-02 voice](tasks/G1-02-voice.md) | Browser Daily/Tavus adapter, connection state, microphone lifecycle | Integrated foundation and agreed credential contract |
 | [G1-03 UI](tasks/G1-03-ui.md) | Minimal warm/crisp sign-in and practice UI wired to agreed interfaces | Integrated foundation and agreed component/state contracts |
 | [G1-04 integration](tasks/G1-04-integration.md) | Wiring, combined checks, authenticated live conversation, End evidence | Auth/session, voice, and UI ready for integration |
 

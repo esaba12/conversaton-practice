@@ -14,7 +14,7 @@ Requirements/tests: P04, P05, P09, P12, P13; G1 portions of T01, T03, T09, T10, 
 - Branch/worktree: proposed `main` in `/Users/ethansaba/code/therapist`; verify actual checkout before integration.
 - Port: proposed 3000; no running server or live callback assumed.
 - Dependencies: G1-01, G1-02, G1-03 in `review` with frozen-contract evidence and integration-ready commits/diffs.
-- Unblock condition for wiring/static checks: reviewed worker work. The fresh Supabase project is configured and Auth health returned HTTP 200; real sign-in, migration access, and database isolation remain untested. Live acceptance additionally needs Supabase Auth/database access, ElevenLabs and selected avatar provider access, configured demo/test callback origin, and available microphone/camera/browser. Continue independent integration while account dependencies are pending. Follow [the live video contract](../22-LIVE-VIDEO.md); LiveAvatar is a researched candidate, not a proven selection.
+- Unblock condition for wiring/static checks: reviewed worker work. The fresh Supabase project is configured and Auth health returned HTTP 200; migration access and real-JWT database boundary checks now pass; UI email/callback sign-in and audiovisual integration remain untested. Live acceptance additionally needs Supabase Auth/database access, ElevenLabs and selected avatar provider access, configured demo/test callback origin, and available microphone/camera/browser. Continue independent integration while account dependencies are pending. Follow [the live video contract](../22-LIVE-VIDEO.md); Tavus CVI plus explicit ElevenLabs TTS is selected; API preflight is not live-media acceptance.
 
 Proposed exact ownership, frozen by G1-00 before `ready`:
 

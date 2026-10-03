@@ -1,97 +1,70 @@
 # Project status
 
-Updated October 3, 2026, America/Detroit (public preview deployed; application G1 not started).
+Updated October 3, 2026, 14:43 America/Detroit. **G1 foundation is active; no product gate has passed.**
 
-## Restart handoff
-Latest setup direction: the user confirms credits for **Tavus and ElevenLabs** and requests setup guidance. Proceed with Tavus CVI plus explicitly selected ElevenLabs TTS as the first integration route. Tavus manages the live conversation; ElevenLabs provides speech. This replaces LiveAvatar/ElevenLabs Agents as the current setup path, not as a claim of a tested integration. The latest local presence check found Supabase URL/publishable values present and `TAVUS_API_KEY`, `ELEVENLABS_API_KEY`, `OPENAI_API_KEY` missing. Account credit balances/API access remain unverified by tools. Follow docs/21-START-BUILD.md; no LiveAvatar account or separate ElevenLabs Agent is needed for this route. Before freezing worker contracts, revise the older connector-specific architecture/task details to Tavus; do not combine both pipelines.
+## Latest user direction
+Build now, keep documentation/GitHub current, and ask only for actual account actions or ambiguity. The user requested a second, externally launched frontend agent; its worktree and prompt are ready. Keep the confirmed FaceTime-style live-video product, editable generated setups, required sign-in, Supabase, Tavus CVI + ElevenLabs TTS, and OpenAI setup/reflection defaults.
 
-Confirmed core product: **FaceTime-style practice with a visible, talking fictional AI counterpart** is the main draw. Real responsive synchronized video is mandatory in G1; voice-only, static portraits, and prerecorded replies cannot pass. The interaction is settled; do not ask again. Specs and GitHub issues #1-#5 now reflect it. Read docs/22-LIVE-VIDEO.md. Tavus CVI + ElevenLabs TTS is the current integration route; API access and live behavior remain unverified. Sign-in, generated editable setups, and Supabase remain selected.
+## Current work and ownership
+- Coordinator checkout: `/Users/ethansaba/code/therapist`, branch `build/g1-foundation`. Scaffold `a601a0e`, provider/database foundation `fe27967`, frontend merge `cf32199`, and workspace/Auth integration `c48cecf` are committed/pushed. Remaining handoff changes are documentation only.
+- External frontend: `.worktrees/g1-frontend`, branch `agent/g1-frontend`, base `a601a0e`, port 3003. Owns only presentation components, development preview route, one frontend test and [its task record](docs/tasks/G1-03-frontend-preview.md). Its [PR #7](https://github.com/esaba12/conversaton-practice/pull/7) was reviewed and merged into foundation at `cf32199`; the external worktree remains preserved. Coordinator has wired its setup component into the protected workspace.
+- Coordinator owns shared contracts, app wiring, auth/media/backend, dependencies, numbered specs, migration execution, provider resources and STATUS.
+- Research agents completed provider/API and database reviews. One authored the two coordinator-reviewed migrations and rollback assertions; no worker ran SQL.
+- Media contracts are **provisional** until human live-video feasibility is recorded. G1-01/02/04 full implementation dispatch remains gated. Independent auth/database scaffolding and presentational UI proceeded within foundation.
 
-Latest decision: use **Supabase Auth + PostgreSQL** because AWS credits cannot arrive in time. The user supplied fresh project `rcktybngebovyopregnt` and its publishable key. Configuration is saved in the Git-ignored `.env.local`; the Auth health endpoint returned HTTP 200. Database administration, sign-in, and ownership policies remain untested; no existing database is being reused. Keep sign-in required. Skip AWS CLI/login, Cognito, Aurora, and credit-application setup.
+## What exists
+- Next.js 16.3.8 / React 19.3.0 / TypeScript 5.9.3 scaffold with pinned lockfile, local Node 22.23.3 and Node 22 CI. Host Node 20 bootstrapped npm installation; npm scripts use the local Node binary.
+- Supabase SSR 0.12.7 and client 2.117.2; Daily 0.87.0; Zod 4.6.5; Vitest 4.1.11; Playwright 1.63.0. Vitest was patched after npm audit; subsequent installation reported zero vulnerabilities.
+- Landing page, email/password sign-in/account-creation form, confirmation callback, cookie-refresh proxy, protected workspace shell. Real password sign-in and sign-out passed in Chromium using temporary confirmed fictional accounts; email delivery/confirmation callback still need verification. The workspace explicitly says calls are disabled.
+- Allowlisted fictional roommate context, strict request/media/state schemas and tested server Tavus adapter. Private notes/history are rejected by role schema.
+- GitHub Actions typecheck/unit/build/browser workflow passes on final code revision `c48cecf`: [run 37145104163](https://github.com/esaba12/conversaton-practice/actions/runs/37145104163), completed 14:42 EDT. Foundation draft [PR #8](https://github.com/esaba12/conversaton-practice/pull/8) is open; gate remains pending.
+- Integrated app is running at http://127.0.0.1:3000 (launch session 16025). Development-only presentation fixture: /design-preview. This does not start media or pass G1.
+- Original static public preview remains at https://conversation-practice-site.vercel.app and is separate from the app.
 
-The earlier quick public website request is complete at https://conversation-practice-site.vercel.app. Source is in `website/`; details/evidence are in docs/tasks/PREP-02-public-website.md and [GitHub issue #6](https://github.com/esaba12/conversaton-practice/issues/6). The AWS credits application is no longer a build dependency. This is a static product preview, not the authenticated voice application. No G1 acceptance is implied.
+## Supabase
+Fresh selected project `rcktybngebovyopregnt` is linked locally. Escalated CLI account and SQL checks succeeded; it initially had zero public tables.
+Applied in order:
+1. `20261003180000_session_foundation.sql`
+2. `20261003182400_identity_helper_privileges.sql`
 
-The user is ready to start building after clearing context. Follow [the final startup checklist](docs/21-START-BUILD.md), recheck what actually ran, then begin G1-00 / GitHub issue #1. The baseline commit and project skills now exist; application scaffolding has not started.
+The first database assertion run exposed that managed Supabase's postgres role could not delegate Auth schema usage to the restricted executor. Additive repair moved only the private identity/capability verifier to postgres SECURITY DEFINER; mutation RPCs remain restricted and owner-RLS protected. Re-run passed. CLI migration catalog caching warned that Docker was unavailable; migrations still applied and SQL assertions succeeded. Docker is not a hosted-build prerequisite.
 
-Project directory: /Users/ethansaba/code/therapist. The development-agent framework and specs support one human with parallel coding agents and Warp worktrees. A standalone public landing page is deployed on Vercel. Authenticated app implementation and Supabase integration have not started.
+Session rows contain owner/lease/status/trusted provider association/cleanup only, not room credentials, raw prompts, transcripts or media. Direct authenticated DML is revoked. Runtime mutations require a verified nonanonymous owner plus an admin-provisioned server capability; raw capability stays local, only its digest goes to a private table. See [G1-00C evidence](docs/tasks/G1-00C-session-schema.md).
 
-To resume, read this file, AGENTS.md, README.md, docs/01-PRD.md, docs/10-BUILD-PLAN.md, docs/19-AGENT-WORKFLOW.md, and the assigned task record. The next implementation task is docs/tasks/G1-00-foundation.md. docs/18-DESIGN-AND-AWS.md retains its historical filename but now describes Supabase. Do not repeat product discovery or reintroduce a name.
+## Tavus / ElevenLabs
+User-supplied keys passed read checks in PREP-03. Coordinator created one immutable roleplay PAL using a ready system stock face and a premade ElevenLabs voice. Server-to-server speech-key transfer is part of the authorized selected route. PAL readback confirmed explicit ElevenLabs TTS and perception off. Provider LLM default was not changed.
 
-Account setup order: the user's fresh Supabase project for Auth/minimal PostgreSQL session/cleanup storage, plus conversation/avatar provider access for authenticated live video G1; OpenAI for G2 generation; broader profiles/personas and memory persistence in G3. App-specific credentials/access remain unverified. No credentials are stored here.
+Private test-mode conversation creation returned ended plus a meeting token; Tavus hard deletion succeeded. This verifies request acceptance only, not live TTS/video or billing. Recording-off does not disable provider transcripts. ElevenLabs retention/deletion remains separate from Tavus cleanup.
 
-Research conclusions and references are saved in docs/00-DECISIONS-AND-VIABILITY.md and docs/14-SOURCES.md (S05, S39, S40). Practice clear requests, boundaries, and saying no; scenario choice is a product decision, not an established research ranking. The app has no demonstrated clinical efficacy.
+Isolated live preflight is running at **http://127.0.0.1:3010** (process session 14951 at launch). It starts a real three-minute call only on explicit click. User was asked to test five exchanges, interruption, End/microphone release, and two fictional contexts. **No human result received yet.** Restart command:
+`node_modules/.bin/node --env-file=.env.local scripts/preflight/video-server.mjs`
 
-Event plan: internal submission target October 4, 2026 at 11:30 AM America/Detroit; the existing event notes record an official deadline before noon. Reassess remaining time after the restart.
+This harness is intentionally separate from the authenticated application, binds loopback, and is not a G1 pass. Do not run automated call-start/camera actions while the user is testing.
 
-## Confirmed direction
-- One human builder with explicitly authorized coding subagents, multitasking, and worktrees in Warp; project remains unnamed. Keep product gates ordered, parallelize independent tasks within each, and do not add an app runtime orchestration framework.
-- Documentation accompanies behavior changes. Coordinator owns shared contracts, numbered specs, integration, and STATUS; workers own their assigned task record and paths. See docs/20-DOCUMENTATION-STANDARD.md.
-- Use the connected GitHub repository frequently for task issues, focused commits/branches, draft PRs, review, and CI. This is a standing user preference, recorded in AGENTS.md and docs/19.
-- Fresh sessions; approved persona/profile settings may persist, simulated events do not.
-- User-described situations are the primary input. Working situation generation is core scope.
-- Confirmed: generate an editable counterpart, scenario, and opening, then converse live. Written script generation is outside the current scope.
-- Use a concrete communication action as the practice goal. Keep the roommate cleaning request as a demo example; reviewed sources do not rank it above other scenarios.
-- Sign-in is required before all workspace actions, including designing personas/conversations and generating setups. This explicitly replaces anonymous/guest-first entry.
-- Supabase Auth/PostgreSQL is selected again; the user supplied a fresh project. Owners use verified auth.users.id with RLS and atomic database operations. AWS is superseded. Vercel is the recommended app host; only the public static preview is deployed.
-- Visual direction confirmed: warm and minimal, but crisp and modern. Proposed ivory/ink/sage palette and screen direction are in docs/18-DESIGN-AND-AWS.md.
-- Photon is deferred until all core gates pass and demo/submission preparation is covered.
+## Actual verification
+October 3, original checkout, `a601a0e` plus current uncommitted changes:
+- `npm run typecheck`: pass.
+- `npm test`: 9 unit tests pass, including private-context rejection, state rules, credential boundary, no blind provider-create retry and separate End verification.
+- `npm run build`: pass, Next 16.3.8 production build.
+- Combined `npm run test:ui`: 8 Chromium checks passed and 1 production-only check intentionally skipped in development. Includes entry/guard, frontend controls, mobile layouts and truthful preview states. No media mock claimed as live.
+- `supabase db query --linked --file supabase/tests/session_foundation.sql`: initial permission failure, then pass after additive repair. Synthetic identities/claims, all fixtures/config changes rolled back. Checks owner isolation, direct-write denial, capability/anonymous rejection, idempotency, terminal-state/late-bind behavior and expiry. Does not establish HTTP Auth or concurrent multi-connection behavior.
+- Real Auth/HTTP concurrent boundary check: passed; two fictional users signed in, owner/capability/direct-write checks and simultaneous acquisition passed; all fixtures removed. `auth-database-check.mjs --ui-only` also passed real browser sign-in, SSR workspace, integrated setup, sign-out and denied re-entry. No email or provider calls; no credentials retained.
+- Provider PAL/readback and test-mode creation/deletion: live API pass, audiovisual not run.
+- Playwright screenshot of loopback preflight inspected without starting a call; no media recorded.
+- Installed Next.js cookies/proxy/authentication/route guides reviewed; preserve its generated AGENTS.md rules block.
 
-## Current gate
-G1 implementation has not started. Product, media, privacy, evaluation, startup docs, and five task briefs now require live video. Provider-specific interfaces still need the bounded live feasibility check before dispatch; the interaction itself is confirmed. Git now has baseline commit `ec919a5` on main tracking origin/main. Public static site deployment is complete. No application workers are currently assigned.
+## Next steps and real blockers
+1. Record the human live-video preflight result; repair actual provider/media failures before freezing integration contracts.
+2. Keep [foundation PR #8](https://github.com/esaba12/conversaton-practice/pull/8) reviewable and record next live evidence. Frontend PR #7 is integrated; issues remain open until full acceptance.
+3. Verify actual email delivery/confirmation callback; real password/UI sign-in already passed with confirmed fixtures. Default Supabase SMTP may restrict recipients/rate; do not burn quota with repeated synthetic signup attempts or claim public email readiness.
+4. Freeze media/session contracts, then dispatch/review application auth/session routes and media-controller work against the integrated frontend props.
+5. Full G1 requires authenticated five-turn video, durable owner isolation/concurrency and local media teardown on End/auth loss/failed requests. Only then start G2 situation generation.
 
-## Dispatch queue
-All implementation tasks are `planned`; proposed worktrees, ports, and file ownership become final in G1-00. No app verification has run.
+G2 editable generation, G3 approved memory, later reflection/deletion and G5 evaluation remain unimplemented. Do not replace generated situations or live video with simpler features. Photon/Relay remain deferred.
 
-| Task | GitHub issue | Owner at dispatch | Dependency |
-| --- | --- | --- | --- |
-| G1-00 foundation | [#1](https://github.com/esaba12/conversaton-practice/issues/1) | Coordinator | Reviewed committed baseline and supported hosting/runtime choice |
-| G1-01 auth/session | [#2](https://github.com/esaba12/conversaton-practice/issues/2) | Worker 1 | Integrated foundation and frozen contracts |
-| G1-02 media | [#3](https://github.com/esaba12/conversaton-practice/issues/3) | Worker 2 | Integrated foundation and frozen contracts |
-| G1-03 UI | [#4](https://github.com/esaba12/conversaton-practice/issues/4) | Worker 3 | Integrated foundation and frozen contracts |
-| G1-04 integration | [#5](https://github.com/esaba12/conversaton-practice/issues/5) | Coordinator | Reviewed worker changes; real accounts for live acceptance |
+## GitHub and setup
+Repository: https://github.com/esaba12/conversaton-practice . G1 issues #1–#5 remain open. Draft foundation PR #8 exists and presentation PR #7 is merged into it. Check existing PRs before creating another. Local environment and provider IDs are ignored; never stage `.env.local`. Git/worktree and network operations succeeded via scoped escalation; a context reset does not change managed read-only permissions. Preserve uncommitted work.
 
-Task briefs are in docs/tasks/. Coordinator may integrate/test independently while waiting on account actions; no live gate can pass without actual evidence. No G1-G5 gate has passed.
-The five open issues belong to [the G1 milestone](https://github.com/esaba12/conversaton-practice/milestone/1). Implementation is planned; baseline docs were pushed, while the newer Supabase decision/task edits remain local until committed.
+Preparation evidence: [PREP-01](docs/tasks/PREP-01-agent-workflow.md), [public preview](docs/tasks/PREP-02-public-website.md), [access checks](docs/tasks/PREP-03-access-check.md). No need to recreate keys, reinitialize Git, obtain AWS credits or create LiveAvatar accounts.
 
-## Selected Git remote
-- User selected `git@github.com:esaba12/conversaton-practice.git`.
-- GitHub API verified `esaba12/conversaton-practice` exists and is public, with default branch `main`.
-- Reverified authenticated GitHub API access, including repository push permissions. Created milestone 1 and issues #1-#5 successfully through the API. GitHub access works even though local `.git` writes remain restricted.
-- Current local verification: `main` at `ec919a5` (initial docs commit), tracking origin/main, with the correct SSH origin. The user completed the baseline after the earlier preflight. Do not rerun initialization or first-commit instructions.
-- New website and related handoff changes are local/uncommitted; the static website was separately deployed with Vercel CLI. This session still cannot write project Git metadata.
-- `bash tooling/worktree.sh <task-id> [base-ref] [--dry-run]` is prepared. It requires a clean committed baseline containing the task record. `.worktrees/` is ignored.
-
-## Tooling completed and blocked
-- Existing: Codex CLI 0.160.0, Codex VS Code extension, GitHub/Supabase/Vercel CLIs, Prettier, Codex browser tooling, shadcn skill.
-- Final preflight verified Node v20.19.4, npm 11.5.1, Codex 0.160.0, GitHub CLI 2.91.0, and Homebrew availability. Foundation still selects a supported app runtime; do not interpret the installed Node version as a frozen deployment choice.
-- Installed: Context7 MCP 4.1.1 under tooling/codex, pinned in package.json/package-lock.json. Local MCP startup and expected tool discovery passed. Its remote documentation retrieval was not tested.
-- Active in this session: official ElevenLabs agents and Vercel web-design-guidelines skills, after the user's setup. The latest setup dry run also found existing OpenAI Docs and Context7 MCP configurations; remote queries through those configured connections were not retested.
-- Earlier direct HTTP checks: OpenAI Docs and AWS Knowledge MCP each returned tool lists and successful documentation search results. AWS Knowledge is optional.
-- Blocked: Codex settings and project `.agents` are protected from writes; VS Code extension installation also encountered a marketplace DNS failure. No automatic approval review rejection occurred; these were command-level sandbox/network failures.
-- Ready for the normal terminal if activation remains incomplete: `bash /Users/ethansaba/code/therapist/tooling/finish-setup.sh`. It preserves matching installed skills, registers OpenAI Docs/Context7, and installs ESLint/Tailwind IntelliSense. Existing configs are preserved. See tooling/README.md.
-- AWS CLI/account setup is no longer required. The finish script now registers OpenAI Docs and Context7 only; optional existing AWS Knowledge configuration is left untouched.
-- Supabase CLI is present, but even its version command was blocked by a write to protected `~/.supabase/telemetry.json`; no project listing or account check completed. This is a local tool restriction, not evidence that the user's Supabase login failed.
-- Supabase URL/publishable key are saved in `.env.local` with owner-only file permissions; `git check-ignore .env.local` passed. No private provider keys were added. The earlier unactivated-skill result was superseded by the user's setup: both project skills are now active.
-- Added: guarded task-worktree helper, optional staged Warp Codex/checks tab config, multiagent runbook, documentation standard, task template, and five G1 briefs. Warp config is not installed or UI-tested; see tooling/README.md.
-- Added `.github/pull_request_template.md` and `.github/ISSUE_TEMPLATE/task.md` to the baseline. CI is assigned to G1-00 once real app scripts exist. No PR or Actions run has been created yet.
-
-## Verification
-Video-scope revision: three coding agents handled product/evaluation specs, task briefs, and official provider research with separate ownership. GitHub issues #1-#5 and milestone #1 were updated successfully. Local links/code fences passed across 37 Markdown files, and `git diff --check` passed. Independent review found a foundation/worker dependency cycle; docs/22 now separates the isolated provider feasibility harness from full authenticated G1-04 acceptance. No application or live video tests have run. Latest source changes remain uncommitted.
-Preparation evidence and contributor handoff: [PREP-01](docs/tasks/PREP-01-agent-workflow.md). Documentation link/format/P/T checks and final independent contract/ownership review passed after fixes.
-
-After the fresh Supabase decision: updated GitHub issues #1-#5 and active backend/startup/task contracts. Shell syntax, setup dry run, `git diff --check`, and local links/code fences across 36 Markdown files passed. No settings were changed by the dry run. Latest local edits still need committing.
-
-Tool installation/smoke checks and documentation/helper verification only. npm previously reported zero vulnerabilities for the tool package installation. Shell syntax and isolated temporary-repository helper checks passed: clean creation, no-mutation dry-run, dirty baseline, invalid task/base, absent task record, symlink/unignored directory, duplicate path/branch, and linked-checkout refusal. Warp TOML parsing/static structure passed; no Warp UI test. The first commit now exists; a clean committed baseline is still required before creating worktrees. No application typecheck/build, real audio checks, authentication tests, owner-isolation tests, or cloud account verification have been performed; the app does not exist yet.
-
-## Outstanding decisions and dependencies
-- Tavus and ElevenLabs credits are user-confirmed. Their API keys and the OpenAI key are still needed locally. No PAL, provider key transfer, SDK install, or live call has been performed. Verify the Tavus/ElevenLabs TTS integration, per-session context, private-room authorization, interruption, and teardown before freezing vendor contracts.
-- Structured-output provider access is needed for situation generation; OpenAI remains the selected default.
-- Fresh Supabase project configuration is saved and Auth health returned HTTP 200. Migration/admin access, real sign-in, and owner isolation still need verification; no service-role key is required for ordinary user requests.
-- Select supported Node/Next.js versions for the recommended Vercel deployment during foundation. The former Amplify version constraint no longer applies.
-- Public hosting versus supervised local/private judging demo remains undecided.
-- Sponsor credits, prize stacking, and actual provider models/voices remain unverified.
-
-## Next implementation task
-Begin G1-00 foundation and the live-video feasibility checklist in docs/22-LIVE-VIDEO.md. Auth/database scaffolding and labeled UI development can proceed while provider account access is pending. Do not replace the required video experience with audio-only practice.
-
-Preserve/commit the website and updated Supabase handoff, then complete G1-00 foundation: scaffold the Next.js app with Supabase Auth/PostgreSQL, pin dependencies, and freeze contracts/ownership. The baseline already exists. Fresh Supabase configuration is available in `.env.local`; verify migration access during foundation. Continue independent work while remaining provider access is pending. After the shared media contracts are verified and frozen, dispatch G1-01/02/03 in parallel, then integrate G1-04. G1 requires sign-in, durable owner-scoped sessions, a responsive synchronized AI video call, and complete media teardown even on auth loss or failed End requests. Follow docs/10-BUILD-PLAN.md; preserve the submission buffer.
+Submission target: October 4, 11:30 AM America/Detroit; event notes record deadline before noon. Preserve the submission buffer.

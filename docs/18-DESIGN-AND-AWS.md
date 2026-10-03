@@ -1,11 +1,11 @@
 # Design and backend direction
 
-Updated October 3, 2026. The user cannot obtain AWS credits in time and approved Supabase. This supersedes the AWS/Cognito/Aurora/Amplify proposal; the filename remains unchanged to preserve existing links. The user supplied fresh Supabase project `rcktybngebovyopregnt`; local configuration is saved and Auth health returned HTTP 200. Application integration has not started.
+Updated October 3, 2026. The user cannot obtain AWS credits in time and approved Supabase. This supersedes the AWS/Cognito/Aurora/Amplify proposal; the filename remains unchanged to preserve existing links. The user supplied fresh Supabase project `rcktybngebovyopregnt`; local configuration is saved and Auth health returned HTTP 200. Foundation implementation is active; current checks and remaining live gaps are in STATUS.md.
 
 ## Confirmed decisions
 
 - Warm and minimal, with crisp modern styling.
-- FaceTime-style practice with a visible talking AI counterpart is the core experience. Live synchronized audio/video is mandatory; the video provider remains undecided pending feasibility research. See [the live video contract](22-LIVE-VIDEO.md).
+- FaceTime-style practice with a visible talking AI counterpart is the core experience. Live synchronized audio/video is mandatory; Tavus CVI with explicit ElevenLabs TTS is selected; live feasibility remains pending. See [the live video contract](22-LIVE-VIDEO.md).
 - Sign-in is the basis of the entire product. Users authenticate before designing personas/conversations, generating setups, or practicing. No guest workspace or anonymous Auth users.
 - Use Supabase Auth and PostgreSQL. The user supplied a fresh project; verify migration/admin access before applying migrations. No existing project is being reused or deleted.
 - Live ElevenLabs roleplay and server-only OpenAI setup/reflection remain the selected providers.
@@ -41,7 +41,7 @@ Camera off until opt-in and local-only self-view are implementation defaults, no
 | Database | Supabase PostgreSQL | Owner RLS, explicit grants, and transactional session/memory functions |
 | Hosting | Vercel for the Next.js application | Pin supported Next.js/Node versions and verify the real application build/deployment |
 | Secrets | Ignored local environment plus host-managed server environment | Keep OpenAI/ElevenLabs/video-provider keys and migration credentials out of client bundles |
-| Voice | ElevenLabs Agents | Browser connects with short-lived credentials issued by the authenticated server |
+| Live video and speech | Tavus CVI + ElevenLabs TTS + Daily | Browser uses private room credentials issued by the owner-authorized server |
 | Counterpart video | Provider selection pending feasibility research | Live synchronized talking counterpart; authenticated session setup, truthful readiness/failure, and verified complete teardown |
 | Setup/reflection | OpenAI structured-output adapter | Server-only model requests with configured model IDs |
 

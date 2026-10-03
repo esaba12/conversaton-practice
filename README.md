@@ -1,7 +1,7 @@
 # MHacks conversation rehearsal specification pack
 
 Project name undecided. Prepared October 3, 2026 (America/Detroit).
-Status: public product preview deployed; authenticated application has not been built or clinically validated.
+Status: public product preview deployed; authenticated application foundation in progress. No live acceptance gate or clinical validation.
 Confirmed core experience: FaceTime-style practice with a visible, talking fictional AI counterpart. Real synchronized video is required in the first slice. See docs/22-LIVE-VIDEO.md for the integration and acceptance plan.
 Target: a 24-hour MHacks prototype. Confirmed team: one human builder coordinating multiple coding agents.
 
@@ -46,6 +46,8 @@ For the first implementation session, follow [the final startup checklist](docs/
 
 ## Build with agents
 
+Local application: `npm ci`, then `npm run dev` (http://127.0.0.1:3000). Use Node 22 (`.nvmrc`); a pinned local Node binary also supplies npm scripts. Copy `.env.example` only for a new environment; preserve existing ignored `.env.local`. Checks: `npm run typecheck`, `npm test`, `npm run build`, `npm run test:ui`. Calls are disabled in the initial protected workspace shell. The original static preview remains under `website/`.
+
 Track current work in [the GitHub G1 milestone](https://github.com/esaba12/conversaton-practice/milestone/1). Each implementation task has an issue; agents use focused branches and draft PRs with documented verification. GitHub Actions is part of the foundation task and has not run yet.
 
 The coordinator completes [G1 foundation](docs/tasks/G1-00-foundation.md), then dispatches independent [auth/session](docs/tasks/G1-01-auth-session.md), [voice](docs/tasks/G1-02-voice.md), and [UI](docs/tasks/G1-03-ui.md) tasks before [integration](docs/tasks/G1-04-integration.md). Keep one writer per worktree and one owner for shared contracts. Workers maintain task evidence; the coordinator updates STATUS.md and accepts gates. See the workflow for Warp tabs, the guarded worktree helper, and merge checkpoints. This is a development workflow, not another application dependency.
@@ -56,11 +58,11 @@ First stretch after all core gates pass: bounded iMessage rehearsal using Photon
 
 ## What has and has not been done
 
-This folder supplies specifications, acceptance gates, research, development tooling, and the deployed static product preview in `website/`. Context7 is installed locally; the two staged vendor skills are now active in this session. Recheck MCP activation on restart. See [tooling status](tooling/README.md). The authenticated video-call application and provider integrations have not been built.
+This folder supplies specifications, acceptance gates, research, development tooling, and the deployed static product preview in `website/`. Context7 is installed locally; the two staged vendor skills are now active in this session. Recheck MCP activation on restart. See [tooling status](tooling/README.md). The authenticated scaffold and provider API preflight now exist; live audiovisual integration and the full application gates remain pending. See STATUS.md for actual evidence.
 
 ## Defaults and unresolved items
 
-Current direction: Next.js App Router, TypeScript, npm, ElevenLabs Agents, Supabase Auth/PostgreSQL, required account sign-in, and a server-side structured-output model for setup/reflection. The user returned to Supabase because AWS credits will not arrive in time. Vercel is the recommended app hosting path given the already deployed public site; the authenticated app is not deployed. See docs/18-DESIGN-AND-AWS.md. Default demo: setting a cleaning boundary with a fictional roommate.
+Current direction: Next.js App Router, TypeScript, npm, Tavus CVI with explicit ElevenLabs TTS, Supabase Auth/PostgreSQL, required sign-in, and server-side structured output for setup/reflection. Vercel is the recommended app host; the authenticated app is not deployed. See docs/18-DESIGN-AND-AWS.md. Default demo: setting a cleaning boundary with a fictional roommate.
 
 Confirmed event strategy: Actually Intelligent plus both listed ElevenLabs categories, subject to organizer confirmation of category stacking. Submission is before noon Sunday, October 4, America/Detroit; judging uses a three-minute pitch. See docs/16-MHACKS-STRATEGY.md.
 

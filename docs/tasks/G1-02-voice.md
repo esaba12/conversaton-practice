@@ -16,7 +16,7 @@ Requirements/tests: P04, P05, P09, P13; T09, T12, T13 and live interruption/vide
 - Worktree: proposed `/Users/ethansaba/code/therapist/.worktrees/G1-02-voice`; not created.
 - Port: proposed 3002; no server or approved auth callback implied.
 - Dependencies: frozen G1-00 browser media/session/error contracts, authenticated credential shape, and bounded provider feasibility decision in [the live video contract](../22-LIVE-VIDEO.md). G1-01 may proceed concurrently against those contracts.
-- Unblock condition: integrated foundation and frozen ownership; actual authenticated start credentials and both conversation/avatar provider access for live evidence. Planned path is ElevenLabs plus avatar streaming; LiveAvatar is still a candidate, not selected or proven by this brief.
+- Unblock condition: integrated foundation and frozen ownership; actual authenticated start credentials and both conversation/avatar provider access for live evidence. Selected path is Tavus CVI with ElevenLabs TTS and Daily 0.87.0. PAL/test-mode API acceptance passed; actual video, speech and interruption remain unverified.
 
 Proposed exact ownership, frozen by G1-00 before `ready`:
 
