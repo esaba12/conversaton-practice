@@ -7,7 +7,7 @@ Coordinator: Cursor coordinator session
 Gate: G2
 Requirements/tests: G2 acceptance (docs/10), docs/09 line 32 (novel situation), T01, T13
 GitHub issue: [#12](https://github.com/esaba12/conversaton-practice/issues/12), [#13](https://github.com/esaba12/conversaton-practice/issues/13), [#14](https://github.com/esaba12/conversaton-practice/issues/14)
-Pull request: see STATUS (draft PR from `build/g2-generation`)
+Pull request: [#15](https://github.com/esaba12/conversaton-practice/pull/15) (draft)
 CI run: pending on the PR
 
 ## Integration
