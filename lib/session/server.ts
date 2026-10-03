@@ -40,6 +40,7 @@ export function startFingerprint(role: RoleContext, durationSeconds: 180 | 300, 
 export async function startSession(db: Db, input: z.output<typeof startRequestSchema>): Promise<StartResponse> {
   const secret = capability();
   assertTavusConfigured();
+  if ("personId" in input) throw new AppError("NOT_FOUND", "That item was not found.", 404);
   // Only the allowlisted role reaches the provider; no other client field is forwarded.
   const role = roleContextSchema.parse("role" in input ? input.role : roommate);
   const fingerprint = startFingerprint(role, input.durationSeconds, secret);
