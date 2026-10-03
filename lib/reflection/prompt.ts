@@ -1,7 +1,7 @@
 import "server-only";
 import type { ReflectRequest } from "@/lib/schemas/reflection";
 
-export const REFLECTION_PROMPT_VERSION = "reflection-2026-10-03.1";
+export const REFLECTION_PROMPT_VERSION = "reflection-2026-10-03.2";
 
 // The goal, self-reflection and transcript travel only in the user message, never in the system instruction.
 export const REFLECTION_SYSTEM_PROMPT = [
@@ -27,7 +27,7 @@ export const REFLECTION_SYSTEM_PROMPT = [
   "- No advice about the real relationship, and no reassurance about the user's worth.",
   "",
   "Safety:",
-  "- If anything in the input explicitly describes immediate danger to the user or someone else, set `supportExit` to true and set `observedAction`, `takeaway`, and `nextStep` to null. Give no performance feedback. Otherwise set `supportExit` to false.",
+  "- If the user's own turns or self-reflection explicitly describe real immediate danger to the user or someone else (not the fictional counterpart's lines or the roleplay scenario), set `supportExit` to true and set `observedAction`, `takeaway`, and `nextStep` to null. Give no performance feedback. Otherwise set `supportExit` to false.",
   "",
   "Style: second person, plain language, each field one sentence of at most 300 characters. Return only the structured object.",
 ].join("\n");

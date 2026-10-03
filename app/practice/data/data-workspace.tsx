@@ -22,7 +22,8 @@ export function DataWorkspace() {
   const [result, setResult] = useState<DeletePracticeDataResponse | null>(null);
   const [message, setMessage] = useState<{ status?: string; error?: string }>({});
 
-  function authLost() { setInventory(emptyInventory); setSessions({ status: "loading", list: [] }); router.replace("/auth/sign-in"); router.refresh(); }
+  function clearPage() { setInventory(emptyInventory); setSessions({ status: "loading", list: [] }); setResult(null); setMessage({}); }
+  function authLost() { clearPage(); router.replace("/auth/sign-in"); router.refresh(); }
   function failed(error: unknown) { if (codeOf(error) === "UNAUTHENTICATED") { authLost(); return true; } return false; }
 
   async function loadInventory() {
@@ -43,7 +44,10 @@ export function DataWorkspace() {
     live.current = true;
     reload();
     const { data } = createBrowserAuthClient().auth.onAuthStateChange((event) => { if (event === "SIGNED_OUT") authLost(); });
-    return () => { live.current = false; data.subscription.unsubscribe(); };
+    // A back/forward-cache restore must not show names from before a sign-out elsewhere; the reload re-checks identity.
+    const onPageShow = (event: PageTransitionEvent) => { if (event.persisted) { clearPage(); reload(); } };
+    window.addEventListener("pageshow", onPageShow);
+    return () => { live.current = false; data.subscription.unsubscribe(); window.removeEventListener("pageshow", onPageShow); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

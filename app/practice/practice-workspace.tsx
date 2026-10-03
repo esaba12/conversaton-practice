@@ -41,10 +41,12 @@ type ReflectState = { sessionId: string | null; goal: string; selfReflection: st
 const closedReflect: ReflectState = { sessionId: null, goal: "", selfReflection: "", pending: false, reflection: null, error: null };
 const REFLECTION_FAILED = "The reflection couldn’t be generated. Your own notes still count.";
 
-function reflectionError(error: unknown): { message: string; retry: boolean } {
+function reflectionError(error: unknown, closeFailed: boolean): { message: string; retry: boolean } {
   const code = error instanceof SessionClientError ? error.code : null;
   if (code === "USAGE_LIMIT") return { message: "You’ve reached the reflection limit for this practice. Your own notes still count.", retry: false };
-  if (code === "SESSION_ACTIVE") return { message: "The call is still closing. Try again in a moment.", retry: true };
+  if (code === "SESSION_ACTIVE") return closeFailed
+    ? { message: "The practice session isn’t closed yet. Use Retry closing session, then try again.", retry: true }
+    : { message: "The call is still closing. Try again in a moment.", retry: true };
   if (code === "NOT_FOUND") return { message: "This practice is no longer available to reflect on.", retry: false };
   if (code === "NOT_CONFIGURED" || code === "VALIDATION_ERROR") return { message: REFLECTION_FAILED, retry: false };
   return { message: REFLECTION_FAILED, retry: true };
@@ -449,7 +451,7 @@ export function PracticeWorkspace() {
     } catch (error) {
       if (generation !== reflectGenerationRef.current) return;
       if (isAuthError(error)) { handleAuthLoss(); return; }
-      setReflect((state) => ({ ...state, pending: false, error: reflectionError(error) }));
+      setReflect((state) => ({ ...state, pending: false, error: reflectionError(error, cleanup?.state === "unreachable") }));
     } finally {
       if (generation === reflectGenerationRef.current) reflectingRef.current = false;
     }

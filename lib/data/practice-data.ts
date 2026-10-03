@@ -35,12 +35,11 @@ export async function listSessions(db: Db) {
 const ids = async (db: Db, table: "people" | "about_me_facts") => (await rows(db.from(table).select("id"))).map(r => String(r.id));
 const hasPrep = async (db: Db) => (await rows(db.from("private_prep").select("owner_id"))).length > 0;
 
-// Counts as gone when the RPC deleted it or it was already gone; other failures are left for `remaining`.
+// True only for an actual delete; an item already gone (NOT_FOUND) or a failure is not counted, and the re-read reports what remains.
 async function remove(db: Db, name: string, args: Record<string, unknown>) {
   try { await rpc(db, name, args); return true; } catch (error) {
-    if (!(error instanceof AppError)) return false;
-    if (error.code === "UNAUTHENTICATED") throw error;
-    return error.code === "NOT_FOUND";
+    if (error instanceof AppError && error.code === "UNAUTHENTICATED") throw error;
+    return false;
   }
 }
 

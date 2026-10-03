@@ -132,7 +132,7 @@ describe("GET /api/sessions and DELETE /api/practice-data", () => {
     expect(queries.find(q => q.table === "practice_sessions")?.calls).toEqual([["select", ["cleanup"]]]);
   });
 
-  it("treats NOT_FOUND as already deleted, continues past a failure and reports what remains", async () => {
+  it("does not count an already-gone (NOT_FOUND) item as deleted, continues past a failure and reports what remains", async () => {
     const state = store([p1, p2], [f1, f2], true);
     handlers.person_delete = ({ p_id }) => {
       if (p_id !== p1) return { error: { code: "57014", message: "statement timeout" } };
@@ -144,7 +144,7 @@ describe("GET /api/sessions and DELETE /api/practice-data", () => {
     tables.practice_sessions = { data: [] };
     const body = deletePracticeDataResponseSchema.parse(await (await practiceData.DELETE(req("DELETE", "/api/practice-data", confirm))).json());
     expect(body).toEqual({
-      deleted: { aboutMeFacts: 1, people: 1, privatePrep: true },
+      deleted: { aboutMeFacts: 1, people: 0, privatePrep: true },
       remaining: { aboutMeFacts: 1, people: 1, privatePrep: false },
       sessions: { total: 0, cleanupConfirmed: 0, cleanupOutstanding: 0 },
     });

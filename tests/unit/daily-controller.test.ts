@@ -243,4 +243,20 @@ describe("Daily media controller", () => {
     message("user", "after end");
     expect(events.filter((event) => event.type === "utterance")).toHaveLength(3);
   });
+
+  it("keeps counterpart turns when only legacy replica utterances arrive, and drops a repeated inference", async () => {
+    const { events, controller } = setup();
+    await controller.connect(credential);
+    const call = daily.calls[0];
+    const message = (role: string, speech: string, inference_id?: string) =>
+      call.emit("app-message", { data: { event_type: "conversation.utterance", inference_id, properties: { role, speech } } });
+    message("replica", "First line.", "i1");
+    message("pal", "First line.", "i1");
+    message("user", "Okay.");
+    message("pal", "Second line.", "i2");
+    message("replica", "Second line.", "i2");
+    message("replica", "Third line, legacy only.");
+    expect(events.filter((event) => event.type === "utterance").map((event) => (event as { speaker: string; text: string }).speaker + ":" + (event as { text: string }).text))
+      .toEqual(["counterpart:First line.", "user:Okay.", "counterpart:Second line."]);
+  });
 });

@@ -153,7 +153,7 @@ describe("POST /api/sessions/[id]/reflect", () => {
       { ...body, selfReflection: "" },
     ];
     for (const value of rejected) expect((await errorOf(await reflect(value), 400)).code).toBe("VALIDATION_ERROR");
-    expect((await errorOf(await reflect(JSON.stringify(body) + " ".repeat(48000)), 400)).code).toBe("VALIDATION_ERROR");
+    expect((await errorOf(await reflect(JSON.stringify(body) + " ".repeat(96000)), 400)).code).toBe("VALIDATION_ERROR");
     expect((await errorOf(await reflect("not json"), 400)).code).toBe("VALIDATION_ERROR");
     expect((await errorOf(await POST(post(body, "nope"), ctx("nope")), 400)).code).toBe("VALIDATION_ERROR");
     expect(from).not.toHaveBeenCalled();

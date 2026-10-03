@@ -10,7 +10,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   return handle(request, async () => {
     const { client } = await requireIdentity();
     const id = parseId((await params).id);
-    const input = await readBody(request, reflectRequestSchema, 48000);
+    const input = await readBody(request, reflectRequestSchema, 96000);
     await requireEndedSession(client, id);
     if (!input.turns.some((turn) => turn.speaker === "user")) return json(reflectResponseSchema.parse({ reflection: insufficient }));
     const release = reserveReflection(id);

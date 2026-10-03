@@ -49,7 +49,7 @@ export const reflectionModelOutputSchema = reflectionSchema;
 export const reflectResponseSchema = z.object({ reflection: reflectionSchema }).strict();
 
 // HTTP contract. Errors use errorSchema with the listed HTTP status.
-// POST /api/sessions/[id]/reflect (reflectRequestSchema, body ≤ 48000 chars) -> 200 reflectResponseSchema. No persistence, no logging.
+// POST /api/sessions/[id]/reflect (reflectRequestSchema, body ≤ 96000 chars; the schema bounds content, the cap allows JSON escaping) -> 200 reflectResponseSchema. No persistence, no logging.
 // 401 UNAUTHENTICATED before params/body; 400 VALIDATION_ERROR; 404 NOT_FOUND when the session is missing, another owner's, or deleted;
 // 409 SESSION_ACTIVE while the session is connecting/active/ending (reflection only after End);
 // 429 USAGE_LIMIT after MAX_REFLECTIONS_PER_SESSION generations for one session (per server process);
