@@ -55,6 +55,7 @@ Parallel after repository/approval contracts settle: domain persistence, memory 
 - [ ] Implement proposal approve/edit/dismiss transaction.
 - [ ] Implement no-app-save behavior.
 Gate G3: approve one preference; next session uses it; second user cannot access it.
+**Updated October 3, 17:05 (user decision):** G3 is saved people + About me + per-person drag-and-drop sharing + chip editor, as specified in [docs/26](26-PEOPLE-AND-SHARING.md). Gate: share one About-me fact with a saved person, and that person's next practice knows it while an unshared fact and private prep stay unknown; a chip edit changes behavior; a second user cannot access any of it; a stale version returns 409. The proposal approval transaction above is replaced by explicit versioned saves.
 
 ## 10-14 hours: reflection and deletion
 Parallel after lifecycle contracts settle: reflection, deletion adapter, and retention/disclosure review. Integrate late-result handling before accepting closure.

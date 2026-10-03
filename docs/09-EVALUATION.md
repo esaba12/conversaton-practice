@@ -22,6 +22,7 @@ Use fictional fixtures for automated testing. Human testers choose low-stakes sc
 | T12 | Secret handling | No provider secret in client build or returned errors |
 | T13 | Required sign-in | Signed-out/expired requests to generation, data, and media routes fail before provider calls; protected pages reject entry; sign-out/expiry tears down all media and clears transient private state |
 | T14 | Camera privacy | No camera acquisition before opt-in; camera frames remain in local self-view with no publishing, analysis, or recording; camera-off stops its tracks without muting the mic or ending the counterpart call |
+| T16 | Per-person sharing | Counterpart context for a saved person contains exactly the About-me facts shared with that person; unshared facts, private prep, other people's facts and other users' data are absent; private prep cannot be shared through any route |
 | T15 | Video availability | Live state requires audio and video readiness; frozen/lost video produces an explicit interrupted state, stops ongoing media, and cannot silently become an audio-only call |
 
 ## Browser checks
