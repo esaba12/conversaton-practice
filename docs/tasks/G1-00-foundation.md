@@ -5,7 +5,7 @@ Owner: coordinator
 Gate: G1 foundation; no product gate passed
 Issue: https://github.com/esaba12/conversaton-practice/issues/1
 PR: https://github.com/esaba12/conversaton-practice/pull/8
-Branch: build/g1-foundation
+Branch: build/g1-foundation (merged to main by PR #8 at c178d37832cfe4540c62b5f071902730ed27affa; continue on a new branch)
 Base: 4dc34a1; preservation e98fa75; scaffold a601a0e; provider/database fe27967; frontend merge cf32199; tested integration c48cecf
 Worktree: /Users/ethansaba/code/therapist
 Ports: app 3000; browser tests 3100; isolated video preflight 3010; external UI 3003
@@ -43,4 +43,4 @@ October 3, 2026, America/Detroit, original checkout a601a0e plus current changes
 Final code CI: [run 37145104163](https://github.com/esaba12/conversaton-practice/actions/runs/37145104163) passed for c48cecfde061d5550b56265d6f045a78215de2b5 at 14:42 EDT, covering npm ci, typecheck, unit tests, production build and Chromium suite. Research handoff/doc-only follow-up does not alter implementation. Coordinator visually inspected combined desktop setup and 320px call fixtures; they are clearly labeled synthetic media and do not prove a live call.
 Human live preflight must establish usable synchronized speech/video, interruption, two isolated contexts and actual media release before media contracts freeze. Full G1 then requires authenticated app integration, real UI Auth, readiness acknowledgement and End/auth-loss/navigation teardown through application routes. Credential expiry and app lease expiry remain separate. No raw transcript/media persistence; provider transcripts and downstream deletion limitations are explicit.
 
-Next smallest action: record human preflight result, keep draft PR/CI current, then dispatch application media/auth tasks against accepted contracts. Do not advance to G2 or count test mode as a working live call.
+Next smallest action: follow the Cursor handoff in docs/23-CURSOR-HANDOFF.md from main, record human preflight result, then dispatch application media/auth tasks against accepted contracts. The exact final PR head d7bc7af passed CI run 37145240793 before merge; merging the foundation did not pass the live gate. Do not advance to G2 or count test mode as a working live call.
