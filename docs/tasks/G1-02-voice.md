@@ -1,15 +1,20 @@
 # G1-02: Connect the live talking AI video call and guarantee media teardown
 
-Status: planned
-Updated: October 3, 2026, America/Detroit
-Assigned writer: unassigned; media worker role
-Coordinator: unassigned
+Status: active
+Updated: October 3, 2026, 14:58 America/Detroit
+Assigned writer: Cursor subagent "G1-02 media controller"
+Coordinator: Cursor coordinator session
 Gate: G1
 GitHub issue: [#3](https://github.com/esaba12/conversaton-practice/issues/3)
 Pull request: not opened; CI: not run
 Requirements/tests: P04, P05, P09, P13; T09, T12, T13 and live interruption/video/End microphone-camera checks
 
-## Assignment and isolation
+## Dispatch (supersedes the proposed assignment below)
+
+- Base: branch `build/g1-session-media`, frozen-contract commit recorded in STATUS. Shared original checkout with G1-01/G1-03 workers on disjoint paths; no separate worktree.
+- Owned paths: `lib/media/daily-controller.ts`, `tests/unit/daily-controller.test.ts`, this record.
+- Frozen contract (read-only): `MediaController`, `MediaEvent`, `CreateMediaController`, `MediaCredential` in `lib/schemas/media.ts`. Export `createDailyController: CreateMediaController`. Reference behavior that a human verified live: `scripts/preflight/video.html`.
+- Do not run `npm run build`, `npm run test:ui`, live calls, or Git commits; the coordinator does. Do not touch other workers' paths.
 
 - Base ref + SHA: pending integrated G1-00 commit.
 - Branch: proposed `agent/G1-02-voice`; not created by this brief.

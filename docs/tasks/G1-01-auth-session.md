@@ -1,15 +1,20 @@
 # G1-01: Authenticate users and authorize durable video call sessions
 
-Status: planned
-Updated: October 3, 2026, America/Detroit
-Assigned writer: unassigned; auth/session worker role
-Coordinator: unassigned
+Status: active
+Updated: October 3, 2026, 14:58 America/Detroit
+Assigned writer: Cursor subagent "G1-01 server routes"
+Coordinator: Cursor coordinator session
 Gate: G1
 GitHub issue: [#2](https://github.com/esaba12/conversaton-practice/issues/2)
 Pull request: not opened; CI: not run
 Requirements/tests: P12, P13, P04, P09; T01, T03, T09, T10, T12, T13
 
-## Assignment and isolation
+## Dispatch (supersedes the proposed assignment below)
+
+- Base: branch `build/g1-session-media`, frozen-contract commit recorded in STATUS. Shared original checkout with G1-02/G1-03 workers on disjoint paths; no separate worktree.
+- Owned paths: `lib/data/sessions.ts`, `lib/session/server.ts`, `lib/api/respond.ts`, `app/api/sessions/route.ts`, `app/api/sessions/[id]/connected/route.ts`, `app/api/sessions/[id]/end/route.ts`, `lib/media/tavus.ts`, `tests/unit/tavus.test.ts`, `tests/unit/session-server.test.ts`, this record.
+- Frozen contracts (read-only): HTTP shapes in `lib/schemas/session.ts`, `errorSchema`/`AppError` in `lib/schemas/errors.ts`, `mediaCredentialSchema`, `requireIdentity()` in `lib/auth/server.ts`, the five RPCs in [G1-00C](G1-00C-session-schema.md).
+- Do not run `npm run build`, `npm run test:ui`, live provider calls, SQL, or Git commits; the coordinator does. Do not touch other workers' paths.
 
 - Base ref + SHA: pending integrated G1-00 commit.
 - Branch: proposed `agent/G1-01-auth-session`; not created by this brief.
