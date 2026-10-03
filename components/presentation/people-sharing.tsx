@@ -78,7 +78,7 @@ export function KnowsAboutYou({ personName, facts, sharedIds, onToggle, disabled
   return (
     <section className={setup.card} aria-labelledby={`${id}-title`}>
       <div className={setup.cardTop}><h2 id={`${id}-title`} className={styles.sectionTitle}>What {personName} knows about you</h2><Link className={styles.textLink} href="/practice/about-me">Edit About me</Link></div>
-      <p id={`${id}-hint`} className={setup.hint}>Nothing is shared by default. Drag a fact between the columns, or select it and press Enter or Space to move it. Shared facts are sent to the video call provider as part of this character’s setup when you practice.</p>
+      <p id={`${id}-hint`} className={setup.hint}>Nothing is shared by default. Click a fact to move it to the other column, or drag it there. Shared facts are sent to the video call provider as part of this character’s setup when you practice.</p>
       {disabledReason && <p className={setup.status}>{disabledReason}</p>}
       <div ref={listRef} className={styles.shareGrid}>
         {zone("about", "About me", facts.filter((fact) => !shared.has(fact.id)), facts.length === 0 ? "You haven’t added any facts yet." : "Everything is shared.")}

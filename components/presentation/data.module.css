@@ -1,0 +1,32 @@
+.storedList { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.storedRow { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); font-size: 14px; line-height: 1.6; }
+.storedRow strong { font-weight: 600; }
+.storedRow p { flex: 1 1 260px; margin: 0; color: var(--muted); font-size: 13px; }
+.knowsList { flex: 1 1 100%; list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-size: 13px; color: var(--muted); }
+.knowsList a { color: var(--sage); text-underline-offset: 4px; }
+.knowsList a:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+.providers { margin: 0; padding-left: 18px; display: grid; gap: 8px; color: var(--muted); font-size: 14px; line-height: 1.7; }
+.providers strong { color: var(--ink); font-weight: 600; }
+
+.sessionTable { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.sessionTable th { padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--muted); font-size: 12px; font-weight: 600; text-align: left; }
+.sessionTable td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.cleanup { display: inline-block; padding: 4px 8px; border-radius: 5px; font-size: 12px; line-height: 1.4; background: #f1f0eb; color: var(--ink); }
+.cleanup[data-cleanup="confirmed"] { background: #edf1e9; color: #284738; }
+.cleanup[data-cleanup="pending"], .cleanup[data-cleanup="unresolved"] { background: #eee8d7; color: #665126; }
+
+.confirmForm { display: grid; gap: 12px; padding: 16px; border: 1px solid #d9b8b0; border-radius: 10px; background: #fbf4f1; }
+.confirmForm p { margin: 0; font-size: 13px; line-height: 1.6; }
+.confirmActions { display: flex; flex-wrap: wrap; gap: 10px; }
+.dangerSolid { min-height: 44px; padding: 10px 14px; border: 1px solid #7d2e25; border-radius: 8px; background: #7d2e25; color: var(--surface); font-size: 13px; font-weight: 500; }
+.dangerSolid:hover:not(:disabled) { background: #63231c; }
+.dangerSolid:disabled { background: #e2e5de; color: #515a51; border-color: #d3d7ce; cursor: not-allowed; }
+.dangerSolid:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.result { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.7; }
+
+@media (max-width: 760px) {
+  .sessionTable thead { display: none; }
+  .sessionTable tr { display: grid; gap: 4px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .sessionTable td { padding: 0; border: 0; }
+}

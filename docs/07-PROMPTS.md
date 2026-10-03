@@ -56,6 +56,8 @@ Rules:
 - Never write to the database.
 If immediate danger is explicit, set the support-exit flag and do not generate performance feedback.
 
+Implementation (G4): `lib/reflection/prompt.ts` (`REFLECTION_PROMPT_VERSION` `reflection-2026-10-03.2`; danger detection scoped to the user's own turns and note) and `lib/reflection/generate.ts`. Responses API, strict JSON schema, `store: false`, model `OPENAI_REFLECTION_MODEL` falling back to `OPENAI_SETUP_MODEL`. Goal, self-reflection and turns travel only in the user message as escaped JSON inside `<untrusted_input>`. Input is the in-memory transcript from Tavus `conversation.utterance` events, never private notes, About-me facts, person data or the role. Server backstops: a support exit nulls all feedback fields; insufficient evidence nulls the observation; a transcript with no user turn returns insufficient without a model call. Memory proposals are not generated in G4.
+
 ## Reassurance loop handling
 If the user repeatedly asks whether they sounded stupid or whether the real person will dislike them:
 Acknowledge uncertainty once. Refer to the chosen action, not an evaluation of worth. Offer to finish or choose a concrete next step. Do not generate increasingly confident reassurance.

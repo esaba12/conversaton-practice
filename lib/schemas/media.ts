@@ -17,6 +17,9 @@ export type MediaEvent =
   | { type: "local-preview"; stream: MediaStream | null }
   | { type: "ready" }
   | { type: "remote-left" }
+  // One finished turn from the provider's transcription (Tavus conversation.utterance). Emitted only while the call is live.
+  // Holders keep it in memory for an optional reflection; never persist or log it.
+  | { type: "utterance"; speaker: "user" | "counterpart"; text: string }
   | { type: "failed"; reason: "join" | "credential_expired" | "video_lost" | "provider_error" | "microphone_denied" };
 
 export interface MediaController {

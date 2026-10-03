@@ -1,7 +1,34 @@
 import type { DailyCall, DailyParticipant } from "@daily-co/daily-js";
+import { z } from "zod";
 import type { CreateMediaController, MediaCredential, MediaEvent } from "@/lib/schemas/media";
+import { MAX_TURN_CHARS } from "@/lib/schemas/reflection";
 
 type FailureReason = Extract<MediaEvent, { type: "failed" }>["reason"];
+
+// Tavus documents a legacy duplicate of each counterpart turn with role "replica". It is used only until a "pal" turn has been seen,
+// and a repeated inference_id is dropped, so either form yields one turn. Analysis fields are never read.
+const utteranceSchema = z.object({
+  event_type: z.literal("conversation.utterance"),
+  inference_id: z.string().optional(),
+  properties: z.object({ role: z.enum(["pal", "user", "replica"]), speech: z.string() }).loose(),
+}).loose();
+function utteranceReader() {
+  let sawPal = false;
+  const seen = new Set<string>();
+  return (data: unknown): Extract<MediaEvent, { type: "utterance" }> | null => {
+    const parsed = utteranceSchema.safeParse(data);
+    if (!parsed.success) return null;
+    const { role, speech } = parsed.data.properties;
+    const text = speech.trim().slice(0, MAX_TURN_CHARS).trim();
+    if (!text) return null;
+    if (role === "user") return { type: "utterance", speaker: "user", text };
+    if (role === "replica" && sawPal) return null;
+    if (role === "pal") sawPal = true;
+    const id = parsed.data.inference_id;
+    if (id) { if (seen.has(id)) return null; seen.add(id); }
+    return { type: "utterance", speaker: "counterpart", text };
+  };
+}
 
 function stopTracks(stream: MediaStream | null) {
   stream?.getTracks().forEach((track) => track.stop());
@@ -131,6 +158,12 @@ export const createDailyController: CreateMediaController = (onEvent) => {
           if (type === "exp-token" || type === "exp-room") fail("credential_expired");
           else if (type === "ejected") remoteLeft();
           else fail("provider_error");
+        });
+        const utterance = utteranceReader();
+        instance.on("app-message", (event) => {
+          if (!live()) return;
+          const turn = utterance(event?.data);
+          if (turn) onEvent(turn);
         });
         instance.on("left-meeting", () => {
           if (live()) remoteLeft();

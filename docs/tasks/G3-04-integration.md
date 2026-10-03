@@ -1,7 +1,7 @@
 # G3-04: Integrate and verify saved people, About me and per-person sharing
 
-Status: review — awaiting human live G3 call
-Updated: October 3, 2026, 17:42 EDT
+Status: integrated — accepted on automated evidence by user decision (19:00); live G3 call not verified
+Updated: October 3, 2026, 19:02 EDT
 Assigned writer: coordinator
 Coordinator: Cursor coordinator session
 Gate: G3
@@ -58,3 +58,9 @@ Not yet verified (needs the human live call): a successful saved-person start wi
 4. Practice with <name> → ask "What do you know about me?" and "Any plans this weekend?" → the character may mention the dog; it should not know the marathon or the private note → End.
 5. Change Formality (for example Formal → Casual) → Save → practice again → note the tone difference and that the character does not remember the previous call → End.
 6. Report: shared fact used? unshared fact or private note surfaced? tone change visible? Save/Update after End worked? mic released?
+
+## Gate decision (October 3, 19:00 EDT)
+
+The user decided to stop waiting on human live checks ("do it as automated or unit testing where you can … I'll verify myself when I want to"). G3 advances on the automated evidence above, and PR #20 is merged. **Live G3 is not verified.** That covers a saved-person Tavus start, the counterpart using only shared facts, a tone change after a chip edit, and Save after a real End.
+
+Partial human use observed read-only, not a gate check: ~18:48–18:52 EDT the user added About-me facts, generated a setup, started and ended two real calls (cleanup handled by End), saved a person from the call and edited its chips. The dev-server log showed no share request; the user reported being unable to assign facts. Their page rendered the sharing section correctly when inspected in the Cursor browser (no clicks made). The likely cause is that drag-and-drop doesn't work in the embedded browser. The hint now leads with click (`7852d23`), and "About me" is in the practice header (`57bf297`).

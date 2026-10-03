@@ -1,0 +1,25 @@
+.panel { display: grid; gap: 14px; max-width: 640px; margin: 20px auto 0; padding: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; color: var(--ink); overflow-wrap: anywhere; }
+.panel h2 { margin: 0; font-size: 18px; }
+.panel p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+.field { display: grid; gap: 8px; }
+.labelRow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.labelRow label { font-size: 13px; font-weight: 600; line-height: 1.5; }
+.count { flex-shrink: 0; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.field textarea { width: 100%; min-height: 96px; padding: 11px 12px; border: 1px solid #aeb5ac; border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; line-height: 1.6; resize: vertical; }
+.field textarea:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.panel .hint { font-size: 12px; }
+.result { display: grid; gap: 12px; padding: 16px; border-radius: 10px; background: #f3f6f0; border: 1px solid #b8c7b5; }
+.result:empty { display: none; }
+.result h3 { margin: 0 0 4px; font-size: 13px; font-weight: 600; color: var(--sage); }
+.result p { color: var(--ink); }
+.panel .evidence { justify-self: start; padding: 5px 9px; border-radius: 5px; background: #eee8d7; color: #665126; font-size: 12px; font-weight: 600; }
+.support { display: grid; gap: 8px; padding: 16px; border-radius: 10px; background: #f4f2ec; border: 1px solid #c9c6ba; }
+.panel .support p { color: var(--ink); }
+.error { display: grid; gap: 8px; padding: 12px; border-left: 2px solid #92372e; background: #f6ebe7; }
+.panel .error p { color: var(--ink); font-size: 13px; }
+.primary { min-height: 44px; padding: 10px 14px; border: 1px solid var(--sage); border-radius: 8px; background: var(--sage); color: var(--surface); font-size: 13px; font-weight: 500; }
+.primary:hover:not(:disabled) { background: #284738; }
+.primary:disabled { background: #e2e5de; color: #515a51; border-color: #d3d7ce; cursor: wait; }
+.secondary { min-height: 44px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--ink); font-size: 13px; }
+.secondary:hover:not(:disabled) { border-color: var(--sage); background: #e8ede3; }
+.primary:focus-visible, .secondary:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
