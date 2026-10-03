@@ -39,7 +39,7 @@ Private test-mode conversation creation returned ended plus a meeting token; Tav
 Isolated live preflight is running at **http://127.0.0.1:3010** (process session 14951 at launch). It starts a real three-minute call only on explicit click. User was asked to test five exchanges, interruption, End/microphone release, and two fictional contexts. **No human result received yet.** Restart command:
 `node_modules/.bin/node --env-file=.env.local scripts/preflight/video-server.mjs`
 
-This harness is intentionally separate from the authenticated application, binds loopback, and is not a G1 pass. Do not run automated call-start/camera actions while the user is testing.
+**Human result (14:54 EDT):** usable. Video and responsive speech work; lip sync is slightly off on the stock face. The user reported the rest of the checklist as working collectively, not item by item. Recorded in [G1-00](docs/tasks/G1-00-foundation.md). This harness is intentionally separate from the authenticated application, binds loopback, and is not a G1 pass.
 
 ## Actual verification
 October 3, original checkout; checks ran during development based on `a601a0e` and were integrated through `c48cecf`/`d7bc7af` into main merge `c178d37`. Per-task records retain exact modes/revisions; these are no longer uncommitted feature changes:
@@ -54,7 +54,7 @@ October 3, original checkout; checks ran during development based on `a601a0e` a
 - Installed Next.js cookies/proxy/authentication/route guides reviewed; preserve its generated AGENTS.md rules block.
 
 ## Next steps and real blockers
-1. Record the human live-video preflight result; repair actual provider/media failures before freezing integration contracts.
+1. Done: human preflight recorded as usable with imperfect lip sync. No provider repair needed before freezing contracts; lip sync is a known limitation, not a blocker.
 2. Continue from main on a new focused branch in Cursor. PRs #7 and #8 are merged; G1 issues remain open until full acceptance. Follow docs/23 for the exact implementation map and next task.
 3. Verify actual email delivery/confirmation callback; real password/UI sign-in already passed with confirmed fixtures. Default Supabase SMTP may restrict recipients/rate; do not burn quota with repeated synthetic signup attempts or claim public email readiness.
 4. Freeze media/session contracts, then dispatch/review application auth/session routes and media-controller work against the integrated frontend props.

@@ -1,6 +1,6 @@
 # G1-00: Application and provider foundation
 
-Status: active — human video feasibility and final media contract freeze pending
+Status: active — human video feasibility recorded (usable, imperfect lip sync); media contract freeze next
 Owner: coordinator
 Gate: G1 foundation; no product gate passed
 Issue: https://github.com/esaba12/conversaton-practice/issues/1
@@ -37,10 +37,13 @@ October 3, 2026, America/Detroit, original checkout a601a0e plus current changes
 - `node_modules/.bin/node --env-file=.env.local scripts/preflight/provider-setup.mjs`: exit 0. Live API PAL creation/readback plus test-mode private conversation/deletion pass. No audiovisual proof.
 - Loopback preflight screenshot inspected without starting a call. Installed Next cookies/proxy/auth/route guides and Daily types reviewed.
 - Foundation CI passed at cf32199: https://github.com/esaba12/conversaton-practice/actions/runs/37144707035. Combined local wiring check then passed typecheck, 9 unit tests, build and 8 browser tests (1 production-only skip). Real browser Auth check passed sign-in, protected integrated workspace, sign-out and denied re-entry; fixtures removed.
+- 14:54: human live preflight on loopback harness 3010 (real Tavus CVI call, stock face, ElevenLabs TTS). User report, verbatim intent: lip sync is "not exactly synced but the rest works well." Recorded as **usable with imperfect lip sync**: moving video and responsive speech worked; mouth movement drifts slightly from audio. The remaining checklist items (five exchanges, interruption, End/microphone release, second context) were confirmed collectively as working, not individually itemized. No media or transcript was captured by the coordinator. This is harness evidence only, not G1 app acceptance.
 
 ## Remaining acceptance
 
 Final code CI: [run 37145104163](https://github.com/esaba12/conversaton-practice/actions/runs/37145104163) passed for c48cecfde061d5550b56265d6f045a78215de2b5 at 14:42 EDT, covering npm ci, typecheck, unit tests, production build and Chromium suite. Research handoff/doc-only follow-up does not alter implementation. Coordinator visually inspected combined desktop setup and 320px call fixtures; they are clearly labeled synthetic media and do not prove a live call.
 Human live preflight must establish usable synchronized speech/video, interruption, two isolated contexts and actual media release before media contracts freeze. Full G1 then requires authenticated app integration, real UI Auth, readiness acknowledgement and End/auth-loss/navigation teardown through application routes. Credential expiry and app lease expiry remain separate. No raw transcript/media persistence; provider transcripts and downstream deletion limitations are explicit.
 
-Next smallest action: follow the Cursor handoff in docs/23-CURSOR-HANDOFF.md from main, record human preflight result, then dispatch application media/auth tasks against accepted contracts. The exact final PR head d7bc7af passed CI run 37145240793 before merge; merging the foundation did not pass the live gate. Do not advance to G2 or count test mode as a working live call.
+Known limitation: lip sync on the stock face is slightly off. Treat it as provider quality; do not add custom speech/video pipelines to fix it. If time allows after G1, try another stock face before changing anything else.
+
+Next smallest action: human preflight is recorded; freeze media/session contracts, then dispatch application media/auth tasks against accepted contracts. The exact final PR head d7bc7af passed CI run 37145240793 before merge; merging the foundation did not pass the live gate. Do not advance to G2 or count test mode as a working live call.
