@@ -1,0 +1,20 @@
+.preview { min-height: 100dvh; background: #f7f5f0; color: #232a28; }
+.header { max-width: 1120px; margin: auto; padding: 28px 32px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.wordmark { font-size: 17px; font-weight: 600; letter-spacing: -.6px; }
+.wordmark > span { margin-left: 10px; color: #345a49; }
+.previewBadge { border: 1px solid #cccfc5; border-radius: 5px; padding: 6px 8px; color: #626963; font-size: 10px; white-space: nowrap; }
+.previewNotice { max-width: 1056px; margin: 0 auto; padding: 14px 18px; background: #eee8d7; border: 1px solid #d7caaa; border-radius: 8px; display: flex; align-items: baseline; gap: 16px; color: #665126; font-size: 12px; line-height: 1.6; }
+.previewNotice strong { flex-shrink: 0; font-weight: 600; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; max-width: 1056px; margin: 16px auto 0; padding-bottom: 16px; border-bottom: 1px solid #dddcd5; }
+.toolbar button { padding: 10px 14px; min-height: 44px; border: 1px solid #b5bcb2; background: #fffefb; color: #232a28; border-radius: 6px; font-size: 12px; }
+.toolbar button[aria-pressed="true"] { background: #e1e8dc; border-color: #345a49; }
+.toolbar label { display: flex; align-items: center; gap: 8px; min-height: 44px; color: #515a51; font-size: 12px; cursor: pointer; }
+.toolbar input { accent-color: #345a49; width: 18px; height: 18px; margin: 0; }
+.toolbar select { min-height: 44px; padding: 8px; font: inherit; color: #232a28; background: #fffefb; border: 1px solid #b5bcb2; border-radius: 6px; }
+.toolbar :is(button, input, select):focus-visible { outline: 3px solid #245b91; outline-offset: 4px; }
+.syntheticMedia { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 110px 28px 160px; background: #465648; text-align: center; font-size: 23px; }
+.syntheticMedia small { font-size: 12px; color: #e0e7db; }
+.syntheticLocal { display: grid; place-items: center; background: #52624f; padding-bottom: 24px; color: #fffefb; font-size: 11px; }
+.footer { max-width: 1056px; margin: 0 auto; padding: 22px 0 30px; border-top: 1px solid #dddcd5; color: #626963; font-size: 11px; }
+@media (max-width: 1120px) { .previewNotice, .toolbar, .footer { margin-left: 32px; margin-right: 32px; } }
+@media (max-width: 760px) { .header { padding: 22px 20px; }.wordmark { font-size: 14px; }.previewNotice, .toolbar, .footer { margin-left: 20px; margin-right: 20px; }.previewNotice { flex-direction: column; gap: 4px; }.toolbar { gap: 8px 12px; }.syntheticMedia { font-size: 20px; } }
