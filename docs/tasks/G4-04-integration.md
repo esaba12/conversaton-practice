@@ -56,6 +56,20 @@ Coordinator review notes: the worker choices are accepted. A failed generation r
 - ~18:02 EDT — visual — static fixture. Rendered `ReflectionPanel` (idle with no speech, partial result, retryable error, support exit) and `DataOverview` (three cleanup states, partial-deletion result) on a temporary, uncommitted dev-only page at 900 px and 375 px. Screenshots: `/opt/cursor/artifacts/screenshots/g4-reflection-and-data.png` and `g4-mobile.png`. Layout and wording look as intended. This used fixture props, not real data or sign-in.
 - Not runnable here (no credentials): signed-in flows, a real reflection call, the real `GET /api/sessions` and `DELETE /api/practice-data` against Supabase, two-user isolation of the new routes, and live Tavus utterance events.
 
+## Privacy review (read-only, on `3608690`)
+
+No blockers. Applied:
+- **Counterpart turns.** Legacy `replica` utterances are now accepted until a `pal` turn is seen, and a repeated `inference_id` is dropped. A call that sends only `replica` still yields counterpart turns, and a call that sends both doesn't duplicate them. A new controller test covers this. The role Tavus actually sends is still to be observed live.
+- **Stuck reflect after a failed close.** When closing the session was unreachable, a reflect 409 now says "Use Retry closing session, then try again" instead of an endless "still closing".
+- **Your data and the back/forward cache.** A restored page now clears the people, sessions and result state and reloads, so names from before a sign-out elsewhere don't reappear. `authLost` clears the result and message too.
+- **Nits.**
+  - Reflect body cap raised to 96,000 characters (the schema still bounds content).
+  - The support exit is scoped to real danger in the user's own turns or note, not the fictional counterpart's lines (prompt `.2`).
+  - Items that were already gone (NOT_FOUND) are no longer counted as deleted.
+  - docs/08 notes the US-only support numbers.
+
+The per-process reflection cap isn't enforced across instances or restarts, which was already documented. After the fixes: typecheck pass, `npm test` 13 files and 142 tests pass, `npm run build` exit 0.
+
 ## Human live G4 checklist
 
 On your machine, at `cursor/g4-reflection-9fec` with the dev server on port 3000. Optionally set `OPENAI_REFLECTION_MODEL`; it falls back to `OPENAI_SETUP_MODEL`.
