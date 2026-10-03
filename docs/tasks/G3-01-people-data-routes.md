@@ -1,7 +1,7 @@
 # G3-01: About-me, people and shared-facts data and routes
 
-Status: ready
-Updated: October 3, 2026, 17:20 EDT
+Status: review
+Updated: October 3, 2026, 17:23 EDT
 Assigned writer: G3-01 background subagent
 Coordinator: Cursor coordinator session
 Gate: G3
@@ -23,6 +23,8 @@ CI run: not run
 
 ## Scope and acceptance
 
+All items below are met in unit/mock mode (see Verification evidence); boxes left for the coordinator to tick on review.
+
 Outcome: signed-in users can list/create/edit/delete their About-me facts and saved people, replace which facts a person knows, and read/write their private prep, all owner-scoped.
 Non-goals: UI, session start, context building, migrations.
 
@@ -42,13 +44,29 @@ Non-goals: UI, session start, context building, migrations.
 
 ## Verification evidence
 
-Not run yet.
+Mode: unit/mock only (mocked `requireIdentity`, mocked Supabase `rpc` and a recording chainable `from` builder). No database, provider, build, dev server or browser was used. October 3, 2026, ~17:22 EDT, base `7bb796b` plus uncommitted G3-01 files.
+
+- `npm run typecheck` — pass (no errors).
+- `npx vitest run tests/unit/people-routes.test.ts tests/unit/contracts.test.ts` — 2 files, 23 tests passed (people-routes 11, contracts 12). No failures from other workers' files in this run.
+
+What the 11 route tests cover:
+- 401 on all 12 handlers before the body or `[id]` param is read (`request.bodyUsed` stays false, invalid id ignored), no RPC or table query.
+- 400 for strict-body violations (`ownerId`, `privateNotes`, `sharedFactIds` on PATCH, `personId` on private prep, unknown chip key/value, non-string chip, >5 constraints, missing/zero `expectedVersion`, non-UUID or duplicate or object `factIds`, oversized bodies, invalid ids); 403 cross-origin; no storage call.
+- Exact RPC names/args: trimmed text, `p_traits` as an object, `p_constraints` as an array, `p_expected_version`, `p_fact_ids` as UUIDs only; private prep sends only `p_notes`.
+- Reads: explicit column lists, oldest-first facts, people by `updated_at desc`, links ordered by `created_at` and grouped per person; missing person row → 404.
+- Markers: NOT_FOUND→404, VERSION_CONFLICT→409, LIMIT_REACHED→409 USAGE_LIMIT, INVALID_INPUT→400 VALIDATION_ERROR.
+- Malformed rows (bad chip, bad timestamp, `deleted: false`, non-UUID link), PostgREST errors and thrown RPC errors → sanitized 503 with no raw text.
+- Every response parsed with its `people.ts` response schema in the tests.
+
+Not verified: real PostgREST behavior (query-builder chaining, `maybeSingle`, `uuid[]` binding of `p_fact_ids`, timestamp format) against the applied migration; two-user isolation is enforced by RLS/RPCs and is covered only by the coordinator's SQL assertions, not by these mocks.
 
 ## Handoff
 
-- Changed paths and commit(s): pending
-- Remaining failures/risks: pending
+- Changed paths and commit(s): `lib/data/people.ts`, `app/api/about-me/route.ts`, `app/api/about-me/[id]/route.ts`, `app/api/people/route.ts`, `app/api/people/[id]/route.ts`, `app/api/people/[id]/shared-facts/route.ts`, `app/api/private-prep/route.ts`, `tests/unit/people-routes.test.ts`, this record. Uncommitted (coordinator is the only Git writer).
+- Behavior notes: timestamps are normalized to `toISOString()` (millisecond `Z` form) like `lib/data/sessions.ts`. Link reads for the people list are chunked 25 people per query so 50 people × 30 facts stays under PostgREST's default 1000-row cap. List reads also `limit` to the schema caps (30 facts, 50 people). Responses are validated with `safeParse`; any mismatch is the `storageUnavailable()` 503.
+- Shared change proposals: none required. Optional: `rpc.ts` and `people.ts` each build a 404 NOT_FOUND `AppError`; exporting a `notFound()` helper from `rpc.ts` would remove the duplicate message string.
+- Remaining failures/risks: the live read path is unverified (see above). `GET /api/people/[id]` and the list do two reads (person, then links) without a transaction, so a concurrent share change can briefly return links newer than `version`; the next PUT still version-checks. `about_me_delete`/`about_me_update` bump linked people's versions, so a UI holding a person's version must reload after editing facts.
 - External account action: none
-- Next smallest task: pending
-- Ready for review: no
+- Next smallest task: coordinator integration, then a live two-user check through these routes (preflight script) against the applied migration.
+- Ready for review: yes
 - Coordinator integration: pending
