@@ -4,7 +4,7 @@ Status: review
 Gate: G1 presentation only; no live integration acceptance
 Owner: user-launched frontend agent
 Issue: https://github.com/esaba12/conversaton-practice/issues/4
-PR: check existing PRs, then open focused draft when reviewable
+PR: https://github.com/esaba12/conversaton-practice/pull/7 (draft; base `build/g1-foundation`)
 Base: `a601a0eaea6cd84b68050687fa1ebfd6fb85a39f` (verified clean before edits)
 Branch: `agent/g1-frontend`
 Worktree: `/Users/ethansaba/code/therapist/.worktrees/g1-frontend`
@@ -125,4 +125,8 @@ match base and are excluded from commits. Optional coordinator proposal: set
 `agentRules: false` in the shared Next config if repeated generated AGENTS churn
 is unwanted; no config edit was made here.
 
-CI/integrated revision: pending coordinator review. No gate marked passed.
+Implementation commit: `8a46703` (`feat: add isolated setup and video call presentation`).
+Draft PR #7 opened after confirming no existing frontend PR; branch pushed to origin.
+CI: [Application checks](https://github.com/esaba12/conversaton-practice/actions/runs/37143417445)
+queued when checked at 14:14 EDT; not claimed passed. Integrated revision remains
+pending coordinator review. No merge performed and no gate marked passed.
