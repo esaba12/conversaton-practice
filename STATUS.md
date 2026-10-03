@@ -1,9 +1,19 @@
 # Project status
 
-Updated October 3, 2026, America/Detroit (public preview deployed; application G1 not started).
+Updated October 3, 2026, 13:57 America/Detroit (G1 foundation active).
+
+## Active build handoff — takes precedence over historical preparation notes below
+- User authorized the build and requested an independent external frontend agent. Coordinator branch: `build/g1-foundation`.
+- Scaffold implemented: Next.js 16.3.8, React 19.3.0, project-local Node 22.23.3, Supabase SSR 0.12.7/client 2.117.2, Daily 0.87.0, Zod 4.6.5. Dependencies pinned. Supplied local Node 20 only bootstrapped installation; npm scripts use local Node 22.
+- Landing/sign-in/account-creation UI, callback and protected workspace shell exist. Actual sign-in/email delivery not tested. Calls visibly disabled.
+- Typecheck, 5 contract unit tests, and production build passed against the uncommitted scaffold at 13:56. Browser tests/CI pending. No live gate passed.
+- Supabase CLI account access now works with escalation. Linked the confirmed fresh project; read-only SQL verified Auth schema and zero public tables. No migration applied.
+- Official-doc research confirms Tavus PAL/face API, explicit ElevenLabs TTS, private Daily token, stateless calls and local-only camera design. No PAL/call created. Recording-off does not disable provider transcripts; deletion must remain separately tracked.
+- Frontend agent owns only the paths/contracts in `docs/tasks/G1-03-frontend-preview.md`, isolated at `.worktrees/g1-frontend`, port 3003. Coordinator owns auth, media, database, configs/shared contracts, numbered docs and integration. No overlapping writes.
+- Next: create frontend worktree from tested scaffold; reconcile remaining older LiveAvatar specs; configure bounded Tavus preflight and implement reviewed session foundation. Media contracts remain provisional pending live evidence.
 
 ## Restart handoff
-Latest user instruction: **check access and document only, then stop for context reset**. This request is complete. No build/resource creation or live call was started. Read [PREP-03 access evidence](docs/tasks/PREP-03-access-check.md) before repeating setup.
+Historical preparation instruction was access checks only; it is superseded by the user's build authorization above. Read [PREP-03 access evidence](docs/tasks/PREP-03-access-check.md) before repeating setup.
 
 Latest setup direction: the user confirms credits for **Tavus and ElevenLabs** and requests setup guidance. Proceed with Tavus CVI plus explicitly selected ElevenLabs TTS as the first integration route. Tavus manages the live conversation; ElevenLabs provides speech. This replaces LiveAvatar/ElevenLabs Agents as the current setup path, not as a claim of a tested integration. All five environment values are now present. Read-only Tavus faces, ElevenLabs voices, OpenAI models, and Supabase Auth health/settings checks returned HTTP 200. Credit balances, paid generation, and live calls remain untested. See docs/tasks/PREP-03-access-check.md. Follow docs/21-START-BUILD.md; no LiveAvatar account or separate ElevenLabs Agent is needed for this route. Before freezing worker contracts, revise the older connector-specific architecture/task details to Tavus; do not combine both pipelines.
 

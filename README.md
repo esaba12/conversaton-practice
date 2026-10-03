@@ -1,7 +1,7 @@
 # MHacks conversation rehearsal specification pack
 
 Project name undecided. Prepared October 3, 2026 (America/Detroit).
-Status: public product preview deployed; authenticated application has not been built or clinically validated.
+Status: public product preview deployed; authenticated application foundation in progress. No live acceptance gate or clinical validation.
 Confirmed core experience: FaceTime-style practice with a visible, talking fictional AI counterpart. Real synchronized video is required in the first slice. See docs/22-LIVE-VIDEO.md for the integration and acceptance plan.
 Target: a 24-hour MHacks prototype. Confirmed team: one human builder coordinating multiple coding agents.
 
@@ -45,6 +45,8 @@ For the first implementation session, follow [the final startup checklist](docs/
 23. [Live video experience and integration](docs/22-LIVE-VIDEO.md)
 
 ## Build with agents
+
+Local application: `npm ci`, then `npm run dev` (http://127.0.0.1:3000). Use Node 22 (`.nvmrc`); a pinned local Node binary also supplies npm scripts. Copy `.env.example` only for a new environment; preserve existing ignored `.env.local`. Checks: `npm run typecheck`, `npm test`, `npm run build`, `npm run test:ui`. Calls are disabled in the initial protected workspace shell. The original static preview remains under `website/`.
 
 Track current work in [the GitHub G1 milestone](https://github.com/esaba12/conversaton-practice/milestone/1). Each implementation task has an issue; agents use focused branches and draft PRs with documented verification. GitHub Actions is part of the foundation task and has not run yet.
 

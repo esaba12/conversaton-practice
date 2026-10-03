@@ -1,8 +1,8 @@
 # G1-00: Establish the foundation for three independent workers
 
-Status: planned
+Status: active
 Updated: October 3, 2026, America/Detroit
-Assigned writer: unassigned; coordinator role
+Assigned writer: coordinator
 Gate: G1 preparation; does not pass G1
 GitHub issue: [#1](https://github.com/esaba12/conversaton-practice/issues/1)
 Pull request: not opened; CI: not run
@@ -48,6 +48,8 @@ contains placeholders and server/client scope, never secrets. Document startup, 
 execution ownership, and the exact supported auth callback origins.
 
 ## Verification evidence
+
+October 3, 2026, 13:56 America/Detroit, original checkout on `build/g1-foundation`, `e98fa75` plus scaffold: `npm run typecheck`, `npm test` (5 contract tests), `npm run build` all exited 0. Mode static/unit; outcome pass. Node 22.23.3 used by npm scripts. No live authentication/video acceptance. `supabase db query --linked` read-only schema check passed: intended fresh project has Auth schema and zero public tables. No migration applied. External frontend presentation task is isolated by `G1-03-frontend-preview.md`; media contracts are still provisional.
 
 - Mode/outcome: `not-run` / `not-run` for all implementation checks.
 - Date/time, tested SHA/dirty state, environment/directory, command/steps, exit code, observation/artifact: pending execution; no application evidence exists in this brief.
