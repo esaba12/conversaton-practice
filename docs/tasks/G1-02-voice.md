@@ -1,7 +1,7 @@
 # G1-02: Connect the live talking AI video call and guarantee media teardown
 
-Status: active
-Updated: October 3, 2026, 14:58 America/Detroit
+Status: review
+Updated: October 3, 2026, 15:02 America/Detroit
 Assigned writer: Cursor subagent "G1-02 media controller"
 Coordinator: Cursor coordinator session
 Gate: G1
@@ -48,16 +48,38 @@ Send requested changes to docs/03, 05, 06, 09, 22 and environment/setup guidance
 coordinator. Document verified SDK version, actual teardown behavior, provider errors,
 and pending real tests; do not invent methods or claim account configuration is complete.
 
+## Implementation (dispatch scope)
+
+`createDailyController: CreateMediaController` in `lib/media/daily-controller.ts` ports the human-verified `scripts/preflight/video.html` approach. Daily is imported lazily inside `connect`, so server rendering can import the module. The controller is single-use: a second `connect` rejects without creating another call object.
+
+Daily APIs used, each checked against `node_modules/@daily-co/daily-js/index.d.ts` (0.87.0): `Daily.createCallObject({ audioSource: true, videoSource: false })`, `join({ url, token, startVideoOff: true, startAudioOff })`, `participants()` with `tracks.{audio,video}.{state,persistentTrack,track}` and `session_id`, `setLocalAudio(enabled)`, `destroy()`, and `on()` for `participant-joined`, `participant-updated`, `track-started`, `track-stopped`, `participant-left`, `camera-error`, `error`, `left-meeting`.
+
+Event mapping:
+
+- `participant-joined` / `participant-updated` / `track-started`, plus a check right after join: build a `MediaStream` from the remote participant's live `persistentTrack`s and emit `remote-stream` when the track set changes. Emit `ready` once, when the remote `video.state` and `audio.state` are both `playable`.
+- `track-stopped` for a non-local participant's video: `failed: video_lost`.
+- `error`: `exp-token`/`exp-room` map to `failed: credential_expired`, `ejected` maps to `remote-left`, and anything else maps to `failed: provider_error`.
+- `left-meeting`, or `participant-left` for the rendered remote participant (matched by `session_id`): `remote-left`.
+- `camera-error` with `permissions` that block audio: `failed: microphone_denied`. Missing or in-use microphone errors map to `failed: join`. Video-only camera errors are ignored because Daily never receives a camera source.
+- A rejected join maps to `microphone_denied` when the error is `NotAllowedError` or a permission message, and to `join` otherwise. An expired `expiresAt` is caught before any call object is created and maps to `credential_expired`. The controller never retries a join. If the user ends the session during a join, `connect` resolves quietly.
+- Every failure tears down local media synchronously before it emits `failed`/`remote-left`. `end()` is idempotent, works synchronously first (generation bump, null streams, preview stop, `setLocalAudio(false)`, stopping local `persistentTrack`/`track`), then awaits a single shared `destroy()` and swallows its errors. It never calls the app server.
+- `setMuted` calls `setLocalAudio(!muted)`. A mute set before join is applied through `startAudioOff`.
+- `setCamera` uses `getUserMedia({ video: true, audio: false })` for local preview only. It resolves `true` when a preview is active and `false` after denial, a missing API, disable, end, or a superseded request. It emits nothing on denial, and a late acquisition stops its tracks immediately.
+
 ## Verification evidence
 
-- Mode/outcome: `not-run` / `not-run`; no adapter or live audio/video check executed by this brief.
-- Date/time, tested SHA/dirty state, environment/directory, exact command/manual steps, exit code, observation/artifact: pending.
-- Planned checks: local lifecycle/interruption tests, no stale video or late playback/reconnect after teardown, microphone/camera permission handling, no camera publication, partial-provider connection failures, and late-acquisition disposal. Final real five-exchange responsive lip-synced conversation and mic/camera-indicator observations run in G1-04 with actual browser/provider details.
+- Mode: **unit (mocked Daily and `navigator.mediaDevices`)**. Mocks do not establish live audio/video, lip sync, interruption, or microphone-indicator behavior.
+- 2026-10-03 15:00 America/Detroit, base `7d6ff43` with an uncommitted shared checkout, project root:
+  - `npx vitest run tests/unit/daily-controller.test.ts`: exit 0, 11/11 passed.
+  - `npm run typecheck`: exit 0.
+  - `npm test`: exit 0, 3 files and 20 tests passed.
+- Unit coverage: join options (`videoSource: false`, `startVideoOff`); `ready` emitted once and only when both tracks are playable; idempotent `end` with one `destroy`, mic stopped, and preview stopped; Daily events ignored after `end`; a camera granted after `end` is stopped; camera denial resolves `false` with no events; a failed join tears down, rejects, does not retry, and refuses reuse; microphone denial via join rejection and via `camera-error`; expired credential; mapping for video loss, provider error, and left-meeting; mute calls `setLocalAudio`; the camera stream/track is never passed to any Daily method.
+- Not run (per dispatch): `npm run build`, `npm run test:ui`, live calls.
 
 ## Handoff
 
-- Changed implementation paths/commits: none recorded.
-- Remaining blocker: foundation/provider feasibility; real video additionally depends on authenticated credentials, ElevenLabs access, and the selected avatar provider access.
-- Next action: coordinator freezes contracts and assigns media worker after G1-00. The legacy task ID, branch, and filename remain unchanged.
-- Ready for review/integrated revision: no / pending. Report any provider-setting request; do not mutate the shared agent silently.
+- Changed paths: `lib/media/daily-controller.ts` (new), `tests/unit/daily-controller.test.ts` (new), this record. No commits (coordinator-owned).
+- Remaining live checks (G1-04): interruption stops both speech and speaking animation; End during counterpart speech and during startup stops playback and releases the browser microphone indicator in the real app; camera preview enable/disable/End releases the camera indicator and is not published; real Tavus behavior on `max_call_duration` expiry (assumed to arrive as `ejected`/`left-meeting`, which maps to `remote-left`); whether a real microphone denial shows up as a join rejection or as `camera-error`.
+- Proposed contract clarifications (no edit made): (1) document that `setCamera` resolves "preview is active now" (so `setCamera(false)` resolves `false`); (2) document that `connect` resolves without error when `end()` interrupts the join; (3) document that the `ejected` Daily error maps to `remote-left`.
+- Ready for review/integrated revision: yes / pending coordinator integration. Report any provider-setting request; do not mutate the shared agent silently.
 - Follow [workflow](../19-AGENT-WORKFLOW.md) and [documentation standard](../20-DOCUMENTATION-STANDARD.md).

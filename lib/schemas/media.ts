@@ -11,6 +11,7 @@ export type MediaState = "idle" | "connecting" | "ready" | "interrupted" | "ende
 
 // "ready" fires once, only when counterpart audio and video tracks are both playable.
 // "failed" and "remote-left" mean the controller has already torn down local media itself.
+// A provider-ended call (Daily "ejected", e.g. max duration) is "remote-left", not a failure.
 export type MediaEvent =
   | { type: "remote-stream"; stream: MediaStream | null }
   | { type: "local-preview"; stream: MediaStream | null }
@@ -20,9 +21,11 @@ export type MediaEvent =
 
 export interface MediaController {
   // Rejects after local teardown if joining fails; never retries a join with the same credential.
+  // Resolves without error if end() interrupts the join. Single use.
   connect(credential: MediaCredential): Promise<void>;
   setMuted(muted: boolean): void;
-  // Local preview only: never published to the call. Denial emits nothing and resolves false.
+  // Local preview only: never published to the call. Resolves whether a preview is active now;
+  // denial, disabling, or being superseded by a newer request resolves false.
   setCamera(enabled: boolean): Promise<boolean>;
   // Idempotent, synchronous-first local release; never awaits the application server.
   end(): Promise<void>;
