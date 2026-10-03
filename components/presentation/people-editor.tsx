@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { personFieldsSchema, type PersonFields } from "@/lib/schemas/people";
 import { traitOptions, type TraitChips } from "@/lib/schemas/role-context";
 import { formatUpdated } from "./people-list";
@@ -49,6 +50,7 @@ export type PersonEditorProps = {
 export function PersonEditor({ fields, onChange, isNew, savedName, version, updatedAt, dirty, busy = false, saving = false, onSave, onDelete, deleting = false, conflict = false, onReload, statusMessage, errorMessage, practiceHref }: PersonEditorProps) {
   const id = useId();
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const deleteRef = useRef<HTMLButtonElement>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   useEffect(() => { headingRef.current?.focus(); }, []);
   const valid = parsePersonDraft(fields) !== null;
@@ -135,12 +137,12 @@ export function PersonEditor({ fields, onChange, isNew, savedName, version, upda
         </>}
         {onDelete && <div className={styles.dangerZone}>
           {!confirmDelete
-            ? <button type="button" className={styles.dangerButton} disabled={disabled} onClick={() => setConfirmDelete(true)}>Delete {displayName}</button>
+            ? <button type="button" ref={deleteRef} className={styles.dangerButton} disabled={disabled} onClick={() => setConfirmDelete(true)}>Delete {displayName}</button>
             : <>
-              <p className={setup.hint} role="alert">Delete {displayName} permanently? What they know about you is removed too. Your About-me facts stay.</p>
+              <p id={`${id}-confirm`} className={setup.hint}>Delete {displayName} permanently? What they know about you is removed too. Your About-me facts stay.</p>
               <div className="actions">
-                <button type="button" className={styles.dangerButton} disabled={disabled} onClick={onDelete}>{deleting ? "Deleting…" : "Yes, delete"}</button>
-                <button type="button" className={setup.secondaryButton} disabled={deleting} onClick={() => setConfirmDelete(false)}>Cancel</button>
+                <button type="button" className={styles.dangerButton} disabled={disabled} aria-describedby={`${id}-confirm`} onClick={onDelete}>{deleting ? "Deleting…" : "Yes, delete"}</button>
+                <button type="button" className={setup.secondaryButton} disabled={deleting} autoFocus aria-describedby={`${id}-confirm`} onClick={() => { flushSync(() => setConfirmDelete(false)); deleteRef.current?.focus(); }}>Cancel</button>
               </div>
             </>}
         </div>}

@@ -52,8 +52,8 @@ export function KnowsAboutYou({ personName, facts, sharedIds, onToggle, disabled
     const factId = event.dataTransfer.getData(DRAG_TYPE);
     if (disabled || !factId || !facts.some((fact) => fact.id === factId)) return;
     event.preventDefault();
-    if (target === "knows" && !shared.has(factId)) onToggle(factId, true);
-    if (target === "about" && shared.has(factId)) onToggle(factId, false);
+    if (target === "knows" && !shared.has(factId)) toggle(factId, true);
+    if (target === "about" && shared.has(factId)) toggle(factId, false);
   }
 
   function zone(target: "about" | "knows", title: string, items: AboutMeFact[], empty: string) {
@@ -64,7 +64,7 @@ export function KnowsAboutYou({ personName, facts, sharedIds, onToggle, disabled
       {items.length === 0 ? <p className={setup.hint}>{empty}</p> : <ul className={styles.zoneList}>
         {items.map((fact) => <li key={fact.id}>
           <button type="button" className={styles.factChip} data-fact-id={fact.id} draggable={!disabled} disabled={disabled}
-            aria-label={`${isShared ? "Stop sharing with" : "Share with"} ${personName}: ${fact.text}`} aria-describedby={`${id}-hint`}
+            aria-label={`${isShared ? "Stop sharing with" : "Share with"} ${personName}: ${fact.text}`} aria-describedby={disabledReason ? `${id}-hint ${id}-reason` : `${id}-hint`}
             onClick={() => toggle(fact.id, !isShared)}
             onDragStart={(event) => { event.dataTransfer.setData(DRAG_TYPE, fact.id); event.dataTransfer.effectAllowed = "move"; }}
             onDragEnd={() => setOver(null)}>
@@ -79,7 +79,7 @@ export function KnowsAboutYou({ personName, facts, sharedIds, onToggle, disabled
     <section className={setup.card} aria-labelledby={`${id}-title`}>
       <div className={setup.cardTop}><h2 id={`${id}-title`} className={styles.sectionTitle}>What {personName} knows about you</h2><Link className={styles.textLink} href="/practice/about-me">Edit About me</Link></div>
       <p id={`${id}-hint`} className={setup.hint}>Nothing is shared by default. Click a fact to move it to the other column, or drag it there. Shared facts are sent to the video call provider as part of this character’s setup when you practice.</p>
-      {disabledReason && <p className={setup.status}>{disabledReason}</p>}
+      {disabledReason && <p id={`${id}-reason`} className={setup.status}>{disabledReason}</p>}
       <div ref={listRef} className={styles.shareGrid}>
         {zone("about", "About me", facts.filter((fact) => !shared.has(fact.id)), facts.length === 0 ? "You haven’t added any facts yet." : "Everything is shared.")}
         {zone("knows", `Knows about ${personName}`, facts.filter((fact) => shared.has(fact.id)), "Nothing shared yet.")}

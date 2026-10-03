@@ -42,9 +42,23 @@ export type DataOverviewProps = {
 export function DataOverview({ inventory, sessions, retrying, deleting, result, onRetryCleanup, onDeleteAll, onReload, statusMessage, errorMessage }: DataOverviewProps) {
   const id = useId();
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const deleteHeadingRef = useRef<HTMLHeadingElement>(null);
+  const sessionsHeadingRef = useRef<HTMLHeadingElement>(null);
+  const submitRef = useRef<HTMLButtonElement>(null);
+  const lastRetry = useRef<string | null>(null);
+  const refocusSubmit = useRef(false);
   const [confirming, setConfirming] = useState(false);
   const [phrase, setPhrase] = useState("");
   useEffect(() => { headingRef.current?.focus(); }, []);
+  // A confirmed cleanup removes its Retry button; keep focus in the sessions area instead of losing it.
+  useEffect(() => {
+    if (retrying) { lastRetry.current = retrying; return; }
+    const done = lastRetry.current;
+    lastRetry.current = null;
+    if (!done || (document.activeElement && document.activeElement !== document.body)) return;
+    (document.querySelector<HTMLButtonElement>(`[data-retry="${done}"]`) ?? sessionsHeadingRef.current)?.focus();
+  }, [retrying]);
+  useEffect(() => { if (!deleting && refocusSubmit.current) { refocusSubmit.current = false; submitRef.current?.focus(); } }, [deleting]);
   const remaining = result && (result.remaining.aboutMeFacts > 0 || result.remaining.people > 0 || result.remaining.privatePrep);
   const ready = inventory.status === "ready";
 
@@ -82,7 +96,7 @@ export function DataOverview({ inventory, sessions, retrying, deleting, result, 
     </section>
 
     <section className={setup.card} aria-labelledby={`${id}-sessions`} aria-busy={sessions.status === "loading"}>
-      <h2 id={`${id}-sessions`} className={styles.sectionTitle}>Past sessions</h2>
+      <h2 id={`${id}-sessions`} ref={sessionsHeadingRef} tabIndex={-1} className={styles.sectionTitle}>Past sessions</h2>
       {sessions.status === "loading" ? <p className={setup.hint} role="status">Loading sessions…</p>
         : sessions.status === "error" ? <div className={setup.error} role="alert"><p>We couldn’t load your sessions.</p><button type="button" className={setup.secondaryButton} onClick={onReload}>Try again</button></div>
         : sessions.list.length === 0 ? <p className={setup.hint}>No practice sessions yet.</p>
@@ -92,24 +106,24 @@ export function DataOverview({ inventory, sessions, retrying, deleting, result, 
             <td>{when(session.createdAt)}</td>
             <td>{statusLabels[session.status]}</td>
             <td><span className={data.cleanup} data-cleanup={session.cleanup}>{inProgress(session) ? "In progress" : cleanupLabels[session.cleanup]}</span></td>
-            <td>{canRetryCleanup(session) && <button type="button" className={setup.secondaryButton} disabled={retrying !== null || deleting} aria-busy={retrying === session.id}
+            <td>{canRetryCleanup(session) && <button type="button" className={setup.secondaryButton} data-retry={session.id} disabled={retrying !== null || deleting} aria-busy={retrying === session.id}
               onClick={() => onRetryCleanup(session.id)} aria-label={`Retry provider cleanup for the session started ${when(session.createdAt)}`}>{retrying === session.id ? "Retrying…" : "Retry cleanup"}</button>}</td>
           </tr>)}</tbody>
         </table>}
     </section>
 
     <section className={setup.card} aria-labelledby={`${id}-delete`}>
-      <h2 id={`${id}-delete`} className={styles.sectionTitle}>Delete all practice data</h2>
+      <h2 id={`${id}-delete`} ref={deleteHeadingRef} tabIndex={-1} className={styles.sectionTitle}>Delete all practice data</h2>
       <p className={setup.hint}>Deletes your About-me facts, saved people (and what each knows) and private prep notes from this app. Session records are kept so provider cleanup can be tracked and retried; they hold no practice content. Your account itself is not deleted.</p>
       {!confirming ? <button type="button" className={styles.dangerButton} disabled={deleting || !ready} onClick={() => { setConfirming(true); setPhrase(""); }}>Delete all practice data…</button>
-        : <form className={data.confirmForm} noValidate onSubmit={async (event) => { event.preventDefault(); if (phrase === DELETE_PHRASE && !deleting && await onDeleteAll()) { setConfirming(false); setPhrase(""); } }}>
+        : <form className={data.confirmForm} noValidate onSubmit={async (event) => { event.preventDefault(); if (phrase !== DELETE_PHRASE || deleting) return; if (await onDeleteAll()) { setConfirming(false); setPhrase(""); deleteHeadingRef.current?.focus(); } else refocusSubmit.current = true; }}>
           <div className={setup.field}>
             <label htmlFor={`${id}-phrase`}>Type <strong>{DELETE_PHRASE}</strong> to confirm</label>
-            <input id={`${id}-phrase`} type="text" autoComplete="off" spellCheck={false} autoFocus value={phrase} disabled={deleting} onChange={(event) => setPhrase(event.target.value)} />
+            <input id={`${id}-phrase`} type="text" autoComplete="off" spellCheck={false} autoFocus value={phrase} disabled={deleting} aria-describedby={`${id}-warning`} onChange={(event) => setPhrase(event.target.value)} />
           </div>
-          <p>This can’t be undone. It doesn’t remove anything held by Tavus, ElevenLabs or OpenAI; provider cleanup is tracked per session above.</p>
+          <p id={`${id}-warning`}>This can’t be undone. It doesn’t remove anything held by Tavus, ElevenLabs or OpenAI; provider cleanup is tracked per session above.</p>
           <div className={data.confirmActions}>
-            <button type="submit" className={data.dangerSolid} disabled={phrase !== DELETE_PHRASE || deleting} aria-busy={deleting}>{deleting ? "Deleting…" : "Permanently delete my practice data"}</button>
+            <button type="submit" ref={submitRef} className={data.dangerSolid} disabled={phrase !== DELETE_PHRASE || deleting} aria-busy={deleting}>{deleting ? "Deleting…" : "Permanently delete my practice data"}</button>
             <button type="button" className={setup.secondaryButton} disabled={deleting} onClick={() => { setConfirming(false); setPhrase(""); }}>Cancel</button>
           </div>
         </form>}
@@ -120,13 +134,11 @@ export function DataOverview({ inventory, sessions, retrying, deleting, result, 
           {remaining && <li>Still stored: {plural(result.remaining.aboutMeFacts, "About-me fact")}, {plural(result.remaining.people, "saved person", "saved people")}{result.remaining.privatePrep ? " and your private prep notes" : ""}.</li>}
           <li>{plural(result.sessions.total, "session record")} kept: provider cleanup confirmed for {result.sessions.cleanupConfirmed}, outstanding for {result.sessions.cleanupOutstanding}.</li>
         </ul>
-        {remaining && <button type="button" className={styles.dangerButton} disabled={deleting} onClick={() => void onDeleteAll()}>Retry deletion</button>}
+        {remaining && <button type="button" className={styles.dangerButton} disabled={deleting} onClick={() => void onDeleteAll().then(() => deleteHeadingRef.current?.focus())}>Retry deletion</button>}
       </div>}</div>
     </section>
 
-    <div aria-live="polite">
-      {statusMessage && <p className={setup.status}>{statusMessage}</p>}
-      {errorMessage && <p className={setup.error}>{errorMessage}</p>}
-    </div>
+    <div aria-live="polite">{statusMessage && <p className={setup.status}>{statusMessage}</p>}</div>
+    <div role="alert">{errorMessage && <p className={setup.error}>{errorMessage}</p>}</div>
   </>;
 }
