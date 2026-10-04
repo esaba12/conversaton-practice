@@ -191,6 +191,8 @@
 .banner {
   display: grid;
   gap: 14px;
+  max-width: 1184px;
+  margin: 0 auto 8px;
   padding: 20px 24px;
   border: 1px solid var(--border);
   border-left: 4px solid var(--clay);

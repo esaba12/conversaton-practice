@@ -99,3 +99,9 @@ const [cardOpen, setCardOpen] = useState(false);
 - A "Not yet" answer is stored as the answer for that date. If the user skips the new day, they are not asked again for that date (one prompt per date).
 - The check-in compares `plannedOn` with the browser's local calendar day, so it fires at local midnight.
 - `PlannedSection` fetches `/api/planned` itself, so the person page makes one extra read.
+
+### Coordinator integration (October 4, ~02:30 EDT)
+
+- Rebased onto `d0a71c5` (conflict in About me: kept both the feedback-style control and 1F's Sounds switch). Wired the home check-in banner above the lobby (Handoff diff 2) and gave the banner the lobby's width. Diffs 1 and 3 (feedback style in the reflect request, pocket card and planned day on the recap) wait for slice X.
+- Signed-in walk on real Auth/database (`artifacts/local/keep-walk.mjs`, ignored; two fictional users created and deleted): 9/9 — day saved on the person page; guess off sends only `personId, plannedOn, label`; home shows the check-in after the day; Yes with a note stored, fear null; not asked again for the same day; owner B lists no plans and gets 404 setting a day on owner A's person; signed out 401; no page errors.
+- Checks: typecheck clean; 673 unit tests. Live not verified (no print preview; PNG not inspected by eye).
