@@ -19,7 +19,7 @@ All rows are owned by `auth.uid()`, use owner RLS for every operation, deny anon
 | Table | Fields | Notes |
 | --- | --- | --- |
 | `about_me_facts` | `id`, `owner_id`, `text` (1–120), `created_at`, `updated_at` | The user's shareable facts. Cap 30 per owner. |
-| `people` | `id`, `owner_id`, `version`, `name`, `relationship`, `traits` (jsonb chip map), `style`, `public_context`, `opening`, `constraints` (jsonb ≤5), `challenge`, `pace`, `created_at`, `updated_at`, `deleted_at` | A saved persona. `version` increments on every update; updates require `expected_version` (409 on mismatch). |
+| `people` | `id`, `owner_id`, `version`, `name`, `relationship`, `traits` (jsonb chip map), `style`, `public_context`, `opening`, `constraints` (jsonb ≤5), `challenge`, `pace`, `preset_id`, `created_at`, `updated_at`, `deleted_at` | A saved persona. `version` increments on every update; updates require `expected_version` (409 on mismatch). `preset_id` is null (default look) or one of `roommate`, `professor`, `decline`, `manager`. |
 | `person_shared_facts` | `owner_id`, `person_id`, `fact_id`, `created_at`; PK (`person_id`, `fact_id`) | Join table of what a person knows about the user. Both ends must belong to the same owner, enforced in the RPC/policy. Deleting a fact or person removes its links. |
 | `private_prep` | `owner_id` PK, `notes` (≤1000), `updated_at` | Optional, for the user's own reference. Never joined to people, never read by the context builder. A one-off practice may still keep notes only in browser memory. |
 
@@ -43,7 +43,8 @@ Sessions store optional `person_id` and `person_version` for attribution (both n
 | `GET/POST /api/about-me`, `PATCH/DELETE /api/about-me/:id` | Owner's About-me facts |
 | `GET/POST /api/people`, `GET/PATCH/DELETE /api/people/:id` | Saved people; PATCH requires `expectedVersion` |
 | `PUT /api/people/:id/shared-facts` | Replace the set of shared fact IDs (`expectedVersion`); bumps person version; rejects foreign or unknown fact IDs |
-| `POST /api/sessions` | Adds a third start variant `{ idempotencyKey, durationSeconds, personId, expectedVersion }`; the existing preset and transient-role variants remain |
+| `POST /api/sessions` | Adds a third start variant `{ idempotencyKey, durationSeconds, personId, expectedVersion }`; the existing preset and transient-role variants remain. The body still does not include a face, a voice, or `preset_id`. The server loads `preset_id` for that owner and maps it. |
+| `GET/PUT /api/people/:id/preset` | Look and voice. PUT body is `{ presetId, expectedVersion }`. `presetId` is one of the four starter names or null. Unknown values and extra fields such as a provider id are rejected. Success bumps `version`. |
 
 All routes require sign-in before reading the body, and are owner-scoped. A different user's IDs return 404, without revealing whether they exist.
 
@@ -120,10 +121,10 @@ record only checks actually run.
 Submission target: Oct 4, 11:30 AM America/Detroit.
 ```
 
-## Later, not this gate
+## Look and voice (built after G3)
 
-Appearance presets are decided and not built (October 3, 17:23 EDT; [docs/00](00-DECISIONS-AND-VIABILITY.md)). A saved person will eventually have a preset stock face and premade voice. G3 does not add that picker, those fields, or extra provider characters.
+Built October 4 in [PR #87](https://github.com/esaba12/conversaton-practice/pull/87). On the saved-person page, "Look and voice" offers Default plus the four starters (Alex, Ellis, Sam, Jordan). Each is a stock face and a premade voice. Choosing one saves immediately through `person_set_preset`, which checks `expected_version` and bumps the person version. The next practice with that person uses the mapped face and PAL. Null keeps the default pair. The choice does not change traits or shared About-me facts. `person_context` does not return `preset_id`. There is no upload and no voice cloning. A live call with a non-default face has not been reported. See [docs/00](00-DECISIONS-AND-VIABILITY.md) and [docs/06](06-ELEVENLABS.md).
 
 ## Out of scope for G3
 
-Appearance presets, drag-to-reorder, importing contacts or real chats, inferring facts from conversation, automatic memory writes, and group conversations.
+Drag-to-reorder, importing contacts or real chats, inferring facts from conversation, automatic memory writes, and group conversations. Photo upload, a generated likeness, and voice cloning stay out. The four-starter picker above is the only look-and-voice choice.

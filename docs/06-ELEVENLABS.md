@@ -7,7 +7,9 @@ The coordinator owns one immutable Tavus PAL, a verified stock face and a premad
 
 Perception is off. Patient turn-taking, high interruptibility and no idle engagement are configured, but behavior still needs live verification. No provider database tools, documents or memory identities are configured.
 
-Each private call receives only an allowlisted fictional role/context/opening, with `participant_tags: []`. No shared PAL prompt mutation. Different voice/flow settings require another immutable configuration. A preset voice catalog is decided and not created (docs/00); do not add PALs for it during G3. The counterpart never receives private preparation, fears, profiles or prior simulated history.
+Each private call receives only an allowlisted fictional role/context/opening, with `participant_tags: []`. No shared PAL prompt mutation. Different voice/flow settings require another immutable configuration. The counterpart never receives private preparation, fears, profiles or prior simulated history.
+
+**Four starters (built October 4, live not verified).** Jordan, Alex, Ellis, and Sam each have a stock face and a premade voice. Each voice has its own PAL, using the quality-layer settings from the October 3 A/B. Ids stay in server environment variables (`TAVUS_STARTER_<PRESET>_PAL_ID`, `TAVUS_STARTER_<PRESET>_FACE_ID`, `ELEVENLABS_STARTER_<PRESET>_VOICE_ID`). A preset start and a saved person who picked that starter use that PAL and face. A saved person left on Default uses `TAVUS_PAL_ID` and `TAVUS_FACE_ID`. The browser sends the starter name or null, never these ids. The stand-in PAL and face are separate and must not match a starter or the default face. Provider ids are not a new catalog beyond these four. See [docs/00](00-DECISIONS-AND-VIABILITY.md).
 
 ## Browser and lifecycle
 Pinned transport: Daily 0.87.0. `createCallObject({videoSource:false,audioSource:true})` owns the call microphone and suppresses outgoing camera. Optional preview separately acquires video-only tracks and never supplies them to Daily. UI consumes media and emits controls; it does not acquire tracks.
