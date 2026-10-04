@@ -2,7 +2,7 @@ import "server-only";
 import { rpc, storageUnavailable } from "@/lib/data/rpc";
 import type { Db } from "@/lib/data/sessions";
 import { deletedResponseSchema } from "@/lib/schemas/people";
-import { plannedListResponseSchema, plannedResponseSchema, type CheckinRequest, type SetPlannedRequest } from "@/lib/schemas/planned";
+import { MAX_PLANS, plannedListResponseSchema, plannedResponseSchema, type CheckinRequest, type SetPlannedRequest } from "@/lib/schemas/planned";
 
 type Row = Record<string, unknown>;
 const row = (value: unknown): Row => value !== null && typeof value === "object" && !Array.isArray(value) ? value as Row : {};
@@ -28,7 +28,7 @@ function one(value: unknown) {
 
 export async function listPlanned(db: Db, ownerId: string) {
   let result: { data: unknown; error: unknown };
-  try { result = await db.from("planned_conversations").select("*").eq("owner_id", ownerId).order("planned_on", { ascending: true }); }
+  try { result = await db.from("planned_conversations").select("*").eq("owner_id", ownerId).order("planned_on", { ascending: true }).limit(MAX_PLANS); }
   catch { throw storageUnavailable(); }
   if (result.error || !Array.isArray(result.data)) throw storageUnavailable();
   const parsed = plannedListResponseSchema.safeParse({ plans: result.data.map(plan) });

@@ -1,5 +1,4 @@
 // L3: how reflection wording should sound. Device-only (localStorage), never written to the database.
-// The recap reads it with getFeedbackStyle() and sends the enum as-is; the reflect route validates it.
 
 export const feedbackStyles = ["gentle", "direct", "list"] as const;
 export type FeedbackStyle = (typeof feedbackStyles)[number];
