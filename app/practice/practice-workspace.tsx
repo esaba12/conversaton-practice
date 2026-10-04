@@ -8,6 +8,7 @@ import { SavedPersonStart } from "@/components/presentation/people-start";
 import { PracticeCall, type PracticeCallProps } from "@/components/presentation/practice";
 import { ReflectionPanel } from "@/components/presentation/reflection-panel";
 import { SetupDescribe, type SetupDescribeError } from "@/components/presentation/setup-describe";
+import { DurationChoice, type PracticeDuration } from "@/components/presentation/duration-choice";
 import { SetupReview, emptyRole, parseReviewedRole, type SetupMode } from "@/components/presentation/setup-review";
 import { examples } from "@/fixtures/examples";
 import { createBrowserAuthClient } from "@/lib/auth/browser";
@@ -22,7 +23,7 @@ import { roleContextSchema, type RoleContext } from "@/lib/schemas/role-context"
 import type { EndReason, PracticeSession, SessionPreset, StartResponse } from "@/lib/schemas/session";
 import { SessionClientError, endSession, generateDraft, markConnected, startPresetSession, startSavedPersonSession, startSession } from "@/lib/session/api-client";
 
-const DURATION_SECONDS = 180;
+const EXAMPLE_GOAL = "Make a clear request about sharing kitchen chores.";
 const FALLBACK_GOAL = "Say what matters to you.";
 const GENERATION_FAILED = "We couldn’t generate a setup right now.";
 
@@ -83,6 +84,7 @@ export function PracticeWorkspace() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [view, setView] = useState<"setup" | "call">("setup");
+  const [durationSeconds, setDurationSeconds] = useState<PracticeDuration>(180);
   const [phase, setPhaseState] = useState<Phase>("connecting");
   const [starting, setStarting] = useState(false);
   const [setupMessage, setSetupMessage] = useState("");
@@ -133,6 +135,7 @@ export function PracticeWorkspace() {
   const phaseRef = useRef<Phase | null>(null);
   const connectedRef = useRef(false);
   const startedAtRef = useRef(0);
+  const plannedDurationRef = useRef<PracticeDuration>(180);
   const authLostRef = useRef(false);
   // Chosen once per mount, on the client only, so the test-media notice never differs from the server render.
   const mediaRef = useRef<ReturnType<typeof selectMediaController> | null>(null);
@@ -342,20 +345,21 @@ export function PracticeWorkspace() {
     if (!role) return;
     const preset = examplePreset && setupMode === "example" && JSON.stringify(role) === JSON.stringify(roleContextSchema.parse(examples[examplePreset].role)) ? examplePreset : null;
     void launch({ kind: "role", role }, reviewGoal.trim() || FALLBACK_GOAL, (idempotencyKey) => preset
-      ? startPresetSession({ preset, durationSeconds: DURATION_SECONDS, idempotencyKey })
-      : startSession({ role, durationSeconds: DURATION_SECONDS, idempotencyKey }));
+      ? startPresetSession({ preset, durationSeconds, idempotencyKey })
+      : startSession({ role, durationSeconds, idempotencyKey }));
   }
 
   // Sends only the person's ID and version; private notes and goal stay in the browser.
   function startPerson() {
     const person = savedPerson;
     if (!person) return;
-    void launch({ kind: "person", person }, FALLBACK_GOAL, (idempotencyKey) => startSavedPersonSession({ personId: person.id, expectedVersion: person.version, durationSeconds: DURATION_SECONDS, idempotencyKey }));
+    void launch({ kind: "person", person }, FALLBACK_GOAL, (idempotencyKey) => startSavedPersonSession({ personId: person.id, expectedVersion: person.version, durationSeconds, idempotencyKey }));
   }
 
   async function launch(origin: CallOrigin, goal: string, request: (idempotencyKey: string) => Promise<StartResponse>) {
     if (startingRef.current || controllerRef.current || sessionIdRef.current || authLostRef.current || generating) return;
     startingRef.current = true;
+    plannedDurationRef.current = durationSeconds;
     const attempt = ++attemptRef.current;
     const reflectGoal = origin.kind === "role" ? reviewGoal.trim() : "";
     clearReflection();
@@ -519,8 +523,9 @@ export function PracticeWorkspace() {
     if (phase !== "live") return;
     const timer = window.setInterval(() => {
       const elapsed = Math.floor((Date.now() - startedAtRef.current) / 1000);
-      setElapsedSeconds(Math.min(elapsed, DURATION_SECONDS));
-      if (elapsed >= DURATION_SECONDS) finish("time_limit");
+      const planned = plannedDurationRef.current;
+      setElapsedSeconds(Math.min(elapsed, planned));
+      if (elapsed >= planned) finish("time_limit");
     }, 250);
     return () => window.clearInterval(timer);
     // finish only touches refs and state setters, so the first-render closure is safe.
@@ -582,15 +587,15 @@ export function PracticeWorkspace() {
         : step === "person" && savedPerson
         ? <SavedPersonStart person={savedPerson} onStart={startPerson} onBack={leavePerson} disabled={starting || signingOut} startDisabled={endingPrevious || !!previousSessionId} focusHeading={moveFocus}
             statusMessage={starting ? "Starting your practice…" : setupMessage || undefined}
-            actions={previousSessionId ? <div className="actions"><button type="button" className="button secondary" disabled={endingPrevious} onClick={() => void endPrevious()}>{endingPrevious ? "Ending previous practice…" : "End previous practice"}</button></div> : undefined} />
+            actions={<><DurationChoice value={durationSeconds} onChange={setDurationSeconds} disabled={starting || signingOut} />{previousSessionId ? <div className="actions"><button type="button" className="button secondary" disabled={endingPrevious} onClick={() => void endPrevious()}>{endingPrevious ? "Ending previous practice…" : "End previous practice"}</button></div> : null}</>} />
         : <SetupReview mode={setupMode} role={reviewRole} goal={reviewGoal} assumptions={assumptions} onRoleChange={setReviewRole} onGoalChange={setReviewGoal}
             onBack={backToDescribe} onRegenerate={situation.trim() ? () => void generate() : undefined} onStart={() => void start()} regenerating={generating}
             disabled={starting || signingOut} startDisabled={endingPrevious || !!previousSessionId} focusHeading={moveFocus}
             statusMessage={starting ? "Starting your practice…" : setupMessage || undefined}
             errorMessage={generateError ? (generateError.outOfScope ? `${generateError.message} Try describing an everyday conversation instead.` : `${generateError.message} Your current setup is unchanged.`) : undefined}
-            actions={previousSessionId ? <div className="actions"><button type="button" className="button secondary" disabled={endingPrevious} onClick={() => void endPrevious()}>{endingPrevious ? "Ending previous practice…" : "End previous practice"}</button></div> : undefined} />
+            actions={<><DurationChoice value={durationSeconds} onChange={setDurationSeconds} disabled={starting || signingOut || generating} />{previousSessionId ? <div className="actions"><button type="button" className="button secondary" disabled={endingPrevious} onClick={() => void endPrevious()}>{endingPrevious ? "Ending previous practice…" : "End previous practice"}</button></div> : null}</>} />
       ) : <>
-        <PracticeCall counterpartName={callInfo.name} goal={callInfo.goal} phase={phase} muted={muted} cameraEnabled={cameraEnabled} elapsedSeconds={elapsedSeconds} durationSeconds={DURATION_SECONDS}
+        <PracticeCall counterpartName={callInfo.name} goal={callInfo.goal} phase={phase} muted={muted} cameraEnabled={cameraEnabled} elapsedSeconds={elapsedSeconds} durationSeconds={plannedDurationRef.current}
           remoteMedia={remoteStream ? <StreamVideo stream={remoteStream} /> : null}
           localPreview={localStream ? <StreamVideo stream={localStream} muted /> : undefined}
           onMuteToggle={toggleMute} onCameraToggle={() => void toggleCamera()} onEnd={() => finish("user")} statusMessage={statusMessage || undefined} testMedia={testMedia} />

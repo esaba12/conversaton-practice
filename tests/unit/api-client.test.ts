@@ -34,6 +34,8 @@ describe("session API client", () => {
     expect(raw).not.toContain(privateNote);
     expect(raw).not.toContain("secret goal");
     const body = JSON.parse(raw);
+    expect(Object.keys(body).sort()).toEqual(["durationSeconds", "idempotencyKey", "role"]);
+    expect(body.durationSeconds).toBe(300);
     expect(Object.keys(body.role).sort()).toEqual(["challenge", "constraints", "name", "opening", "pace", "publicContext", "role", "style"]);
     expect(startRequestSchema.safeParse(body).success).toBe(true);
   });
