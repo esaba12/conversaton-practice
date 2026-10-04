@@ -1,4 +1,6 @@
 "use client";
+import { StageTransition, startStage } from "@/components/practice/transitions";
+import { useSoundCues } from "@/lib/practice/use-sound-cues";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Briefing, briefingKey, useBriefingDrafts, type BriefingPlan, type BriefingSubject } from "@/components/practice/briefing";
@@ -121,20 +123,22 @@ export function PracticeWorkspace() {
   const mediaRef = useRef<ReturnType<typeof selectMediaController> | null>(null);
   const [testMedia, setTestMedia] = useState(false);
   const backToSetupRef = useRef<HTMLButtonElement>(null);
+  const sound = useSoundCues();
 
   // One flow event. The reducer decides the stage and what leaving it must release; the shell
   // performs the release, because a tracked close and a keepalive abandon are different requests.
-  function apply(event: FlowEvent) {
+  function apply(event: FlowEvent, animate = false) {
     const transition = reduceFlow(flowRef.current, event);
     flowRef.current = transition.state;
-    setFlow(transition.state);
+    if (animate) startStage(() => setFlow(transition.state));
+    else setFlow(transition.state);
     if (transition.clearPrivate) clearPrivateState();
     return transition;
   }
 
   // A stage change the user asked for: move focus to the new heading and drop the old notice.
   function showStage(event: FlowEvent) {
-    apply(event);
+    apply(event, true);
     setMoveFocus(true);
     setSetupMessage("");
   }
@@ -152,6 +156,7 @@ export function PracticeWorkspace() {
 
   // Releases local media without waiting on any network request; later events from this attempt are ignored.
   function releaseMedia() {
+    sound.stopRing();
     attemptRef.current++;
     const controller = controllerRef.current;
     controllerRef.current = null;
@@ -194,9 +199,10 @@ export function PracticeWorkspace() {
 
   function finish(reason: "user" | "time_limit") {
     const before = flowRef.current;
-    const { teardown, changed } = apply({ type: "ended" });
+    const { teardown, changed } = apply({ type: "ended" }, true);
     if (!changed) return;
     if (teardown.releaseMic) releaseMedia();
+    sound.hangup();
     if (reason === "time_limit") setCallMessage("Time’s up. The practice reached its planned length.");
     else setCallMessage(before.outcome === "interrupted" ? "The call was interrupted before it ended." : "");
     endForTeardown(teardown, reason, "close");
@@ -229,6 +235,8 @@ export function PracticeWorkspace() {
       case "utterance": setTurns((current) => appendTurn(current, event.speaker, event.text)); return;
       case "ready": {
         if (!apply({ type: "videoPlaying" }).changed) return;
+        sound.stopRing();
+        sound.connect();
         startedAtRef.current = Date.now();
         const id = sessionIdRef.current;
         if (id) markConnected(id).catch((error) => {
@@ -449,6 +457,7 @@ export function PracticeWorkspace() {
       // Ringing starts on acceptance, so a failed start stays in the green room with its message.
       apply({ type: "ready" });
       apply({ type: "sessionAccepted" });
+      sound.ring();
       const media = mediaRef.current ??= selectMediaController();
       setTestMedia(media.testMode);
       setLiveCall(initialLiveCallState);
@@ -706,6 +715,7 @@ export function PracticeWorkspace() {
   return <><WorkspaceHeader page="practice" signingOut={signingOut} onSignOut={() => void signOut()} quiet={phase !== null} />
     <main id="main">
       {headerMessage && <p role="status" className="notice">{headerMessage}</p>}
+      <StageTransition stage={flow.stage}>
       {phase === null ? (flow.stage === "meet"
         ? <MeetCard identity={{ name: meetName, relationship: meetRelationship, portraitSrc }} state={meetState} onRoleChange={setReviewRole}
             editable={meetPerson ? "situation" : "all"} start={meetStart} privateNotes={lastDraftRef.current?.privateNotes ?? ""}
@@ -719,7 +729,7 @@ export function PracticeWorkspace() {
             disabled={signingOut} disabledReason="Signing you out…" focusHeading={moveFocus} />
         : flow.stage === "green"
           ? <GreenRoom name={meetName} relationship={meetRelationship} portraitSrc={portraitSrc}
-              onBack={leaveGreenRoom} onReady={(handoff) => { micHandoffRef.current = handoff; if (standInChosenRef.current) startStandIn(); else start(); }}
+              onBack={leaveGreenRoom} onReady={(handoff) => { sound.unlock(); micHandoffRef.current = handoff; if (standInChosenRef.current) startStandIn(); else start(); }}
               starting={starting} startError={setupMessage || null} disabled={signingOut || endingPrevious} disabledReason={signingOut ? "Signing you out…" : "Ending the previous practice…"} focusHeading={moveFocus}
               extras={<>
                 {standInChosen && <p className="notice">First, a stand-in plays you. You play {meetName}.</p>}
@@ -754,5 +764,6 @@ export function PracticeWorkspace() {
           canRetryCleanup={canRetryCleanup} onRetryCleanup={() => cleanupTarget && closeRemote(cleanupTarget.id, cleanupTarget.reason)} onBackToSetup={backToSetup} backToSetupRef={backToSetupRef} />}
           </>}
       </>}
+      </StageTransition>
     </main></>;
 }
