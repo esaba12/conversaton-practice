@@ -1,6 +1,6 @@
 # 0E: UI rules test, state gallery and screenshot script
 
-Status: planned (worker part starts after 0A is integrated)
+Status: in progress (worker dispatched October 3, ~23:20 EDT)
 Updated: October 3, 2026, 22:45 EDT
 Assigned writer: 0E worker subagent (composer-2.5-fast) for the rules test and gallery; coordinator for the screenshot script and the docs/33 rules block
 Coordinator: wow-pass coordinator (main checkout)
@@ -12,7 +12,7 @@ CI run: not run
 
 ## Assignment and isolation
 
-- Base ref + full SHA: `main` after 0A is integrated (SHA recorded by the coordinator at dispatch).
+- Base ref + full SHA: `main` `ca7f549` (0A merged in PR #52).
 - Branch: `agent/0e-ui-gate`
 - Worktree: `/Users/ethansaba/code/therapist/.worktrees/0e`
 - Dev port: 3101 (free once 0A is done)
