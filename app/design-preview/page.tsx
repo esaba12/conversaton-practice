@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { PracticePreview } from "@/components/presentation/practice-preview";
 import { LobbyBriefingGallery } from "./lobby-briefing-gallery";
+import { CallGallery } from "./call-gallery";
 import { PrimitivesGallery } from "./primitives-gallery";
 import { SerifCandidates } from "./serif-candidates";
 import styles from "./gallery.module.css";
@@ -15,6 +16,7 @@ export default function DesignPreviewPage() {
         <SerifCandidates />
         <PrimitivesGallery />
         <LobbyBriefingGallery />
+        <CallGallery />
       </section>
     </>
   );
