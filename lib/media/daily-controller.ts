@@ -1,17 +1,53 @@
 import type { DailyCall, DailyParticipant } from "@daily-co/daily-js";
 import { z } from "zod";
-import type { CreateMediaController, MediaCredential, MediaEvent } from "@/lib/schemas/media";
+import type { MediaController, MediaCredential, MediaEvent } from "@/lib/schemas/media";
 import { MAX_TURN_CHARS } from "@/lib/schemas/reflection";
+import { conversationIdFromRoomUrl, toAppMessage, type Interaction, type LiveEvent } from "./interactions";
 
 type FailureReason = Extract<MediaEvent, { type: "failed" }>["reason"];
 
 // Tavus documents a legacy duplicate of each counterpart turn with role "replica". It is used only until a "pal" turn has been seen,
-// and a repeated inference_id is dropped, so either form yields one turn. Analysis fields are never read.
+// and a repeated inference_id is dropped, so either form yields one turn. The schemas strip every other field, so analysis fields
+// such as user_audio_analysis are gone at parse time.
+const roleSchema = z.enum(["pal", "user", "replica"]);
 const utteranceSchema = z.object({
   event_type: z.literal("conversation.utterance"),
   inference_id: z.string().optional(),
-  properties: z.object({ role: z.enum(["pal", "user", "replica"]), speech: z.string() }).loose(),
-}).loose();
+  properties: z.object({ role: roleSchema, speech: z.string() }),
+});
+const streamingSchema = z.object({
+  event_type: z.literal("conversation.utterance.streaming"),
+  properties: z.object({ role: roleSchema, speech: z.string(), final: z.boolean().optional() }),
+});
+const speakingSchema = z.object({
+  event_type: z.enum(["conversation.started_speaking", "conversation.stopped_speaking"]),
+  properties: z.object({ role: roleSchema }),
+});
+
+// Raven tone notes travel in a separate field; an inline tag, if one ever appears, is dropped too.
+function spokenText(speech: string) {
+  return speech.replace(/<user_(?:audio|visual)_analysis>[\s\S]*?(?:<\/user_(?:audio|visual)_analysis>|$)/g, "").trim().slice(0, MAX_TURN_CHARS).trim();
+}
+
+function liveReader() {
+  let sawPal = false;
+  return (data: unknown): LiveEvent | null => {
+    const speaking = speakingSchema.safeParse(data);
+    if (speaking.success) {
+      const speaker = speaking.data.properties.role === "user" ? "user" : "counterpart";
+      return { type: "speaking", speaker, speaking: speaking.data.event_type === "conversation.started_speaking" };
+    }
+    const parsed = streamingSchema.safeParse(data);
+    if (!parsed.success) return null;
+    const { role: from, speech, final = false } = parsed.data.properties;
+    if (from === "replica" && sawPal) return null;
+    if (from === "pal") sawPal = true;
+    const text = spokenText(speech);
+    if (!text) return null;
+    return { type: "caption", speaker: from === "user" ? "user" : "counterpart", text, final };
+  };
+}
+
 function utteranceReader() {
   let sawPal = false;
   const seen = new Set<string>();
@@ -19,8 +55,7 @@ function utteranceReader() {
     const parsed = utteranceSchema.safeParse(data);
     if (!parsed.success) return null;
     const { role, speech } = parsed.data.properties;
-    // Raven tone notes travel in a separate field; an inline tag, if one ever appears, is dropped too.
-    const text = speech.replace(/<user_(?:audio|visual)_analysis>[\s\S]*?<\/user_(?:audio|visual)_analysis>/g, "").trim().slice(0, MAX_TURN_CHARS).trim();
+    const text = spokenText(speech);
     if (!text) return null;
     if (role === "user") return { type: "utterance", speaker: "user", text };
     if (role === "replica" && sawPal) return null;
@@ -55,9 +90,14 @@ function isPermissionDenial(error: unknown) {
   return name === "NotAllowedError" || /permission|not ?allowed/i.test(message);
 }
 
-// Browser-only: Daily is imported inside connect so server rendering can import this module safely.
-export const createDailyController: CreateMediaController = (onEvent) => {
+// The call controller plus the live interaction path (S4, S5, S6). `send` is true only when the message left for the live call.
+export type LiveMediaController = MediaController & { send(interaction: Interaction): boolean };
+
+// Browser-only: Daily is imported inside connect so server rendering can import this module safely. `onLive` carries captions,
+// speaking state and network quality for the screen; it never carries analysis fields.
+export const createDailyController = (onEvent: (event: MediaEvent) => void, onLive: (event: LiveEvent) => void = () => undefined): LiveMediaController => {
   let call: DailyCall | null = null;
+  let conversationId: string | null = null;
   let started = false;
   let ended = false;
   let generation = 0;
@@ -80,6 +120,7 @@ export const createDailyController: CreateMediaController = (onEvent) => {
     cameraRequest++;
     const current = call;
     call = null;
+    conversationId = null;
     remoteTracks = [];
     remoteStream = null;
     videoPlaying = false;
@@ -160,6 +201,7 @@ export const createDailyController: CreateMediaController = (onEvent) => {
       if (started || ended) throw new Error("This media controller has already been used.");
       started = true;
       const epoch = generation;
+      conversationId = conversationIdFromRoomUrl(credential.roomUrl);
       if (Date.now() >= Date.parse(credential.expiresAt)) {
         fail("credential_expired");
         throw new Error("The call credential has expired.");
@@ -198,10 +240,16 @@ export const createDailyController: CreateMediaController = (onEvent) => {
           else fail("provider_error");
         });
         const utterance = utteranceReader();
+        const liveEvent = liveReader();
         instance.on("app-message", (event) => {
           if (!live()) return;
           const turn = utterance(event?.data);
-          if (turn) onEvent(turn);
+          if (turn) { onEvent(turn); return; }
+          const signal = liveEvent(event?.data);
+          if (signal) onLive(signal);
+        });
+        instance.on("network-quality-change", (event) => {
+          if (live()) onLive({ type: "network", weak: event.networkState === "bad" });
         });
         instance.on("left-meeting", () => {
           if (live()) remoteLeft();
@@ -253,6 +301,18 @@ export const createDailyController: CreateMediaController = (onEvent) => {
       preview = stream;
       onEvent({ type: "local-preview", stream });
       return true;
+    },
+
+    send(interaction: Interaction) {
+      if (ended || !call || !readyEmitted || !conversationId) return false;
+      const message = toAppMessage(interaction, conversationId);
+      if (!message) return false;
+      try {
+        call.sendAppMessage(message, "*");
+        return true;
+      } catch {
+        return false;
+      }
     },
 
     end() {

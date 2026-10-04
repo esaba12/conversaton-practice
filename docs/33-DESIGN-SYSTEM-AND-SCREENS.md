@@ -1,6 +1,6 @@
 # Design system and screens (post-submission plan)
 
-Status: **planning, not built.** Derived from [R05](research/R05-DESIGN-DIRECTION.md). Feature behavior is in [docs/32](32-FEATURE-SPECS.md); this file covers how it looks, moves and sounds. Existing visual direction ("warm and minimal, crisp, modern typography") from docs/00 and docs/18 still holds; this extends it with presence, depth and a dark call mode. Token contrast was measured in 0A (October 3); the remaining "verify" marks are Tavus behavior, not contrast. Tokens and primitives are built; screens are not.
+Status: **planning, not built.** Derived from [R05](research/R05-DESIGN-DIRECTION.md). Feature behavior is in [docs/32](32-FEATURE-SPECS.md); this file covers how it looks, moves and sounds. Existing visual direction ("warm and minimal, crisp, modern typography") from docs/00 and docs/18 still holds; this extends it with presence, depth and a dark call mode. Token contrast was measured in 0A (October 3); the remaining "verify" marks are Tavus behavior, not contrast. Tokens and primitives are built. The lobby, briefing and call screens (call shell, ringing, call bar, captions, speaking glow) are built and mock-tested; live not verified.
 
 ## UI rules (read before any UI change)
 

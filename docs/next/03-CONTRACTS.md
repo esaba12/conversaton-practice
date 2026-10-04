@@ -129,7 +129,7 @@ startRequestSchema branches:
 
 ### 2.8 Live interactions (`lib/media/interactions.ts`, worker-owned, coordinator-reviewed)
 
-Typed builders only for `conversation.append_context`, `conversation.interrupt` and `conversation.respond`, sent through the Daily app-message path. The builders accept only fixed templates plus the reviewed name, or the user's typed turn (≤300). Payload shapes are confirmed against the Tavus Interaction docs at build time and the source and date are recorded in the 1A task file.
+Typed builders only for `conversation.append_llm_context` (the documented name; the October 3 harness used `conversation.append_context`), `conversation.interrupt` and `conversation.respond`, sent through the Daily app-message path. The builders accept only fixed templates plus the reviewed name, or the user's typed turn (≤300). Payload shapes are confirmed against the Tavus Interaction docs at build time and the source and date are recorded in the 1A task file.
 
 Event parsing additions: `conversation.utterance.streaming` (captions), `conversation.started_speaking` / `stopped_speaking` with role `pal` or legacy `replica` (speaking glow). Any `user_audio_analysis` field is dropped at parse time and never reaches React state.
 
