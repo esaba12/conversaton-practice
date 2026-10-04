@@ -1,5 +1,23 @@
 # Project status
 
+## Wow pass build started (October 3, 22:50 EDT)
+
+Coordinator is building [docs/next](docs/next/README.md) Phase 0 now, on automated evidence; every phase stays **live not verified** until the owner reports a live check. Plan docs merged in [PR #41](https://github.com/esaba12/conversaton-practice/pull/41) (`main` `2287d78`). The SHA `723e1d7` below is stale; `main` was `eff6014` before #41.
+
+C0 contract commit (branch `build/wow-c0`): pins `lucide-react` 1.51.0 and `motion` 14.0.0; adds Phase 0 task records. Recipe on C0: typecheck pass, 170 unit pass, build pass, browser 9 pass + 1 production-only skip. Browser runs here need `PLAYWRIGHT_BROWSERS_PATH=$HOME/Library/Caches/ms-playwright` because the sandbox redirects the cache.
+
+| Slice | Issue | Owner | Worktree / port | State |
+| --- | --- | --- | --- | --- |
+| [0A](docs/tasks/0A-tokens.md) tokens, serif, primitives | [#42](https://github.com/esaba12/conversaton-practice/issues/42) | worker | `.worktrees/0a` / 3101 | ready |
+| [SPIKE-01](docs/tasks/SPIKE-01-quality-pal.md) 0B provider spikes + PALs | [#43](https://github.com/esaba12/conversaton-practice/issues/43) | coordinator | main checkout | active |
+| [0C](docs/tasks/0C-flow.md) flow state machine (W1) | [#44](https://github.com/esaba12/conversaton-practice/issues/44) | worker | `.worktrees/0c` / 3102 | ready |
+| [0D](docs/tasks/0D-video-first.md) video-first (Q3) | [#45](https://github.com/esaba12/conversaton-practice/issues/45) | worker after 0C | `.worktrees/0d` / 3103 | planned |
+| [0E](docs/tasks/0E-ui-gate.md) UI rules + gallery + screenshots | [#46](https://github.com/esaba12/conversaton-practice/issues/46) | worker after 0A + coordinator | `.worktrees/0e` / 3101 | planned |
+
+Next: merge C0, dispatch 0A and 0C, run 0B spikes. `TAVUS_PAL_ID` does not switch until the owner's A/B call.
+
+## Before the wow pass
+
 Updated October 3, 2026, 21:50 EDT. **G1 and G2 passed** (human live calls). **G3–G5 accepted on automated evidence (live not verified)**.
 
 **Decisions, not built.** One-moment retry: the user sets a line for the hard moment and may try that moment once ([docs/30](docs/30-ONE-MOMENT-RETRY.md)). Owner answers for the later plan are in [docs/00](docs/00-DECISIONS-AND-VIABILITY.md): reflection after End unless Skip, one alternate phrasing only on request, an opt-in goal light, stance chips, and vocal-tone perception with a notice. Specs: [docs/31](docs/31-PRODUCT-VISION.md), [docs/32](docs/32-FEATURE-SPECS.md), [docs/33](docs/33-DESIGN-SYSTEM-AND-SCREENS.md).
