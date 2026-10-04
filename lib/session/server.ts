@@ -5,6 +5,7 @@ import { manager } from "@/fixtures/manager";
 import { professor } from "@/fixtures/professor";
 import { roommate } from "@/fixtures/roommate";
 import { loadPersonContext } from "@/lib/data/person-context";
+import { getPersonPreset } from "@/lib/data/people-preset";
 import * as sessions from "@/lib/data/sessions";
 import type { Db, SessionRow } from "@/lib/data/sessions";
 import { assertTavusConfigured, createConversation, stopConversation, type ConversationMedia } from "@/lib/media/tavus";
@@ -69,6 +70,13 @@ export async function startSession(db: Db, input: z.output<typeof startRequestSc
       role = roleContextSchema.parse({ ...role, opening: input.openingOverride });
     }
     person = { id: input.personId, version: loaded.version };
+    // B4: a preset change bumps the version, so the version check above also covers the face and PAL.
+    const { presetId } = await getPersonPreset(db, input.personId);
+    if (presetId) {
+      const starter = starterMedia(presetId);
+      if (!starter) throw new AppError("NOT_CONFIGURED", "Live practice is not configured yet.", 503);
+      media = { palId: starter.palId, faceId: starter.faceId };
+    }
     fingerprint = startFingerprint(role, input.durationSeconds, secret, { extras, personId: input.personId, version: loaded.version });
   } else {
     // Only the allowlisted role reaches the provider; a preset id is resolved here and no other client field is forwarded.
