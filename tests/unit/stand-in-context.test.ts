@@ -94,4 +94,14 @@ describe("standInMedia", () => {
     vi.stubEnv("TAVUS_PAL_ID", "default-pal");
     expect(() => standInMedia()).toThrowError(expect.objectContaining({ code: "NOT_CONFIGURED", status: 503 }));
   });
+
+  it("fails closed when the reserved face is the default or a starter counterpart face", () => {
+    vi.stubEnv("TAVUS_STANDIN_PAL_ID", "standin-pal");
+    vi.stubEnv("TAVUS_FACE_ID", "default-face");
+    vi.stubEnv("TAVUS_STANDIN_FACE_ID", "default-face");
+    expect(() => standInMedia()).toThrowError(expect.objectContaining({ code: "NOT_CONFIGURED", status: 503 }));
+    vi.stubEnv("TAVUS_STARTER_ROOMMATE_FACE_ID", "roommate-face");
+    vi.stubEnv("TAVUS_STANDIN_FACE_ID", "roommate-face");
+    expect(() => standInMedia()).toThrowError(expect.objectContaining({ code: "NOT_CONFIGURED", status: 503 }));
+  });
 });

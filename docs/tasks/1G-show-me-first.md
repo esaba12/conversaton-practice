@@ -48,6 +48,13 @@ Run in the 1G worktree on October 4, ~01:00 EDT. No provider call, no migration,
 
 **Not verified live.** No real Tavus conversation and no human call. `TAVUS_STANDIN_PAL_ID` and `TAVUS_STANDIN_FACE_ID` are still empty in `.env.local`, so the branch answers 503 `NOT_CONFIGURED` until 0B provisions the stand-in PAL and face. The live checks in W10 (the line said nearly verbatim, one kind hold under pushback, never coaching, and the face swap reading as "now it's you") are all outstanding. The Cursor browser tool could not reach the local dev server, so there is no screenshot; the gallery evidence is the served markup.
 
+**Coordinator correction and privacy review (October 4, ~01:05 EDT).** The stand-in PAL, face and voice were provisioned in SPIKE-01 and are set in the main checkout's `.env.local`; the worktree copy holds public values only, which is why they read empty here. The configured stand-in face matches neither the default face nor any starter face (checked by comparison, values not printed). Privacy review: claude-opus-5-5-medium (gpt-5.6-sol-medium was unavailable; Fable needs an owner policy acknowledgment), verdict approve with fixes, no must-fix. Applied by the coordinator:
+- `requireEndedSession` reads `kind` and answers 404 for a stand-in session, so the server never reflects on one (`tests/unit/reflection-session.test.ts`).
+- `standInMedia()` fails closed when the reserved face equals `TAVUS_FACE_ID` or any `TAVUS_STARTER_*_FACE_ID`.
+- `npm run check:standin-bundle` added and run in CI after the build.
+
+After the fixes: typecheck exit 0; `npm test` 520 passed; `npm run build` exit 0; `npm run check:standin-bundle` pass (35 files). Not taken: skipping the history read after person writes, and documenting the goal-free fingerprint (both nits).
+
 ## Handoff
 
 ### Changed paths and commits

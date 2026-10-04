@@ -1,6 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { AppError } from "@/lib/schemas/errors";
+import { sessionPresetSchema } from "@/lib/schemas/situation";
 
 // W10 "Show me first" (docs/next/04-NEW-SPECS.md, docs/next/03-CONTRACTS.md §2.7).
 //
@@ -67,5 +68,8 @@ export function standInGreeting(counterpartName: string): string {
 export function standInMedia(): { palId: string; faceId: string } {
   const palId = process.env.TAVUS_STANDIN_PAL_ID, faceId = process.env.TAVUS_STANDIN_FACE_ID;
   if (!palId || !faceId) throw new AppError("NOT_CONFIGURED", "Show me first is not available yet.", 503);
+  // The stand-in must never wear a counterpart's face.
+  const counterpartFaces = [process.env.TAVUS_FACE_ID, ...sessionPresetSchema.options.map((option) => process.env[`TAVUS_STARTER_${option.value.toUpperCase()}_FACE_ID`])];
+  if (counterpartFaces.includes(faceId)) throw new AppError("NOT_CONFIGURED", "Show me first is not available yet.", 503);
   return { palId, faceId };
 }
