@@ -1,7 +1,7 @@
 # 1C: Person/situation server (P2, Q2 server, W2 fixture, W11 streamed draft)
 
-Status: in progress (worker dispatched October 4, ~00:35 EDT)
-Updated: October 4, 2026, 00:35 EDT
+Status: ready for coordinator review (live not verified)
+Updated: October 4, 2026, 00:55 EDT
 Assigned writer: 1C worker subagent (gpt-5.6-sol-medium)
 Coordinator: wow-pass coordinator (main checkout)
 Gate: Wow pass Phase 1
@@ -23,27 +23,31 @@ CI run: not run
 ## Scope and acceptance
 
 From 02-BUILD-PLAN 1C:
-- [ ] P2 and Q2 acceptance lists (docs/32).
-- [ ] Draft with `personId`: server loads that person's identity fields (not shared facts, not private prep); model generates situation fields only. Another owner's `personId` → 404; stale version → 409.
-- [ ] Stance: `draftModelOutputSchema` gains stance fields and `stanceOptions` (prompt version bump); `draftResponseSchema.stanceOptions` required. FIX-01 private-note probe extended to `wants`, `holdsBackBecause`, `softensWhen` and every situation field.
-- [ ] W11: an event-stream draft emits completed fields then one validated `done`; a probe failure emits an error and no `done`; private notes never appear in any event; a JSON request is unchanged.
-- [ ] Start branches: person + `situation` merges identity (loaded by id) with the Zod-validated situation; preset + optional `openingOverride`; remove the 400 guard for `situation` and `openingOverride` only. The start body never carries identity or fact text for a saved person, nor goal, notes or hard-moment line.
-- [ ] Preset starts use the starter's PAL and face via `starterMedia(preset)`; role, person and stand-in starts unchanged. Pass `kind: 'practice'` and `preset` to `practice_acquire` (M1 added `p_kind`, `p_preset`).
-- [ ] Situations routes: `GET/POST /api/people/[id]/situations`, `DELETE /api/people/[id]/situations/[situationId]` per C1 schemas and M1 RPCs (`person_situation_list/create/delete`; `LIMIT_REACHED` → a clear 409/422 per contracts). Person reads/writes include `background` (`p_background`).
-- [ ] `buildRoleContext` snapshot has the stance instruction, freeze rule and emotional-delivery line, and no goal; existing presets validate.
-- [ ] `auth-database-check.mjs --p2` mode written (two real users: situations owner isolation, cap, cross-owner 404) for the coordinator to run.
+- [x] P2 and Q2 acceptance lists (docs/32).
+- [x] Draft with `personId`: server loads that person's identity fields (not shared facts, not private prep); model generates situation fields only. Another owner's `personId` → 404; stale version → 409.
+- [x] Stance: `draftModelOutputSchema` gains stance fields and `stanceOptions` (prompt version bump); `draftResponseSchema.stanceOptions` required. FIX-01 private-note probe extended to `wants`, `holdsBackBecause`, `softensWhen` and every situation field.
+- [x] W11: an event-stream draft emits completed fields then one validated `done`; a probe failure emits an error and no `done`; private notes never appear in any event; a JSON request is unchanged.
+- [x] Start branches: person + `situation` merges identity (loaded by id) with the Zod-validated situation; preset + optional `openingOverride`; remove the 400 guard for `situation` and `openingOverride` only. The start body never carries identity or fact text for a saved person, nor goal, notes or hard-moment line.
+- [x] Preset starts use the starter's PAL and face via `starterMedia(preset)`; role, person and stand-in starts unchanged. Pass `kind: 'practice'` and `preset` to `practice_acquire` (M1 added `p_kind`, `p_preset`).
+- [x] Situations routes: `GET/POST /api/people/[id]/situations`, `DELETE /api/people/[id]/situations/[situationId]` per C1 schemas and M1 RPCs (`person_situation_list/create/delete`; `LIMIT_REACHED` → a clear 409/422 per contracts). Person reads/writes include `background` (`p_background`).
+- [x] `buildRoleContext` snapshot has the stance instruction, freeze rule and emotional-delivery line, and no goal; existing presets validate.
+- [x] `auth-database-check.mjs --p2` mode written (two real users: situations owner isolation, cap, cross-owner 404) for the coordinator to run.
 
 ## Verification evidence
 
-(worker fills in)
+- `npm run typecheck` — passed.
+- `npm test` — passed: 24 files, 459 tests.
+- `npm run build` — passed; Next.js production build includes the three new/changed API surfaces.
+- Focused P2/Q2/W11 route, privacy, context, session and saved-situation tests — passed: 5 files, 85 tests before the final full-suite run.
+- Provider behavior is mock-tested only. `--p2` real-Auth/database mode was written but not run, as assigned. Live not verified.
 
 ## Handoff
 
-- Changed paths and commit(s):
-- Remaining failures/risks:
-- Proposed shared-file changes:
+- Changed paths and commit(s): `5749860` (person/situation server, contracts, routes, tests and `--p2` preflight); `437f212` (incremental validated Responses streaming).
+- Remaining failures/risks: no known automated failure. Real OpenAI streaming, real starter PAL/face selection, real Auth/database `--p2`, and live audiovisual behavior remain unverified.
+- Proposed shared-file changes: `lib/data/sessions.ts` passes M1's required `p_kind`/`p_preset` RPC arguments; `lib/media/tavus.ts` accepts a server-only PAL/face override so preset starts can use `starterMedia`. Both are minimal acceptance dependencies for coordinator review.
 - External account action: none
-- Ready for review:
+- Ready for review: yes
 - Coordinator integration: pending
 
 The writer owns this handoff; the coordinator records integration and updates STATUS.
