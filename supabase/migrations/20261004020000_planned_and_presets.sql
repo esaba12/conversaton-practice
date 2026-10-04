@@ -54,6 +54,8 @@ create table public.planned_conversations (
   foreign key (person_id, owner_id) references public.people(id, owner_id) on delete cascade
 );
 
+create index planned_conversations_owner on public.planned_conversations(owner_id, planned_on desc);
+
 alter table public.planned_conversations enable row level security;
 alter table public.planned_conversations force row level security;
 
@@ -202,6 +204,10 @@ begin
   );
 end;
 $$;
+
+alter function public.practice_data_delete_all() owner to people_executor;
+revoke all on function public.practice_data_delete_all() from public, anon, authenticated;
+grant execute on function public.practice_data_delete_all() to authenticated;
 
 revoke create on schema public from people_executor;
 revoke people_executor from postgres;

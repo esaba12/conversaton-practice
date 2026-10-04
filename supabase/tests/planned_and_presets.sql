@@ -76,6 +76,10 @@ begin
     pg_catalog.format('update public.planned_conversations set label = %L', 'direct'), '42501');
   perform practice_private.test_m23_expect(
     pg_catalog.format('update public.people set preset_id = %L', 'manager'), '42501');
+  perform practice_private.test_m23_expect('delete from public.planned_conversations', '42501');
+  if (public.person_context((v_person ->> 'id')::uuid, (v_preset ->> 'version')::integer)) ?| array['fear', 'likelihood_before', 'likelihood_after', 'checkin', 'checkin_note', 'preset_id'] then
+    raise exception 'person_context must not carry plan or preset fields';
+  end if;
   perform pg_catalog.set_config('test.m23.person_a', v_person ->> 'id', true);
   perform pg_catalog.set_config('test.m23.version_a', v_preset ->> 'version', true);
   perform pg_catalog.set_config('test.m23.plan_a', v_plan ->> 'id', true);
@@ -105,6 +109,16 @@ begin
   perform practice_private.test_m23_expect(
     pg_catalog.format('insert into public.planned_conversations(owner_id, person_id, planned_on) values (%L, %L, %L)',
       '00000000-0000-4000-8000-0000000f0b01', current_setting('test.m23.person_a'), '2026-10-20'), '42501');
+end;
+$$;
+
+-- An anonymous session is rejected.
+select pg_catalog.set_config('request.jwt.claims',
+  '{"sub":"00000000-0000-4000-8000-0000000f0b01","role":"authenticated","is_anonymous":true}', true);
+do $$
+begin
+  perform practice_private.test_m23_expect(
+    pg_catalog.format('select public.planned_set(%L, %L)', current_setting('test.m23.person_a'), '2026-10-20'), 'P0001');
 end;
 $$;
 
@@ -138,17 +152,24 @@ $$;
 
 reset role;
 do $$
+declare
+  v_fn text;
 begin
-  if not exists (
-    select 1 from pg_catalog.pg_proc p join pg_catalog.pg_namespace n on n.oid = p.pronamespace
-    where n.nspname = 'public' and p.proname = 'planned_set'
-      and p.proowner = 'people_executor'::regrole and p.prosecdef and 'search_path=""' = any(p.proconfig)
-  ) then
-    raise exception 'planned_set lost its owner or search_path';
-  end if;
-  if pg_catalog.has_function_privilege('anon', 'public.planned_set(uuid, date, text, text, smallint)', 'execute') then
-    raise exception 'anon can execute planned_set';
-  end if;
+  foreach v_fn in array array[
+    'public.person_set_preset(uuid, integer, text)', 'public.planned_set(uuid, date, text, text, smallint)',
+    'public.planned_checkin(uuid, text, text, smallint)', 'public.planned_delete(uuid)', 'public.practice_data_delete_all()'
+  ] loop
+    if not exists (
+      select 1 from pg_catalog.pg_proc p
+      where p.oid = v_fn::regprocedure
+        and p.proowner = 'people_executor'::regrole and p.prosecdef and 'search_path=""' = any(p.proconfig)
+    ) then
+      raise exception '% lost its owner, definer or search_path', v_fn;
+    end if;
+    if pg_catalog.has_function_privilege('anon', v_fn, 'execute') then
+      raise exception 'anon can execute %', v_fn;
+    end if;
+  end loop;
 end;
 $$;
 
