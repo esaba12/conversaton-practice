@@ -10,7 +10,7 @@ import {
 
 // Reads use owner RLS on the request client; writes go only through the version-checked RPCs.
 const FACT_COLUMNS = "id, text, created_at, updated_at";
-const PERSON_COLUMNS = "id, version, name, relationship, traits, style, public_context, opening, constraints, challenge, pace, created_at, updated_at";
+const PERSON_COLUMNS = "id, version, name, relationship, traits, style, background, public_context, opening, constraints, challenge, pace, created_at, updated_at";
 // Keeps each link query under PostgREST's default 1000-row cap (25 people × 30 facts).
 const LINK_CHUNK = 25;
 const notFound = () => new AppError("NOT_FOUND", "That item was not found.", 404);
@@ -40,12 +40,12 @@ function rows(data: unknown) {
 const fact = (r: Row) => ({ id: r.id, text: r.text, createdAt: iso(r.created_at), updatedAt: iso(r.updated_at) });
 const person = (r: Row, sharedFactIds: unknown = r.shared_fact_ids) => ({
   id: r.id, version: r.version, name: r.name, relationship: r.relationship, traits: r.traits, style: r.style,
-  publicContext: r.public_context, opening: r.opening, constraints: r.constraints, challenge: r.challenge, pace: r.pace,
+  background: r.background, publicContext: r.public_context, opening: r.opening, constraints: r.constraints, challenge: r.challenge, pace: r.pace,
   sharedFactIds, createdAt: iso(r.created_at), updatedAt: iso(r.updated_at),
 });
 const personArgs = (f: PersonFields) => ({
   p_name: f.name, p_relationship: f.relationship, p_traits: f.traits, p_style: f.style, p_public_context: f.publicContext,
-  p_opening: f.opening, p_constraints: f.constraints, p_challenge: f.challenge, p_pace: f.pace,
+  p_opening: f.opening, p_constraints: f.constraints, p_challenge: f.challenge, p_pace: f.pace, p_background: f.background ?? null,
 });
 
 async function sharedFactIds(db: Db, personIds: string[]) {

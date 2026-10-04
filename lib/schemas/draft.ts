@@ -26,17 +26,23 @@ export const draftResponseSchema = z.object({
   role: roleContextSchema,
   goal: z.string().trim().min(1).max(200),
   assumptions: z.array(z.string().trim().min(1).max(200)).max(5),
-  stanceOptions: stanceOptionsSchema.optional(),
+  stanceOptions: stanceOptionsSchema,
 }).strict();
 export type DraftResponse = z.infer<typeof draftResponseSchema>;
 
 // Model output: when outOfScope is true the rest is ignored and the route returns OUT_OF_SCOPE.
 // Strict structured output makes every property required, so stance fields join the model output with 1C's prompt version, not before.
+const generatedRoleSchema = baseRoleContextSchema.extend({
+  wants: stanceChipSchema,
+  holdsBackBecause: stanceChipSchema,
+  softensWhen: stanceChipSchema,
+});
 export const draftModelOutputSchema = z.object({
   outOfScope: z.boolean(),
-  role: baseRoleContextSchema,
+  role: generatedRoleSchema,
   goal: draftResponseSchema.shape.goal,
   assumptions: draftResponseSchema.shape.assumptions,
+  stanceOptions: stanceOptionsSchema,
 }).strict();
 export type DraftModelOutput = z.infer<typeof draftModelOutputSchema>;
 

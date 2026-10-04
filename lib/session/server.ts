@@ -8,6 +8,7 @@ import { loadPersonContext } from "@/lib/data/person-context";
 import * as sessions from "@/lib/data/sessions";
 import type { Db, SessionRow } from "@/lib/data/sessions";
 import { assertTavusConfigured, createConversation, stopConversation } from "@/lib/media/tavus";
+import { starterMedia } from "@/lib/media/presets.server";
 import { AppError } from "@/lib/schemas/errors";
 import { roleContextSchema, type RoleContext, type RoleExtras } from "@/lib/schemas/role-context";
 import { startResponseSchema, type EndReason, type SessionPreset, type StartResponse, type startRequestSchema } from "@/lib/schemas/session";
@@ -43,28 +44,50 @@ export function startFingerprint(role: RoleContext, durationSeconds: 180 | 300, 
 }
 
 export async function startSession(db: Db, input: z.output<typeof startRequestSchema>): Promise<StartResponse> {
-  // C1 staging: these branches are frozen in the contract but built in 1C (situation, openingOverride) and 1G (stand-in).
-  if ("standIn" in input || "situation" in input || "openingOverride" in input) {
+  // C1 staging: 1G owns the stand-in branch.
+  if ("standIn" in input) {
     throw new AppError("VALIDATION_ERROR", "This kind of start isn't available yet.", 400);
   }
   const secret = capability();
   assertTavusConfigured();
   let role: RoleContext, extras: RoleExtras | undefined, fingerprint: string;
+  let preset: SessionPreset | null = null;
+  let media: { palId: string; faceId: string } | undefined;
   // Preset and reviewed-role starts store no person. A saved person is copied only after person_context succeeds.
   let person: { id: string; version: number } | null = null;
   if ("personId" in input) {
     // Loaded and version-checked for the caller before any lease or provider call; the client sends only ID and version.
     const loaded = await loadPersonContext(db, input.personId, input.expectedVersion);
     ({ role, extras } = loaded);
+    if ("situation" in input) {
+      role = roleContextSchema.parse({
+        name: role.name,
+        role: role.role,
+        style: role.style,
+        ...input.situation,
+      });
+    } else if ("openingOverride" in input && input.openingOverride) {
+      role = roleContextSchema.parse({ ...role, opening: input.openingOverride });
+    }
     person = { id: input.personId, version: loaded.version };
     fingerprint = startFingerprint(role, input.durationSeconds, secret, { extras, personId: input.personId, version: loaded.version });
   } else {
     // Only the allowlisted role reaches the provider; a preset id is resolved here and no other client field is forwarded.
     role = roleContextSchema.parse("preset" in input ? presetRoles[input.preset] : input.role);
+    if ("preset" in input) {
+      preset = input.preset;
+      if (input.openingOverride) role = roleContextSchema.parse({ ...role, opening: input.openingOverride });
+      const starter = starterMedia(input.preset);
+      if (starter) media = { palId: starter.palId, faceId: starter.faceId };
+    }
     fingerprint = startFingerprint(role, input.durationSeconds, secret);
   }
   let acquired: Awaited<ReturnType<typeof sessions.acquire>>;
-  try { acquired = await sessions.acquire(db, secret, input.idempotencyKey, fingerprint, input.durationSeconds, person); }
+  try {
+    acquired = await sessions.acquire(db, secret, input.idempotencyKey, fingerprint, input.durationSeconds, person, {
+      kind: "practice", preset,
+    });
+  }
   catch (error) {
     if (error instanceof AppError && error.code === "SESSION_ACTIVE") error.sessionId = await sessions.activeSessionId(db);
     throw error;
@@ -73,7 +96,7 @@ export async function startSession(db: Db, input: z.output<typeof startRequestSc
   // Only a fresh lease may create a provider call; replays never start a second one.
   if (!acquired.created) throw new AppError("SESSION_ACTIVE", "This start request was already handled. End that session to start another.", 409, false, id);
   let created: Awaited<ReturnType<typeof createConversation>>;
-  try { created = await createConversation(role, input.durationSeconds, extras); }
+  try { created = await createConversation(role, input.durationSeconds, extras, media); }
   catch {
     // Without a provider ID the database records cleanup as unresolved, which is truthful after a timeout.
     await sessions.end(db, secret, id, "connection_failure").catch(() => undefined);

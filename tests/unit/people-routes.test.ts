@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AppError, errorSchema } from "@/lib/schemas/errors";
 import {
   aboutMeFactResponseSchema, aboutMeListResponseSchema, deletedResponseSchema, peopleListResponseSchema,
-  personResponseSchema, privatePrepResponseSchema,
+  personResponseSchema, personSituationResponseSchema, personSituationsResponseSchema, privatePrepResponseSchema,
 } from "@/lib/schemas/people";
 
 const identity = vi.hoisted(() => ({ requireIdentity: vi.fn() }));
@@ -12,10 +12,13 @@ import * as aboutMeItem from "@/app/api/about-me/[id]/route";
 import * as people from "@/app/api/people/route";
 import * as personItem from "@/app/api/people/[id]/route";
 import * as sharedFacts from "@/app/api/people/[id]/shared-facts/route";
+import * as situations from "@/app/api/people/[id]/situations/route";
+import * as situationItem from "@/app/api/people/[id]/situations/[situationId]/route";
 import * as privatePrep from "@/app/api/private-prep/route";
 
 const owner = "11111111-1111-4111-8111-111111111111", pid = "22222222-2222-4222-8222-222222222222", pid2 = "55555555-5555-4555-8555-555555555555";
 const f1 = "33333333-3333-4333-8333-333333333333", f2 = "44444444-4444-4444-8444-444444444444";
+const sid = "66666666-6666-4666-8666-666666666666";
 const ts = "2026-10-03T21:00:00.123456+00:00", iso = "2026-10-03T21:00:00.123Z";
 type Result = { data?: unknown; error?: { code: string; message: string } };
 let handlers: Record<string, (args: Record<string, unknown>) => Result>, tables: Record<string, Result>;
@@ -25,11 +28,12 @@ const marker = (message: string) => ({ error: { code: "P0001", message } });
 const factRow = (patch: Record<string, unknown> = {}) => ({ id: f1, owner_id: owner, text: "I joined in June", created_at: ts, updated_at: ts, ...patch });
 const personRow = (patch: Record<string, unknown> = {}) => ({
   id: pid, owner_id: owner, version: 1, name: "Dana", relationship: "My manager", traits: { tone: "warm", formality: "professional" },
-  style: "Busy but fair.", public_context: "We work on the same team.", opening: "What did you want to cover?",
+  style: "Busy but fair.", background: "Dana manages the product team.", public_context: "We work on the same team.", opening: "What did you want to cover?",
   constraints: ["Stay in a workplace one-on-one."], challenge: "neutral", pace: "conversational", created_at: ts, updated_at: ts, ...patch,
 });
 const fields = {
   name: "  Dana ", relationship: " My manager ", traits: { tone: "blunt", familiarity: "close" }, style: " Busy but fair. ",
+  background: " Dana manages the product team. ",
   publicContext: " We work on the same team. ", opening: " What did you want to cover? ", constraints: [" Stay in a workplace one-on-one. "],
   challenge: "mild_pushback", pace: "patient",
 };
@@ -83,6 +87,9 @@ describe("people, about-me and private-prep routes", () => {
     add(req("PATCH", `/api/people/${pid}`, "not json"), r => personItem.PATCH(r, ctx("bad-id")));
     add(req("DELETE", `/api/people/${pid}`), r => personItem.DELETE(r, ctx("bad-id")));
     add(req("PUT", `/api/people/${pid}/shared-facts`, "not json"), r => sharedFacts.PUT(r, ctx("bad-id")));
+    add(req("GET", `/api/people/${pid}/situations`), r => situations.GET(r, ctx("bad-id")));
+    add(req("POST", `/api/people/${pid}/situations`, "not json"), r => situations.POST(r, ctx("bad-id")));
+    add(req("DELETE", `/api/people/${pid}/situations/${sid}`), r => situationItem.DELETE(r, { params: Promise.resolve({ id: "bad-id", situationId: "bad-id" }) }));
     add(req("GET", "/api/private-prep"), r => privatePrep.GET(r));
     add(req("PUT", "/api/private-prep", "not json"), r => privatePrep.PUT(r));
     for (const [request, run] of requests) {
@@ -117,6 +124,7 @@ describe("people, about-me and private-prep routes", () => {
       sharedFacts.PUT(req("PUT", `/api/people/${pid}/shared-facts`, { factIds: [f1] }), ctx(pid)),
       privatePrep.PUT(req("PUT", "/api/private-prep", { notes: "nervous", personId: pid })),
       privatePrep.PUT(req("PUT", "/api/private-prep", { notes: "n".repeat(1001) })),
+      situations.POST(req("POST", `/api/people/${pid}/situations`, { label: "x", situation: { publicContext: "x", opening: "Hi.", constraints: [], challenge: "neutral", pace: "patient" }, privateNotes: "PRIVATE" }), ctx(pid)),
     ];
     for (const response of await Promise.all(rejected)) expect((await errorOf(response, 400)).code).toBe("VALIDATION_ERROR");
     expect((await errorOf(await people.POST(req("POST", "/api/people", fields, { origin: "https://evil.example" })), 403)).code).toBe("FORBIDDEN");
@@ -156,7 +164,7 @@ describe("people, about-me and private-prep routes", () => {
     const expected = {
       p_name: "Dana", p_relationship: "My manager", p_traits: { tone: "blunt", familiarity: "close" }, p_style: "Busy but fair.",
       p_public_context: "We work on the same team.", p_opening: "What did you want to cover?", p_constraints: ["Stay in a workplace one-on-one."],
-      p_challenge: "mild_pushback", p_pace: "patient",
+      p_challenge: "mild_pushback", p_pace: "patient", p_background: "Dana manages the product team.",
     };
     expect(calls("person_create")).toEqual([expected]);
     const updated = await ok(await personItem.PATCH(req("PATCH", `/api/people/${pid}`, { ...fields, expectedVersion: 3 }), ctx(pid)), personResponseSchema);
@@ -211,6 +219,44 @@ describe("people, about-me and private-prep routes", () => {
     expect((await errorOf(await people.POST(req("POST", "/api/people", fields)), 409)).code).toBe("USAGE_LIMIT");
     handlers.person_set_shared_facts = () => marker("INVALID_INPUT");
     expect((await errorOf(await sharedFacts.PUT(req("PUT", `/api/people/${pid}/shared-facts`, { factIds: [f2], expectedVersion: 1 }), ctx(pid)), 400)).code).toBe("VALIDATION_ERROR");
+  });
+
+  it("lists, creates and deletes owner-scoped saved situations through M1 RPCs", async () => {
+    const value = {
+      publicContext: "A launch task needs to move.", opening: "Which task?", constraints: ["Stay on this launch."],
+      challenge: "mild_pushback", pace: "conversational", wants: "Keep launch on track",
+      holdsBackBecause: "The team is short staffed", softensWhen: "You name what to drop",
+    };
+    const stored = { id: sid, person_id: pid, label: "Launch workload", situation: value, created_at: ts, updated_at: ts };
+    handlers.person_situation_list = () => ({ data: [stored] });
+    handlers.person_situation_create = (args) => ({ data: { ...stored, label: args.p_label, situation: args.p_situation } });
+    handlers.person_situation_delete = () => ({ data: { deleted: true } });
+    const listed = await ok(await situations.GET(req("GET", `/api/people/${pid}/situations`), ctx(pid)), personSituationsResponseSchema);
+    expect(listed.situations[0]).toMatchObject({ id: sid, label: "Launch workload", situation: value });
+    const created = await ok(await situations.POST(req("POST", `/api/people/${pid}/situations`, { label: " Launch workload ", situation: value }), ctx(pid)), personSituationResponseSchema, 201);
+    expect(created.situation.label).toBe("Launch workload");
+    expect(calls("person_situation_create")).toEqual([{ p_person_id: pid, p_label: "Launch workload", p_situation: value }]);
+    const deleted = await situationItem.DELETE(req("DELETE", `/api/people/${pid}/situations/${sid}`), { params: Promise.resolve({ id: pid, situationId: sid }) });
+    expect(await ok(deleted, deletedResponseSchema)).toEqual({ deleted: true });
+    expect(calls("person_situation_delete")).toEqual([{ p_id: sid }]);
+  });
+
+  it("deletes a situation only through its own person's URL", async () => {
+    handlers.person_situation_list = () => ({ data: [] });
+    handlers.person_situation_delete = () => ({ data: { deleted: true } });
+    const response = await situationItem.DELETE(req("DELETE", `/api/people/${pid}/situations/${sid}`), { params: Promise.resolve({ id: pid, situationId: sid }) });
+    expect((await errorOf(response, 404)).code).toBe("NOT_FOUND");
+    expect(calls("person_situation_delete")).toEqual([]);
+  });
+
+  it("maps saved-situation owner isolation and cap markers", async () => {
+    handlers.person_situation_list = () => marker("NOT_FOUND");
+    expect((await errorOf(await situations.GET(req("GET", `/api/people/${pid}/situations`), ctx(pid)), 404)).code).toBe("NOT_FOUND");
+    handlers.person_situation_create = () => marker("LIMIT_REACHED");
+    const value = { publicContext: "x", opening: "Hi.", constraints: [], challenge: "neutral", pace: "patient" };
+    expect((await errorOf(await situations.POST(req("POST", `/api/people/${pid}/situations`, { label: "One", situation: value }), ctx(pid)), 409)).code).toBe("USAGE_LIMIT");
+    handlers.person_situation_delete = () => marker("NOT_FOUND");
+    expect((await errorOf(await situationItem.DELETE(req("DELETE", `/api/people/${pid}/situations/${sid}`), { params: Promise.resolve({ id: pid, situationId: sid }) }), 404)).code).toBe("NOT_FOUND");
   });
 
   it("turns malformed rows and raw database errors into a sanitized 503", async () => {
