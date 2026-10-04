@@ -1,6 +1,6 @@
 # Design system and screens (post-submission plan)
 
-Status: **planning, not built.** Derived from [R05](research/R05-DESIGN-DIRECTION.md). Feature behavior is in [docs/32](32-FEATURE-SPECS.md); this file covers how it looks, moves and sounds. Existing visual direction ("warm and minimal, crisp, modern typography") from docs/00 and docs/18 still holds; this extends it with presence, depth and a dark call mode. Contrast values marked "verify" must be measured before merge.
+Status: **planning, not built.** Derived from [R05](research/R05-DESIGN-DIRECTION.md). Feature behavior is in [docs/32](32-FEATURE-SPECS.md); this file covers how it looks, moves and sounds. Existing visual direction ("warm and minimal, crisp, modern typography") from docs/00 and docs/18 still holds; this extends it with presence, depth and a dark call mode. Token contrast was measured in 0A (October 3); the remaining "verify" marks are Tavus behavior, not contrast. Tokens and primitives are built; screens are not.
 
 ## 1. Concept
 
@@ -38,7 +38,7 @@ Shadows are sage-tinted, never grey: `--shadow-1: 0 1px 2px rgb(52 90 73 / .08)`
 
 - **UI sans:** existing stack (`"Avenir Next","Segoe UI",system-ui`).
 - **Display serif: Newsreader** (variable, `opsz` axis, `next/font`; chosen October 3 by 0A over Fraunces and Source Serif 4, see docs/tasks/0A-tokens.md). Used for page headlines, character names, pocket cards, the recap's quoted line. Never for form labels or controls.
-- Scale (px): 12, 14, 16, 18, 22, 28, 40, 56; line height 1.5 body, 1.1 display. Letter-spacing on display −0.02em (replaces current −3.4 px fixed values). Tokens: `--font-sans`, `--font-serif`, `--text-{12…56}`, `--leading-body`, `--leading-display`, `--tracking-display`.
+- Scale (px): 12, 14, 16, 18, 22, 28, 40, 56; line height 1.5 body, 1.1 display. Letter-spacing on display −0.02em (replaces current −3.4 px fixed values). Tokens: `--font-sans`, `--font-serif`, `--text-12` … `--text-56`, `--leading-body`, `--leading-display`, `--tracking-display`.
 
 ### Space, radius, size
 
@@ -53,7 +53,9 @@ Shadows are sage-tinted, never grey: `--shadow-1: 0 1px 2px rgb(52 90 73 / .08)`
 | `--t-calm` | `520ms cubic-bezier(.32,.72,0,1)` | Room ↔ call, entering green room and recap |
 | `--t-breath` | `5s ease-in-out infinite` | Settle circle, ringing pulse |
 
-`prefers-reduced-motion: reduce`: no morphs, pulses or slides; fades ≤150 ms; breathing circle becomes a static ring with a text count. Built as a global rule (all transitions and animations to 0.01 ms) with `data-reduced-fade` as the opt-in for the 150 ms opacity fade. Motion springs live in `lib/ui/motion.ts` (`press`, `lift`, `pop`, `settle`). Disabled controls use `aria-disabled` (still focusable) with a visible reason linked by `aria-describedby`, dashed `--surface-sunk` and `--muted` text, never opacity. The development gallery forces states with `data-preview-state="hover|focus|active"`.
+`prefers-reduced-motion: reduce`: no morphs, pulses or slides; fades ≤150 ms; breathing circle becomes a static ring with a text count. Built as a global rule (all transitions and animations 0.01 ms) with `data-reduced-fade` as the opt-in for the 150 ms opacity fade. Springs live in `lib/ui/motion.ts` (`press`, `lift`, `pop`, `settle`).
+
+Disabled controls use `aria-disabled` (still focusable) with a visible reason linked by `aria-describedby`, a dashed `--surface-sunk` fill and `--muted` text, never opacity. The development gallery forces states with `data-preview-state="hover|focus|active"`.
 
 ### Sound
 
