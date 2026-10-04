@@ -21,8 +21,7 @@ export async function POST(request: Request) {
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
         try {
-          const draft = await generateDraftStream(setupInput);
-          for (const [field, value] of Object.entries(draft)) controller.enqueue(event("field", { field, value }));
+          const draft = await generateDraftStream(setupInput, (field, value) => controller.enqueue(event("field", { field, value })));
           controller.enqueue(event("done", draft));
         } catch (error) {
           const known = error instanceof AppError ? error : new AppError("INTERNAL_ERROR", "Something went wrong. Try again shortly.", 500);

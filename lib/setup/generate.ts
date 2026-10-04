@@ -174,7 +174,53 @@ export async function generateDraft(input: SetupInput): Promise<DraftResponse> {
   throw new AppError("PROVIDER_UNAVAILABLE", "The setup could not be generated. Try again or fill in the form manually.", 503, true);
 }
 
-async function streamedText(response: Response): Promise<string> {
+function completedTopLevel(text: string): Map<string, unknown> {
+  const result = new Map<string, unknown>();
+  let index = 0;
+  const whitespace = () => { while (/\s/.test(text[index] ?? "")) index += 1; };
+  whitespace();
+  if (text[index++] !== "{") return result;
+  for (;;) {
+    whitespace();
+    if (text[index] !== "\"") return result;
+    const keyStart = index++;
+    let escaped = false;
+    while (index < text.length) {
+      const char = text[index++];
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === "\"") break;
+    }
+    if (text[index - 1] !== "\"") return result;
+    let key: unknown;
+    try { key = JSON.parse(text.slice(keyStart, index)); } catch { return result; }
+    whitespace();
+    if (text[index++] !== ":") return result;
+    whitespace();
+    const valueStart = index;
+    let depth = 0, inString = false;
+    escaped = false;
+    for (; index < text.length; index++) {
+      const char = text[index];
+      if (inString) {
+        if (escaped) escaped = false;
+        else if (char === "\\") escaped = true;
+        else if (char === "\"") inString = false;
+        continue;
+      }
+      if (char === "\"") inString = true;
+      else if (char === "{" || char === "[") depth += 1;
+      else if ((char === "}" || char === "]") && depth > 0) depth -= 1;
+      else if ((char === "," || char === "}") && depth === 0) break;
+    }
+    if (index >= text.length) return result;
+    try { result.set(String(key), JSON.parse(text.slice(valueStart, index))); } catch { return result; }
+    if (text[index] === "}") return result;
+    index += 1;
+  }
+}
+
+async function streamedText(response: Response, onDelta: (text: string) => void): Promise<string> {
   if (!response.body) throw new Invalid();
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
@@ -194,7 +240,10 @@ async function streamedText(response: Response): Promise<string> {
         try { event = JSON.parse(data); } catch { throw new Invalid(); }
         const parsed = z.object({ type: z.string(), delta: z.string().optional() }).loose().safeParse(event);
         if (!parsed.success) throw new Invalid();
-        if (parsed.data.type === "response.output_text.delta" && parsed.data.delta) text += parsed.data.delta;
+        if (parsed.data.type === "response.output_text.delta" && parsed.data.delta) {
+          text += parsed.data.delta;
+          onDelta(text);
+        }
         if (parsed.data.type === "response.failed" || parsed.data.type === "error") throw new Invalid();
       }
     }
@@ -203,7 +252,13 @@ async function streamedText(response: Response): Promise<string> {
   return text;
 }
 
-async function streamAttempt(input: SetupInput, key: string, model: string): Promise<DraftModelOutput> {
+type DraftField = keyof DraftResponse;
+async function streamAttempt(
+  input: SetupInput,
+  key: string,
+  model: string,
+  onField: (field: DraftField, value: unknown) => void,
+): Promise<DraftModelOutput> {
   let response: Response;
   try {
     response = await fetch("https://api.openai.com/v1/responses", {
@@ -215,7 +270,51 @@ async function streamAttempt(input: SetupInput, key: string, model: string): Pro
     });
   } catch { throw new Invalid(); }
   if (!response.ok) throw new Invalid();
-  const text = await streamedText(response);
+  const emitted = new Set<string>();
+  let partialRole: RoleContext | undefined;
+  const text = await streamedText(response, current => {
+    const fields = completedTopLevel(current);
+    const scope = fields.get("outOfScope");
+    if (scope === true) return;
+    const rawRole = fields.get("role");
+    if (!emitted.has("role") && rawRole !== undefined) {
+      const parsed = draftModelOutputSchema.shape.role.safeParse(rawRole);
+      if (!parsed.success) throw new Invalid();
+      partialRole = input.personIdentity
+        ? { ...parsed.data, name: input.personIdentity.name, role: input.personIdentity.relationship, style: input.personIdentity.style }
+        : parsed.data;
+      if (leaksPrivateNotes(partialRole, input.privateNotes, input.situation)) throw new Invalid();
+      emitted.add("role");
+      onField("role", partialRole);
+    }
+    const rawGoal = fields.get("goal");
+    if (!emitted.has("goal") && rawGoal !== undefined) {
+      const parsed = draftResponseSchema.shape.goal.safeParse(input.goal ?? rawGoal);
+      if (!parsed.success) throw new Invalid();
+      if (partialRole && leaksPrivateNotes({ ...partialRole, constraints: [...partialRole.constraints, parsed.data] }, input.privateNotes, input.situation)) throw new Invalid();
+      emitted.add("goal");
+      onField("goal", parsed.data);
+    }
+    const rawAssumptions = fields.get("assumptions");
+    if (!emitted.has("assumptions") && rawAssumptions !== undefined) {
+      const parsed = draftResponseSchema.shape.assumptions.safeParse(rawAssumptions);
+      if (!parsed.success) throw new Invalid();
+      if (partialRole && leaksPrivateNotes({ ...partialRole, constraints: [...partialRole.constraints, ...parsed.data] }, input.privateNotes, input.situation)) throw new Invalid();
+      emitted.add("assumptions");
+      onField("assumptions", parsed.data);
+    }
+    const rawStance = fields.get("stanceOptions");
+    if (!emitted.has("stanceOptions") && rawStance !== undefined && partialRole) {
+      const parsed = draftResponseSchema.shape.stanceOptions.safeParse(rawStance);
+      if (!parsed.success
+        || parsed.data.wants[0] !== partialRole.wants
+        || parsed.data.holdsBackBecause[0] !== partialRole.holdsBackBecause
+        || parsed.data.softensWhen[0] !== partialRole.softensWhen
+        || leaksPrivateNotes(partialRole, input.privateNotes, input.situation, parsed.data)) throw new Invalid();
+      emitted.add("stanceOptions");
+      onField("stanceOptions", parsed.data);
+    }
+  });
   let value: unknown;
   try { value = JSON.parse(text); } catch { throw new Invalid(); }
   const parsed = draftModelOutputSchema.safeParse(value);
@@ -223,11 +322,21 @@ async function streamAttempt(input: SetupInput, key: string, model: string): Pro
   return checked(parsed.data, input, true);
 }
 
-export async function generateDraftStream(input: SetupInput): Promise<DraftResponse> {
+export async function generateDraftStream(input: SetupInput, onField: (field: DraftField, value: unknown) => void): Promise<DraftResponse> {
   const { key, model } = configuration();
   for (let i = 0; i < ATTEMPTS; i++) {
-    try { return responseFrom(await streamAttempt(input, key, model), input); }
+    let emitted = false;
+    try {
+      return responseFrom(await streamAttempt(input, key, model, (field, value) => {
+        emitted = true;
+        onField(field, value);
+      }), input);
+    }
     catch (error) { if (error instanceof Invalid) continue; throw error; }
+    finally {
+      // Once a partial field reached the client, retrying could mix two model attempts.
+      if (emitted && i + 1 < ATTEMPTS) i = ATTEMPTS;
+    }
   }
   throw new AppError("PROVIDER_UNAVAILABLE", "The setup could not be generated. Try again or fill in the form manually.", 503, true);
 }
