@@ -26,7 +26,9 @@ CI run: not run
 - [ ] `tests/unit/ui-rules.test.ts` checks 05-UI-UPGRADE §2 Never #5 (raw hex/`rgb()` in `*.module.css`), #6 (`opacity` inside `:disabled` rules), #7 (`outline: none` without `:focus-visible`), #9 (pure black/white), #10 (icon imports other than `lucide-react`; inline `<svg>` in components except logo/illustrations allow-list).
 - [ ] Negative control: each check fails on a planted violation (test fixture strings), then passes on the integrated head with existing violations fixed or listed here.
 - [ ] `/design-preview` gallery shows every 0A primitive in every state, plus today's screens' states, from fixtures (development only).
-- [ ] Screenshot script writes every gallery state at 390, 900 and 1440 px, light and night, reduced motion on and off, into `artifacts/ui/<branch>/` (ignored).
+- [x] Screenshot script writes every gallery state at 390, 900 and 1440 px, light and night, reduced motion on and off, into `artifacts/ui/<branch>/` (ignored). Coordinator, `scripts/ui/screenshots.mjs`; smoke run on `main` `c2541e2` wrote 12 whole-page shots (no gallery markers yet), October 3, 23:25 EDT.
+
+**Gallery contract for the worker.** Wrap each state in an element with `data-gallery-state="<component>-<state>"` (for example `chip-selected`, `primary-button-disabled`) and `data-surface="room"` or `"night"`. The script screenshots each such element separately; pages without markers are captured whole. Run: `PLAYWRIGHT_BROWSERS_PATH=$HOME/Library/Caches/ms-playwright node scripts/ui/screenshots.mjs --base http://127.0.0.1:<port> --route /design-preview`.
 
 ## Verification evidence
 
