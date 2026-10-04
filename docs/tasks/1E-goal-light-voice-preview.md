@@ -7,7 +7,7 @@ Coordinator: wow-pass coordinator (main checkout)
 Gate: Wow pass Phase 1 (after the hero-path checkpoint)
 Requirements/tests: docs/next/02-BUILD-PLAN.md §3 1E; docs/32-FEATURE-SPECS.md G1; docs/next/04-NEW-SPECS.md W3; docs/next/03-CONTRACTS.md
 GitHub issue: https://github.com/esaba12/conversaton-practice/issues/64
-Pull request: see the draft PR on `agent/1e-goal-voice` (linked from issue #64)
+Pull request: https://github.com/esaba12/conversaton-practice/pull/85 (draft)
 CI run: not checked by the worker
 
 ## Assignment and isolation
