@@ -8,11 +8,11 @@ C0 contract commit (branch `build/wow-c0`): pins `lucide-react` 1.51.0 and `moti
 
 | Slice | Issue | Owner | Worktree / port | State |
 | --- | --- | --- | --- | --- |
-| [0A](docs/tasks/0A-tokens.md) tokens, serif, primitives | [#42](https://github.com/esaba12/conversaton-practice/issues/42) | worker | `.worktrees/0a` / 3101 | ready |
+| [0A](docs/tasks/0A-tokens.md) tokens, serif, primitives | [#42](https://github.com/esaba12/conversaton-practice/issues/42) | worker | `.worktrees/0a` / 3101 | merged [PR #52](https://github.com/esaba12/conversaton-practice/pull/52) (`ca7f549`) |
 | [SPIKE-01](docs/tasks/SPIKE-01-quality-pal.md) 0B provider spikes + PALs | [#43](https://github.com/esaba12/conversaton-practice/issues/43) | coordinator | main checkout | active |
 | [0C](docs/tasks/0C-flow.md) flow state machine (W1) | [#44](https://github.com/esaba12/conversaton-practice/issues/44) | worker | `.worktrees/0c` / 3102 | ready |
 | [0D](docs/tasks/0D-video-first.md) video-first (Q3) | [#45](https://github.com/esaba12/conversaton-practice/issues/45) | worker after 0C | `.worktrees/0d` / 3103 | planned |
-| [0E](docs/tasks/0E-ui-gate.md) UI rules + gallery + screenshots | [#46](https://github.com/esaba12/conversaton-practice/issues/46) | worker after 0A + coordinator | `.worktrees/0e` / 3101 | planned |
+| [0E](docs/tasks/0E-ui-gate.md) UI rules + gallery + screenshots | [#46](https://github.com/esaba12/conversaton-practice/issues/46) | worker (dispatched 23:20 from `ca7f549`) + coordinator | `.worktrees/0e` / 3101 | in progress |
 
 **23:15 EDT.** C0 merged in [PR #47](https://github.com/esaba12/conversaton-practice/pull/47) (`main` `9419820`). 0A and 0C workers dispatched from `9419820` into `.worktrees/0a` and `.worktrees/0c` (worker `.env.local` holds only the public Supabase values). SPIKE-01 API work done ([record](docs/tasks/SPIKE-01-quality-pal.md)): quality PAL and stand-in PAL created with `eleven_v4_turbo`, Raven-1 audio with full emotion recognition, idle patient; readback and test-mode create/delete pass. Today's call face is phoenix-3; the quality PAL uses a phoenix-4.5 Pro face. Faces expose thumbnail image and video URLs (W6). `max_call_duration` start point is undocumented, so create-on-ready stays.
 

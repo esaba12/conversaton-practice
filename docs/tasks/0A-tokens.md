@@ -126,7 +126,7 @@ Text needs 4.5:1; focus rings (non-text) and large text need 3:1. Every row is a
 - External account action: none
 - Next smallest task: 0E UI rule test over `components/**` and `app/**`, expanding the `/design-preview` gallery on top of this.
 - Ready for review: yes
-- Coordinator integration: pending
+- Coordinator integration: merged October 3, ~23:15 EDT in PR #52 (`ca7f549`) after rebase onto `df75cad`. Coordinator reran typecheck, npm test (249 pass), build, and npm run test:ui (9 pass, 1 production-only skip); screenshots at 390/900/1440 reviewed by a separate model (no blockers; Active state and gallery orphan rows passed to 0E). docs/33 updated with the handoff proposals.
 
 The writer owns this handoff; the coordinator records integration and updates STATUS.
 Follow [documentation rules](../20-DOCUMENTATION-STANDARD.md) and
