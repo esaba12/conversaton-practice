@@ -14,6 +14,20 @@ C0 contract commit (branch `build/wow-c0`): pins `lucide-react` 1.51.0 and `moti
 | [0D](docs/tasks/0D-video-first.md) video-first (Q3) | [#45](https://github.com/esaba12/conversaton-practice/issues/45) | worker + coordinator review fixes | `.worktrees/0d` / 3103 | merged [PR #57](https://github.com/esaba12/conversaton-practice/pull/57) (`966e836`) |
 | [0E](docs/tasks/0E-ui-gate.md) UI rules + gallery + screenshots | [#46](https://github.com/esaba12/conversaton-practice/issues/46) | worker + coordinator | `.worktrees/0e` / 3101 | merged [PR #55](https://github.com/esaba12/conversaton-practice/pull/55) (`51ef56c`) |
 
+## Phase 1 in progress (October 4, ~00:40 EDT, main `9d2e396`)
+
+Owner deferred the 0D live check ("dont have time to do that rn") and asked to start Phase 1.
+
+| Slice | Issue | Owner | Worktree / port | State |
+| --- | --- | --- | --- | --- |
+| C1 contracts + starter faces + portrait route | [#59](https://github.com/esaba12/conversaton-practice/issues/59) (closed) | coordinator | main | merged [PR #67](https://github.com/esaba12/conversaton-practice/pull/67) (`916e590`) |
+| [M1](docs/tasks/M1-person-situations.md) migration | #59 | worker draft + coordinator fixes | `.worktrees/m1` | merged [PR #68](https://github.com/esaba12/conversaton-practice/pull/68) (`9d2e396`), **applied** ~00:30; 4 SQL suites + `auth-database-check --g3` pass after apply |
+| 1A call screen | [#60](https://github.com/esaba12/conversaton-practice/issues/60) | worker (opus-5.5) | `.worktrees/1a` / 3101 | in progress |
+| 1B lobby + briefing | [#61](https://github.com/esaba12/conversaton-practice/issues/61) | worker (opus-5.5) | `.worktrees/1b` / 3102 | in progress |
+| 1C person/situation server | [#62](https://github.com/esaba12/conversaton-practice/issues/62) | worker (gpt-5.6) | `.worktrees/1c` / 3103 | in progress |
+
+Starter faces (ids only in local `.env.local`, Vercel unchanged): Jordan = Victor/Eric, Alex = Lucas/Will, Ellis = Daniel/George, Sam = Priya/Jessica; one quality-layer PAL each, readback verified. M1 privacy review: three should-fixes applied, one declined with reason (task record). Next: 1D after 1B, 1G after 1C, then the hero-path checkpoint (`tests/browser/hero-path.spec.ts`) and an owner live hero call (optional; otherwise live not verified). Open: 0D live check, SPIKE-01 timing probes (#43).
+
 **October 4, ~00:05 EDT. Phase 0 passed on automated evidence (live not verified)**, main `966e836`. 0D merged after review fixes (blocked-unmute recovery, paused-frame guard, watchdog clear). Owner live check requested: headphones call, voice never before the first frame, ringing ends on first video, End releases mic. SPIKE-01 timing probes still open (#43). Next: Phase 1 C1 contracts freeze (incl. starter faces), then M1 migration with its SQL test, then workers 1A/1B/1C.
 
 **23:50 EDT.** 0A, 0C and 0E merged (main `51ef56c`). 0C passed a signed-in mock-browser walk identical to main; a review blocker (private-state clear on leaving a person) was fixed before merge. 0E needed a coordinator overflow fix at 390/900 px. 0D dispatched. Phase 0 remaining: 0D, then the Phase 0 report.
