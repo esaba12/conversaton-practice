@@ -243,7 +243,7 @@ declare
   v_column text;
   v_granted text[] := array[
     'id', 'owner_id', 'status', 'created_at', 'expires_at', 'connected_at', 'ended_at',
-    'cleanup', 'person_id', 'person_version'];
+    'cleanup', 'person_id', 'person_version', 'kind', 'preset'];
   v_hidden text[] := array['idempotency_key', 'request_fingerprint', 'provider_conversation_id'];
 begin
   if exists(select 1 from pg_catalog.pg_roles where rolname = 'practice_session_executor'
@@ -290,7 +290,8 @@ begin
     where a.attrelid = 'public.practice_sessions'::regclass and a.attnum > 0 and not a.attisdropped
   ) is distinct from array[
     'cleanup', 'connected_at', 'created_at', 'ended_at', 'expires_at', 'id', 'idempotency_key',
-    'owner_id', 'person_id', 'person_version', 'provider_conversation_id', 'request_fingerprint', 'status'
+    'kind', 'owner_id', 'person_id', 'person_version', 'preset', 'provider_conversation_id',
+    'request_fingerprint', 'status'
   ]::text[] then
     raise exception 'practice_sessions columns changed; update the authenticated column grant';
   end if;
