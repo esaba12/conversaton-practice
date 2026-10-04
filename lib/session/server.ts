@@ -1,5 +1,7 @@
 import "server-only";
 import { createHmac } from "node:crypto";
+import { decline } from "@/fixtures/decline";
+import { professor } from "@/fixtures/professor";
 import { roommate } from "@/fixtures/roommate";
 import { loadPersonContext } from "@/lib/data/person-context";
 import * as sessions from "@/lib/data/sessions";
@@ -7,7 +9,7 @@ import type { Db, SessionRow } from "@/lib/data/sessions";
 import { assertTavusConfigured, createConversation, stopConversation } from "@/lib/media/tavus";
 import { AppError } from "@/lib/schemas/errors";
 import { roleContextSchema, type RoleContext, type RoleExtras } from "@/lib/schemas/role-context";
-import { startResponseSchema, type EndReason, type StartResponse, type startRequestSchema } from "@/lib/schemas/session";
+import { startResponseSchema, type EndReason, type SessionPreset, type StartResponse, type startRequestSchema } from "@/lib/schemas/session";
 import type { z } from "zod";
 
 function capability() {
@@ -16,6 +18,7 @@ function capability() {
   return secret;
 }
 const startFailed = () => new AppError("PROVIDER_UNAVAILABLE", "The call could not be started. Wait a moment before trying again.", 503, false);
+const presetRoles: Record<SessionPreset, RoleContext> = { roommate, professor, decline };
 
 // Leaves cleanup pending/unresolved unless the remote call is verified ended and hard-deleted.
 async function cleanUp(db: Db, secret: string, row: SessionRow) {
@@ -51,8 +54,8 @@ export async function startSession(db: Db, input: z.output<typeof startRequestSc
     person = { id: input.personId, version: loaded.version };
     fingerprint = startFingerprint(role, input.durationSeconds, secret, { extras, personId: input.personId, version: loaded.version });
   } else {
-    // Only the allowlisted role reaches the provider; no other client field is forwarded.
-    role = roleContextSchema.parse("role" in input ? input.role : roommate);
+    // Only the allowlisted role reaches the provider; a preset id is resolved here and no other client field is forwarded.
+    role = roleContextSchema.parse("preset" in input ? presetRoles[input.preset] : input.role);
     fingerprint = startFingerprint(role, input.durationSeconds, secret);
   }
   let acquired: Awaited<ReturnType<typeof sessions.acquire>>;

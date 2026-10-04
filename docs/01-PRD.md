@@ -27,7 +27,7 @@ Sign-in is a prerequisite for the entire workspace, including setup generation, 
 
 | ID | Requirement | Acceptance |
 |---|---|---|
-| P01 | Three presets | Professor, roommate, and declining a request are usable without generation |
+| P01 | Three presets | Professor (Ellis, office hours for one assignment), roommate (Alex, dishes), and declining a request (Sam, a classmate's weekend favor) open a labeled example review without generation. An unedited example start sends only the preset id |
 | P02 | Situation generation | A new user-described situation produces an editable persona, scenario, goal suggestion when needed, and opening; actual generation must work for MVP acceptance. Manual fallback handles individual failures; no silent invention of real-person facts |
 | P03 | Persona editing | Form supports role, style, voice, familiarity, and constraints. G3: categorical trait chips (tone, formality, talkativeness, familiarity) plus short text fields. Face and voice stay the single stock pair during G3; a preset catalog is decided for later (docs/00) |
 | P04 | Live video conversation | Five responsive exchanges complete with real ElevenLabs audio and synchronized talking-counterpart video; interruption stops the superseded speech and matching speaking animation; voice-only, a static portrait, or prerecorded replies cannot pass |

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useId, useRef, type ReactNode } from "react";
+import { examples } from "@/fixtures/examples";
+import type { SessionPreset } from "@/lib/schemas/session";
 import styles from "./setup.module.css";
 
 export const SITUATION_MAX = 1000;
@@ -18,7 +20,7 @@ export type SetupDescribeProps = {
   onPrivateNotesChange: (value: string) => void;
   onGenerate: () => void;
   onManual: () => void;
-  onUseExample?: () => void;
+  onUseExample?: (preset: SessionPreset) => void;
   generating?: boolean;
   disabled?: boolean;
   error?: SetupDescribeError | null;
@@ -50,6 +52,15 @@ export function SetupDescribe({ situation, goal, privateNotes, onSituationChange
           <p id={`${id}-situation-hint`} className={styles.hint}>Who is it with, and what’s going on? For example, “My roommate keeps leaving dishes in the sink.”</p>
         </div>
 
+        {onUseExample && <div className={styles.examples} role="group" aria-labelledby={`${id}-examples`}>
+          <p id={`${id}-examples`} className={styles.hint}>Or start from an example. These are not generated.</p>
+          <div className={styles.exampleActions}>
+            {(["professor", "roommate", "decline"] as const).map((preset) => (
+              <button key={preset} type="button" className={styles.linkButton} onClick={() => onUseExample(preset)} disabled={busy}>{examples[preset].label}</button>
+            ))}
+          </div>
+        </div>}
+
         <div className={styles.field}>
           <div className={styles.labelRow}><label htmlFor={`${id}-goal`}>What do you want to say or do? <span className={styles.optional}>Optional</span></label><span id={`${id}-goal-count`} className={styles.count}>{goal.length} / {INTENT_MAX}</span></div>
           <input id={`${id}-goal`} type="text" maxLength={INTENT_MAX} value={goal} disabled={busy} aria-describedby={`${id}-goal-count`} onChange={(event) => onGoalChange(event.target.value)} />
@@ -72,7 +83,6 @@ export function SetupDescribe({ situation, goal, privateNotes, onSituationChange
         <button type="submit" className={styles.primaryButton} disabled={!canGenerate} aria-busy={generating}>{generating ? "Generating…" : "Generate setup"}</button>
         <div className={styles.linkRow}>
           <button type="button" className={styles.linkButton} onClick={onManual} disabled={busy}>Enter setup manually</button>
-          {onUseExample && <button type="button" className={styles.linkButton} onClick={onUseExample} disabled={busy}>Use roommate example</button>}
         </div>
       </form>
     </section>

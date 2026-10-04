@@ -3,6 +3,8 @@ import { AppError, errorSchema } from "@/lib/schemas/errors";
 import { buildRoleContext, type RoleContext } from "@/lib/schemas/role-context";
 import { personToRole } from "@/lib/schemas/people";
 import { sessionResponseSchema, startRequestSchema, startResponseSchema } from "@/lib/schemas/session";
+import { decline } from "@/fixtures/decline";
+import { professor } from "@/fixtures/professor";
 import { roommate } from "@/fixtures/roommate";
 
 const identity = vi.hoisted(() => ({ requireIdentity: vi.fn() }));
@@ -136,6 +138,9 @@ describe("session routes", () => {
     expect(JSON.stringify(reordered)).not.toBe(JSON.stringify(reviewed));
     expect(startFingerprint(reordered, 180, SECRET)).toBe(startFingerprint(reviewed, 180, SECRET));
     expect(startFingerprint(reviewed, 180, SECRET)).not.toBe(startFingerprint(roommate, 180, SECRET));
+    expect(startFingerprint(professor, 180, SECRET)).not.toBe(startFingerprint(roommate, 180, SECRET));
+    expect(startFingerprint(decline, 180, SECRET)).not.toBe(startFingerprint(roommate, 180, SECRET));
+    expect(startFingerprint(professor, 180, SECRET)).not.toBe(startFingerprint(decline, 180, SECRET));
     expect(startFingerprint(reviewed, 180, SECRET)).not.toBe(startFingerprint(reviewed, 300, SECRET));
     expect(startFingerprint({ ...reviewed, constraints: [...reviewed.constraints].reverse() }, 180, SECRET)).not.toBe(startFingerprint(reviewed, 180, SECRET));
     handlers.practice_acquire = () => marker("SESSION_ACTIVE");
@@ -144,6 +149,26 @@ describe("session routes", () => {
     const [preset, custom] = calls("practice_acquire").map((args) => args.p_fingerprint);
     expect(preset).toBe(startFingerprint(roommate, 180, SECRET));
     expect(custom).toBe(startFingerprint(reviewed, 180, SECRET));
+  });
+
+  it("maps professor and decline to their fixtures and rejects a fourth preset", async () => {
+    handlers.practice_acquire = () => ({ data: { created: true, session: row() } });
+    handlers.practice_bind = (args) => ({ data: row({ provider_conversation_id: args.p_provider_id }) });
+    const fetchMock = tavus();
+    for (const [preset, fixture] of [["professor", professor], ["decline", decline]] as const) {
+      expect((await start(post("/api/sessions", { idempotencyKey: key, preset, durationSeconds: 180 }))).status).toBe(201);
+      const sent = JSON.parse(String(fetchMock.mock.calls.at(-1)?.[1].body));
+      expect(sent.conversational_context).toBe(buildRoleContext(fixture));
+      expect(sent.custom_greeting).toBe(fixture.opening);
+      expect(sent.conversational_context).not.toContain("Alex");
+      expect(calls("practice_acquire").at(-1)).toMatchObject({ p_fingerprint: startFingerprint(fixture, 180, SECRET) });
+    }
+    const providerCalls = fetchMock.mock.calls.length;
+    const storageCalls = rpc.mock.calls.length;
+    await errorOf(await start(post("/api/sessions", { idempotencyKey: key, preset: "manager", durationSeconds: 180 })), 400);
+    await errorOf(await start(post("/api/sessions", { idempotencyKey: key, preset: "professor", privateNotes: "PRIVATE-NOTE", durationSeconds: 180 })), 400);
+    expect(fetchMock.mock.calls.length).toBe(providerCalls);
+    expect(rpc.mock.calls.length).toBe(storageCalls);
   });
 
   it("surfaces the database's fingerprint conflict when a key is replayed with a different role", async () => {
