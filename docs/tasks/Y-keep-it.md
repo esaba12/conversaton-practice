@@ -3,7 +3,7 @@
 Status: review (draft PR open)
 Updated: October 4, 2026, 02:20 EDT
 GitHub issue: https://github.com/esaba12/conversaton-practice/issues/80
-Pull request: see the PR for branch `agent/y-keep-it` (draft)
+Pull request: https://github.com/esaba12/conversaton-practice/pull/86 (draft)
 Assigned writer: Y worker subagent
 Coordinator: wow-pass coordinator
 Gate: Compressed finish (docs/next/02-BUILD-PLAN.md §1a)
