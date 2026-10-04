@@ -44,6 +44,8 @@ The handbook requires submission through Devpost before noon Sunday, October 4, 
 Judging factors listed: innovation, technical complexity, usability, and presentation quality. No numeric weights were published in the reviewed handbook.
 
 ## Checklist
+Execution steps, including the push of local polish and the backup recording, are [SUB-01](tasks/SUB-01-submission-execution.md). Pitch copy stays in [DEMO-01](tasks/DEMO-01-submission-prep.md).
+
 - [ ] Coding/building occurred during the hackathon; disclose reused dependencies and planning artifacts as required.
 - [ ] Actually Intelligent selected as the main theme.
 - [ ] Both ElevenLabs awards checked with organizers for entry and stacking rules.

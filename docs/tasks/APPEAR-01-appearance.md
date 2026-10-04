@@ -1,0 +1,68 @@
+# APPEAR-01: Stock face and premade voice for a saved person
+
+Status: planned
+Updated: October 3, 2026, 20:00 EDT
+Assigned writer: unassigned
+Coordinator: Cursor coordinator session
+Gate: after submission, if the human still wants it. docs/10 cut order drops this catalog before generation, live video, or sharing.
+Requirements/tests: P03 “preset catalog is decided for later.” docs/00 appearance section.
+GitHub issue: not opened
+Pull request: not opened
+CI run: not run
+
+## Assignment and isolation
+
+- Base ref + full SHA: `main` `8f61d0968e1eba755c79281780f199f7960248f3`
+- Branch: a focused branch only after the unblock
+- Worktree: coordinator creates provider resources; UI can be a separate writer after the catalog contract is frozen
+- Dev port: 3000
+- Owned files: to be frozen at start. Expected: person schema and migration (preset id only), server map from preset id to Tavus replica and PAL ids, person editor control, `lib/media/tavus.ts` selection
+- Shared resources: the one existing PAL and stock face stay the default. New PALs are created only when this task starts. The browser never receives provider ids.
+- Dependency tasks and contract revisions: docs/00 (October 3, 17:23 EDT) and docs/06 (one PAL per premade voice, same roleplay settings).
+- Unblock condition: submission is sent and the human schedules the catalog. Do not create PALs before that.
+
+## Scope and acceptance
+
+Outcome: on a saved person, the user picks one entry from a short catalog. The next practice with that person uses that stock face and premade ElevenLabs voice. Traits and shared About-me facts stay independent of the pick. The counterpart remains labeled fictional.
+
+Non-goals: photo upload, generated likeness, voice cloning, a face for unsaved one-off setups beyond the current default, per-call face overrides from the browser.
+
+Catalog rules when scheduled:
+
+- The person row stores a preset id from a server-owned list. Unknown ids are rejected.
+- The server maps that id to a replica id and a PAL id. Those ids are configuration, not request fields.
+- Each distinct premade voice needs its own PAL with the same roleplay settings. Faces can vary per conversation if Tavus already accepts the replica on the call; confirm against current Tavus docs before adding PALs that differ only by face.
+- Default preset is today’s configured face and voice, so existing people keep today’s look until edited.
+
+- [ ] The picker lists names a person would recognize (“warm, lower voice”), not provider ids.
+- [ ] A saved-person start uses the stored preset. A reviewed-role start keeps the default.
+- [ ] User B cannot set or read A’s preset.
+- [ ] No upload control and no cloning control exists.
+- [ ] One live call with a non-default preset is a separate human check. Automated tests prove the id mapping and the request boundary.
+
+## Contract and documentation changes
+
+- Inputs/outputs/errors: person create/update gains `appearancePreset`. Start body for a saved person stays id + version. The server loads the preset.
+- Shared change: coordinator adds the field and the server map. Workers do not invent provider ids.
+- Updated specs: docs/00, docs/02, docs/06, docs/26 “later” section.
+- Decision/source: docs/00, October 3, 17:23 EDT.
+
+## Verification evidence
+
+- Date/time/timezone: October 3, 2026, 20:00 EDT
+- Mode: not-run
+- Outcome: not-run
+- Tested commit/dirty state: `8f61d0968e1eba755c79281780f199f7960248f3`
+- Exact command or manual steps: not run
+- Exit code: not-run
+- Observed result/artifact: one PAL, one stock face, no person field for appearance
+- Limitations: catalog size and which stock faces are available were not re-fetched for this plan
+
+## Handoff
+
+- Changed paths and commit(s): none yet
+- Remaining failures/risks: extra PALs cost account setup and can drift from the roleplay settings. Create them in one pass and read them back.
+- External account action: none until the task starts; then the coordinator creates PALs in the existing Tavus account
+- Next smallest task: leave it
+- Ready for review: no
+- Coordinator integration: pending

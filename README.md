@@ -18,7 +18,7 @@ Stack: Next.js 16, Supabase Auth/PostgreSQL, Tavus CVI + ElevenLabs TTS, OpenAI 
 
 ## Read in this order
 
-On restart, begin with [STATUS.md](STATUS.md) and [AGENTS.md](AGENTS.md). Demo/submission: [docs/11](docs/11-DEMO-AND-SUBMISSION.md) and [DEMO-01](docs/tasks/DEMO-01-submission-prep.md). The full reference index follows.
+On restart, begin with [STATUS.md](STATUS.md) and [AGENTS.md](AGENTS.md). Work still open is [docs/29](docs/29-REMAINING-WORK.md). Demo copy: [docs/11](docs/11-DEMO-AND-SUBMISSION.md) and [DEMO-01](docs/tasks/DEMO-01-submission-prep.md). The full reference index follows.
 
 1. [Decisions and viability](docs/00-DECISIONS-AND-VIABILITY.md)
 2. [Product requirements](docs/01-PRD.md)
@@ -43,6 +43,7 @@ On restart, begin with [STATUS.md](STATUS.md) and [AGENTS.md](AGENTS.md). Demo/s
 21. [Documentation and verification standard](docs/20-DOCUMENTATION-STANDARD.md)
 22. [Final startup checklist and reset prompt](docs/21-START-BUILD.md)
 23. [Live video experience and integration](docs/22-LIVE-VIDEO.md)
+24. [Remaining work after G5](docs/29-REMAINING-WORK.md)
 
 ## Build with agents
 
@@ -68,7 +69,7 @@ Confirmed event strategy: Actually Intelligent plus both listed ElevenLabs categ
 
 Confirmed: one human with parallel coding agents, fresh sessions, user-described situations as the primary input, warm minimal/crisp modern design, and sign-in before all workspace actions. The user supplied a fresh Supabase project; Auth and owner isolation are automated-tested. Situation generation is core scope.
 
-Open items: Devpost submission, ElevenLabs category stacking, backup-demo recording, and optional human live checks of G3–G5. Photon/Relay remain deferred.
+Open items are planned in [docs/29](docs/29-REMAINING-WORK.md): verify the workspace polish, then submission execution, with optional live checks. Unscheduled product gaps are the 3/5-minute choice, professor and saying-no presets, captions, session attribution, and appearance presets. The project is unnamed and the authenticated app is local-only. Photon/Relay remain deferred.
 
 ## Evidence policy
 

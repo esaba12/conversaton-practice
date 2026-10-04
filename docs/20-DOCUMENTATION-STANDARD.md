@@ -20,6 +20,7 @@ specification before implementing against a competing interpretation.
 | Voice integration and prompt boundaries | `06-ELEVENLABS.md`, `07-PROMPTS.md` |
 | Privacy and safety requirements | `08-SAFETY-AND-PRIVACY.md` |
 | Test definitions and gate order | `09-EVALUATION.md`, `10-BUILD-PLAN.md` |
+| Work still open after G5 | `29-REMAINING-WORK.md` and `tasks/POST-01` through `tasks/HOST-01` |
 | Submission and event strategy | `11-DEMO-AND-SUBMISSION.md`, `16-MHACKS-STRATEGY.md` |
 | Tool setup and external evidence | `12-CODEX-SETUP.md`, `13-TOOL-RESEARCH.md`, `14-SOURCES.md`, `../tooling/README.md` |
 | Restart instructions | `15-HANDOFF.md`, with live progress in `../STATUS.md` |

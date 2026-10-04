@@ -94,6 +94,9 @@ Gate G5: no critical ownership/context/teardown defects.
 ## Final 30 minutes: submission buffer
 Verify receipt and required fields, charge devices, and prepare the headset and backup. Avoid feature work that risks the submitted build.
 
+## After the gates (October 3, 20:00 EDT)
+G1–G5 are implemented. The empty checkboxes above are the original elapsed targets, not a list of unfinished gates. Work still open — polish verification, unrun live and submission steps, and product gaps held until scheduled — is [docs/29](29-REMAINING-WORK.md).
+
 ## Sponsor scope gate
 Keep the live video call, situation generation, and the core loop first. Defer Relay and Photon for the solo MVP. Gemini can replace the setup/reflection provider before that layer is implemented, but do not maintain two providers. Notability requires genuine Pro usage, a tools tag, a usage note, and two screenshots. Figma eligibility and prize stacking remain questions for organizers.
 

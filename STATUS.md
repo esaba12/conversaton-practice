@@ -1,6 +1,19 @@
 # Project status
 
-Updated October 3, 2026, 19:35 EDT. **G1 and G2 passed** (human live calls). **G3–G5 accepted on automated evidence (live not verified)**. Human: product is not demo-ready yet — polish the workspace before any pitch/Devpost. Demo pack exists as [DEMO-01](docs/tasks/DEMO-01-submission-prep.md) and is not the next task.
+Updated October 3, 2026, 20:32 EDT. **G1 and G2 passed** (human live calls). **G3–G5 accepted on automated evidence (live not verified)**. Merged to local `main` (not pushed): privacy review, session person attribution, three example presets, 3/5-minute choice, and collapsed captions. Typecheck passed. Unit tests: 157 passed. Migrations `20261003220000_session_person.sql` and `20261003220100_revoke_session_executor.sql` are **applied**. `session_person.sql` and `session_foundation.sql` passed (both roll back). Not merged, because those branches had no commits: polish verification, appearance presets. Live checks, Devpost, the project name, and hosting stay with the human. `main` is ahead of origin and not pushed.
+
+## Integrated October 3, 20:32 EDT
+
+| Task | Result |
+| --- | --- |
+| [REV-01](docs/tasks/REV-01-g5-privacy-review.md) | Merged. 0 blockers, 3 should-fix, 5 accepted risks |
+| [DATA-01](docs/tasks/DATA-01-session-attribution.md) | Merged. Saved-person starts store id and version. SQL assertions passed after apply |
+| [UX-01](docs/tasks/UX-01-presets.md) | Merged. Examples: Alex (roommate), Ellis (professor), Sam (saying no) |
+| [UX-02](docs/tasks/UX-02-duration.md) | Merged. 3 minutes default, 5 minutes optional, including example and saved-person starts |
+| [UX-03](docs/tasks/UX-03-captions.md) | Merged. Collapsed captions from in-memory turns. Provider captions stay off |
+| [POST-01](docs/tasks/POST-01-workspace-polish.md) | No commit. Browser verification was not finished |
+| [APPEAR-01](docs/tasks/APPEAR-01-appearance.md) | No commit. Catalog was not built |
+| [LIVE-01](docs/tasks/LIVE-01-human-checks.md), [SUB-01](docs/tasks/SUB-01-submission-execution.md), [NAME-01](docs/tasks/NAME-01-project-name.md), [HOST-01](docs/tasks/HOST-01-hosting.md) | Still human decisions |
 
 ## G5 merged (19:26 EDT)
 [PR #26](https://github.com/esaba12/conversaton-practice/pull/26) CI [verify SUCCESS](https://github.com/esaba12/conversaton-practice/actions/runs/37161341412). Issues #22–#25 closed. Draft rate limit, test-media seam (dev only), no duplicate save, a11y/mobile, `--g5-ui` real-Auth checks. Evidence: [G5-04](docs/tasks/G5-04-integration.md), docs/09 G5 coverage table. Deferred: session `person_id` attribution. Dependencies frozen (do not upgrade).
