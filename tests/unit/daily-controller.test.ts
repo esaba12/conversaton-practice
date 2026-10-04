@@ -45,7 +45,7 @@ vi.mock("@daily-co/daily-js", () => ({
 const { createDailyController, reportRemoteVideoPlaying, VIDEO_FIRST_TIMEOUT_MS } = await import("@/lib/media/daily-controller");
 const { buildAskToWait, buildTypedTurn, buildWrapUp } = await import("@/lib/media/interactions");
 
-const credential: MediaCredential = { provider: "tavus", roomUrl: "https://example.daily.co/room", meetingToken: "unit-token", expiresAt: new Date(Date.now() + 600_000).toISOString() };
+const credential: MediaCredential = { provider: "tavus", roomUrl: "https://tavus.daily.co/room", meetingToken: "unit-token", expiresAt: new Date(Date.now() + 600_000).toISOString() };
 
 function remote(videoState: string, audioState: string) {
   const video = fakeTrack("video");
@@ -528,12 +528,11 @@ describe("Daily media controller: live interactions (1A)", () => {
     expect(call.sendAppMessage).toHaveBeenCalledTimes(4);
   });
 
-  it("sends nothing when the room URL carries no usable conversation id", async () => {
-    const { events, controller, connect } = liveSetup({ ...tavusCredential, roomUrl: "https://tavus.daily.co/" });
-    const call = await connect();
-    goLive(call, events);
-    expect(controller.send(buildWrapUp("Jordan")!)).toBe(false);
-    expect(call.sendAppMessage).not.toHaveBeenCalled();
+  it("does not join a room URL with no conversation id", async () => {
+    const { events, connect } = liveSetup({ ...tavusCredential, roomUrl: "https://tavus.daily.co/" });
+    await expect(connect()).rejects.toThrow(/could not start/);
+    expect(daily.calls).toHaveLength(0);
+    expect(events).toContainEqual({ type: "failed", reason: "join" });
   });
 
   it("cancel while ringing (join still pending) releases the microphone, destroys the call and emits nothing after", async () => {

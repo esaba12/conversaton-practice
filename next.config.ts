@@ -8,6 +8,7 @@ const config: NextConfig = {
       { key: "X-Content-Type-Options", value: "nosniff" },
       { key: "Permissions-Policy", value: "camera=(self), microphone=(self), geolocation=()" },
       { key: "X-Frame-Options", value: "DENY" },
+      { key: "Content-Security-Policy", value: "base-uri 'self'; object-src 'none'; form-action 'self'; frame-ancestors 'none'" },
     ] }];
   },
 };

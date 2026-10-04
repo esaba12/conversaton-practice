@@ -1,8 +1,20 @@
 # Project status
 
+## Privacy review (October 4, ~11:05 AM EDT)
+
+On `privacy/rev-02`, branched from `main` `9b7bc93`. Record: [REV-02](docs/tasks/REV-02-privacy-security.md). A pass over auth, owner isolation, counterpart context, retention, and the new dashboard found no cross-user leak and no private-note path into the character. Three URL checks were tightened: call rooms must be `https://tavus.daily.co/{id}`, face stills must be `https://cdn.replica.tavus.io` with no redirects, and provider calls that send a secret do not follow redirects. Response headers now also set a narrow content security policy. Typecheck, the affected unit tests, and `npm run build` passed. Pushed, not merged, not deployed, **live not verified**. The UI redesign in [PR #98](https://github.com/esaba12/conversaton-practice/pull/98) is already this `main`.
+
+## Look while setting up (October 4)
+
+Setting up a practice that is not a saved person includes the four-starter catalogue (Default, Alex, Ellis, Sam, Jordan) on the briefing and the Meet card. A reviewed-role start may send `look`. The server maps it to that starter's face and PAL and does not store it as the session preset. An untouched starter left on its own look still starts as that preset. Live not verified.
+
 ## Name (October 4, ~10:10 EDT)
 
-The product name is **SpeakEasy** (owner decision). Wordmark, document title, README, static preview, and the Devpost draft title use it. The GitHub repository and `package.json` name are unchanged. The owner also said they have a domain; the hostname was not in that message, so it is not attached yet.
+The product name is **SpeakEasy** (owner decision). Wordmark, document title, README, static preview, and the Devpost draft title use it. The GitHub repository and `package.json` name are unchanged. The rename is on `main` inside [PR #98](https://github.com/esaba12/conversaton-practice/pull/98) (`9b7bc93`).
+
+Domain: **speakeasyapp.tech** (owner, October 4 ~10:29 EDT). Added to the Vercel project `conversation-practice`. DNS saved ~10:32: apex `A` records `216.198.79.1` and `64.29.17.1`. Vercel verify at ~10:33 EDT: `configured-correctly`.
+
+**Deployed (October 4, ~10:46 EDT):** `main` `9b7bc93` is production (`dpl_Drotqpqj8pPQZAHnkafUYPb9BPwu`), aliased to https://speakeasyapp.tech and https://conversation-practice-zeta.vercel.app. The landing uses SpeakEasy and does not contain "therapy". Favicon, Apple icon, and share image load. Signed-out `/practice` redirects to sign-in. No Tavus face or persona ids from `.env.local` are in the landing HTML. Demo-account sign-in reaches the dashboard. No production call was made. **Live not verified** for a call. The demo account has a third Jordan call from today (10 seconds); reset before recording with `node --env-file=.env.local scripts/demo/seed.mjs --checkin`. This paragraph is only in the local checkout; it is not committed.
 
 ## Submission morning (October 4, ~10:05 AM EDT, main `91ba25e`)
 

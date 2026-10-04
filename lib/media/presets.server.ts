@@ -21,6 +21,17 @@ export function starterMedia(preset: SessionPreset): StarterMedia | null {
 
 const portraitCache = new Map<string, { url: string; expires: number }>();
 const PORTRAIT_URL_TTL_MS = 6 * 60 * 60_000;
+// SPIKE-01: face stills are served from this host. Anything else is refused, including redirects.
+const PORTRAIT_CDN_HOST = "cdn.replica.tavus.io";
+
+export function allowedPortraitUrl(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:" || url.hostname !== PORTRAIT_CDN_HOST || url.port !== "" || url.username || url.password) return null;
+    return url.toString();
+  } catch { return null; }
+}
 
 // Resolves the starter's face still from Tavus. The CDN URL stays on the server; the route streams the image.
 export async function starterPortrait(presetId: string): Promise<Response> {
@@ -31,13 +42,13 @@ export async function starterPortrait(presetId: string): Promise<Response> {
   if (!media || !key) throw new AppError("NOT_CONFIGURED", "Portraits are not configured yet.", 503);
   let cached = portraitCache.get(media.faceId);
   if (!cached || cached.expires < Date.now()) {
-    const face = await fetch(`https://tavusapi.com/v2/faces/${encodeURIComponent(media.faceId)}`, { headers: { "x-api-key": key }, signal: AbortSignal.timeout(8_000) }).catch(() => null);
-    const url = face?.ok ? ((await face.json()) as { thumbnail_image_url?: unknown }).thumbnail_image_url : undefined;
-    if (typeof url !== "string" || !url.startsWith("https://")) throw new AppError("PROVIDER_UNAVAILABLE", "The portrait is unavailable right now.", 503);
+    const face = await fetch(`https://tavusapi.com/v2/faces/${encodeURIComponent(media.faceId)}`, { headers: { "x-api-key": key }, redirect: "error", signal: AbortSignal.timeout(8_000) }).catch(() => null);
+    const url = face?.ok ? allowedPortraitUrl(((await face.json()) as { thumbnail_image_url?: unknown }).thumbnail_image_url) : null;
+    if (!url) throw new AppError("PROVIDER_UNAVAILABLE", "The portrait is unavailable right now.", 503);
     cached = { url, expires: Date.now() + PORTRAIT_URL_TTL_MS };
     portraitCache.set(media.faceId, cached);
   }
-  const image = await fetch(cached.url, { signal: AbortSignal.timeout(8_000) }).catch(() => null);
+  const image = await fetch(cached.url, { redirect: "error", signal: AbortSignal.timeout(8_000) }).catch(() => null);
   const type = imageType(image?.headers.get("content-type") ?? "", cached.url);
   if (!image?.ok || !image.body || !type) throw new AppError("PROVIDER_UNAVAILABLE", "The portrait is unavailable right now.", 503);
   return new Response(image.body, { headers: { "Content-Type": type, "Cache-Control": "private, max-age=86400", "X-Content-Type-Options": "nosniff" } });

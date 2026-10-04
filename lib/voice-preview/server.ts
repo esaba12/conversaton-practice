@@ -43,6 +43,7 @@ export async function synthesizePreview(text: string, { key, voiceId, model }: {
     headers: { "xi-api-key": key, "Content-Type": "application/json", Accept: "audio/mpeg" },
     body: JSON.stringify({ text, model_id: model }),
     cache: "no-store",
+    redirect: "error",
     signal: AbortSignal.timeout(TIMEOUT_MS),
   }).catch(() => null);
   if (!upstream?.ok || !upstream.body) throw new AppError("PROVIDER_UNAVAILABLE", "The voice preview is unavailable right now.", 503, true);

@@ -130,6 +130,7 @@ async function attempt<T>(body: unknown, key: string, schema: z.ZodType<T>): Pro
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify(body),
       cache: "no-store",
+      redirect: "error",
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch { throw new Invalid(); }

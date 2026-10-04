@@ -146,6 +146,7 @@ async function attempt(input: SetupInput, key: string, model: string): Promise<D
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify(setupRequestBody(input, model)),
       cache: "no-store",
+      redirect: "error",
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch { throw new Invalid(); }
@@ -266,6 +267,7 @@ async function streamAttempt(
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify(setupRequestBody(input, model, true)),
       cache: "no-store",
+      redirect: "error",
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch { throw new Invalid(); }

@@ -70,10 +70,10 @@ describe("session contract", () => {
     }
     expect(canTransition("interrupted", "deleted")).toBe(true);
   });
-  it("accepts only HTTPS Daily rooms without tokens in URLs", () => {
-    const credential = { provider: "tavus", roomUrl: "https://example.daily.co/room", meetingToken: "test-token", expiresAt: new Date().toISOString() };
+  it("accepts only the Tavus Daily host, with no tokens or extra path", () => {
+    const credential = { provider: "tavus", roomUrl: "https://tavus.daily.co/room", meetingToken: "test-token", expiresAt: new Date().toISOString() };
     expect(mediaCredentialSchema.safeParse(credential).success).toBe(true);
-    for (const url of ["https://daily.co.evil.test/room", "http://example.daily.co/room", "https://example.daily.co/room?t=secret"]) expect(mediaCredentialSchema.safeParse({ ...credential, roomUrl: url }).success).toBe(false);
+    for (const url of ["https://example.daily.co/room", "https://tavus.daily.co.evil.test/room", "https://evil.tavus.daily.co/room", "http://tavus.daily.co/room", "https://tavus.daily.co/room?t=secret", "https://tavus.daily.co/a/b", "https://user:pass@tavus.daily.co/room"]) expect(mediaCredentialSchema.safeParse({ ...credential, roomUrl: url }).success).toBe(false);
   });
 });
 describe("G3 people contracts", () => {

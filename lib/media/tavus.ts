@@ -15,7 +15,7 @@ async function request(path: string, method: string, body?: unknown, timeoutMs =
   const { key } = configuration();
   let response: Response;
   try {
-    response = await fetch(`https://tavusapi.com/v2/${path}`, { method, headers: { "x-api-key": key, "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body), cache: "no-store", signal: AbortSignal.timeout(timeoutMs) });
+    response = await fetch(`https://tavusapi.com/v2/${path}`, { method, headers: { "x-api-key": key, "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body), cache: "no-store", redirect: "error", signal: AbortSignal.timeout(timeoutMs) });
   } catch { throw new AppError("PROVIDER_UNAVAILABLE", "The call provider could not be reached.", 503, true); }
   if (!response.ok) throw new AppError("PROVIDER_UNAVAILABLE", "The call provider could not complete the request.", 503, true);
   return response;

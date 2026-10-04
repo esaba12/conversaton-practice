@@ -76,7 +76,7 @@ const server = http.createServer(async (request, response) => {
       const data = await created.json();
       if (typeof data.conversation_id === "string") activeId = data.conversation_id;
       const room = new URL(data.conversation_url);
-      if (!activeId || !data.meeting_token || room.protocol !== "https:" || !room.hostname.endsWith(".daily.co") || room.search || room.username || room.password) throw new Error("Invalid private-room response");
+      if (!activeId || !data.meeting_token || room.protocol !== "https:" || room.hostname !== "tavus.daily.co" || room.port || room.search || room.username || room.password) throw new Error("Invalid private-room response");
       if (cancelled) { await cleanup(); return send(response, 409, { error: "Start cancelled; remote cleanup requested." }); }
       // The loopback page needs the conversation id only to address Tavus interaction app-messages (SPIKE-01 timing probes).
       return send(response, 200, { url: data.conversation_url, token: data.meeting_token, conversationId: activeId });

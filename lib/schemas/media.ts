@@ -1,9 +1,19 @@
 import { z } from "zod";
 import type { Interaction, LiveEvent } from "@/lib/media/interactions";
 // Frozen after the 14:54 human preflight (usable video/speech, imperfect lip sync). Never contains API keys.
+// Create Conversation returns `https://tavus.daily.co/{id}`. Any other Daily host would still
+// accept the meeting token and publish the microphone, so the host is exact.
+export function isTavusRoomUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname === "tavus.daily.co" && url.port === ""
+      && !url.search && !url.hash && !url.username && !url.password
+      && /^\/[A-Za-z0-9_-]{1,128}$/.test(url.pathname);
+  } catch { return false; }
+}
 export const mediaCredentialSchema = z.object({
   provider: z.literal("tavus"),
-  roomUrl: z.url().refine((value) => { const url = new URL(value); return url.protocol === "https:" && url.hostname.endsWith(".daily.co") && !url.search && !url.hash && !url.username && !url.password; }),
+  roomUrl: z.url().refine(isTavusRoomUrl),
   meetingToken: z.string().min(1),
   expiresAt: z.iso.datetime(),
 }).strict();

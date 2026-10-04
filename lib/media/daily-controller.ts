@@ -1,6 +1,6 @@
 import type { DailyCall, DailyParticipant } from "@daily-co/daily-js";
 import { z } from "zod";
-import type { MediaController, MediaCredential, MediaEvent } from "@/lib/schemas/media";
+import { isTavusRoomUrl, type MediaController, type MediaCredential, type MediaEvent } from "@/lib/schemas/media";
 import { MAX_TURN_CHARS } from "@/lib/schemas/reflection";
 import { conversationIdFromRoomUrl, toAppMessage, type Interaction, type LiveEvent } from "./interactions";
 
@@ -201,6 +201,10 @@ export const createDailyController = (onEvent: (event: MediaEvent) => void, onLi
       if (started || ended) throw new Error("This media controller has already been used.");
       started = true;
       const epoch = generation;
+      if (!isTavusRoomUrl(credential.roomUrl)) {
+        fail("join");
+        throw new Error("The call could not start.");
+      }
       conversationId = conversationIdFromRoomUrl(credential.roomUrl);
       if (Date.now() >= Date.parse(credential.expiresAt)) {
         fail("credential_expired");

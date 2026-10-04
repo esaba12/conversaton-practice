@@ -35,7 +35,7 @@ If explicit imminent self-harm, violence, or immediate danger emerges, stop the 
 7. Provider retains content despite local deletion.
 8. Roleplayed reactions become beliefs about actual people.
 
-Mitigations: typed allowlists, owner checks + RLS, separate prompts, no live mutation tools, deletion tombstones, server secrets, verified retention settings, provenance checks.
+Mitigations: typed allowlists, owner checks + RLS, separate prompts, no live mutation tools, deletion tombstones, server secrets, verified retention settings, provenance checks. Call credentials are accepted only for `https://tavus.daily.co/{id}`. Face stills are fetched only from `https://cdn.replica.tavus.io`, and provider requests that carry a secret do not follow redirects. Responses send `Referrer-Policy: no-referrer`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, a camera/microphone Permissions-Policy limited to this origin, and `Content-Security-Policy: base-uri 'self'; object-src 'none'; form-action 'self'; frame-ancestors 'none'`.
 
 ## Data path disclosure
 Tavus CVI, ElevenLabs TTS and the configured model providers process conversation data. Tavus receives the server-held ElevenLabs key for the selected speech integration. Optional camera stays local and off until opt-in: no publication, recording, analysis or claim that the counterpart sees it. Recording-off does not disable Tavus transcripts; Tavus hard deletion does not establish ElevenLabs erasure. Track provider-specific deletion status. See docs/22-LIVE-VIDEO.md. The separate setup/reflection provider may receive text. Supabase stores identity and approved app data.

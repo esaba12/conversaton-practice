@@ -98,7 +98,7 @@ export async function runG5({ chromium, credentials, clients, rpc, assert }) {
       await target.route("**/api/sessions", async route => {
         if (route.request().method() !== "POST") return route.continue();
         routes.start.push(route.request().postDataJSON());
-        await route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ...session("connecting", "not_started"), credential: { provider: "tavus", roomUrl: "https://fixture.daily.co/g5-test", meetingToken: "g5-test-token", expiresAt: new Date(Date.now() + 600_000).toISOString() } }) });
+        await route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ...session("connecting", "not_started"), credential: { provider: "tavus", roomUrl: "https://tavus.daily.co/g5-test", meetingToken: "g5-test-token", expiresAt: new Date(Date.now() + 600_000).toISOString() } }) });
       });
       await target.route("**/api/sessions/*/connected", async route => {
         routes.connected++;

@@ -91,7 +91,7 @@ test.describe("hero path", () => {
       if (route.request().method() !== "POST") return route.continue();
       startBodies.push(JSON.parse(route.request().postData() ?? "{}"));
       const expiresAt = new Date(Date.now() + 600_000).toISOString();
-      await route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ session: { id: sessionId, status: "connecting", expiresAt, cleanup: "not_started" }, credential: { provider: "tavus", roomUrl: "https://hero.daily.co/room", meetingToken: "fake", expiresAt } }) });
+      await route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ session: { id: sessionId, status: "connecting", expiresAt, cleanup: "not_started" }, credential: { provider: "tavus", roomUrl: "https://tavus.daily.co/room", meetingToken: "fake", expiresAt } }) });
     });
     await page.route("**/api/sessions/*/connected", (route) => route.fulfill({ status: 200, contentType: "application/json", body: sessionBody("active") }));
     await page.route("**/api/sessions/*/end", (route) => { count.ends++; return route.fulfill({ status: 200, contentType: "application/json", body: sessionBody("ended") }); });

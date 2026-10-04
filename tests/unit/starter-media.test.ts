@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { starterMedia, starterPortrait } from "@/lib/media/presets.server";
+import { allowedPortraitUrl, starterMedia, starterPortrait } from "@/lib/media/presets.server";
 
 const env = { ...process.env };
 afterEach(() => { process.env = { ...env }; vi.unstubAllGlobals(); });
@@ -31,8 +31,8 @@ describe("starter media", () => {
 
   it("streams the face still privately without exposing the CDN URL", async () => {
     configure();
-    const fetchMock = vi.fn(async (url: string) => url.includes("/v2/faces/")
-      ? Response.json({ thumbnail_image_url: "https://cdn.example.test/still.png" })
+    const fetchMock = vi.fn(async (url: string, _init?: RequestInit) => url.includes("/v2/faces/")
+      ? Response.json({ thumbnail_image_url: "https://cdn.replica.tavus.io/still.png" })
       : new Response("png", { headers: { "content-type": "image/png" } }));
     vi.stubGlobal("fetch", fetchMock);
     const response = await starterPortrait("manager");
@@ -40,23 +40,37 @@ describe("starter media", () => {
     expect(response.headers.get("cache-control")).toBe("private, max-age=86400");
     expect(response.headers.get("content-type")).toBe("image/png");
     expect(await response.text()).toBe("png");
-    expect(JSON.stringify([...response.headers])).not.toContain("cdn.example.test");
+    expect(JSON.stringify([...response.headers])).not.toContain("cdn.replica.tavus.io");
+    expect(fetchMock.mock.calls[1][1]).toMatchObject({ redirect: "error" });
   });
 
   it("types a generic CDN response from its image extension, and refuses anything else", async () => {
     configure();
     process.env.TAVUS_STARTER_MANAGER_FACE_ID = "fgeneric";
     vi.stubGlobal("fetch", vi.fn(async (url: string) => url.includes("/v2/faces/")
-      ? Response.json({ thumbnail_image_url: "https://cdn.example.test/still.jpg" })
+      ? Response.json({ thumbnail_image_url: "https://cdn.replica.tavus.io/still.jpg" })
       : new Response("jpg", { headers: { "content-type": "binary/octet-stream" } })));
     const response = await starterPortrait("manager");
     expect(response.headers.get("content-type")).toBe("image/jpeg");
     expect(response.headers.get("x-content-type-options")).toBe("nosniff");
     process.env.TAVUS_STARTER_MANAGER_FACE_ID = "fhtml";
     vi.stubGlobal("fetch", vi.fn(async (url: string) => url.includes("/v2/faces/")
-      ? Response.json({ thumbnail_image_url: "https://cdn.example.test/page.html" })
+      ? Response.json({ thumbnail_image_url: "https://cdn.replica.tavus.io/page.html" })
       : new Response("<html>", { headers: { "content-type": "text/html" } })));
     await expect(starterPortrait("manager")).rejects.toMatchObject({ status: 503 });
+  });
+
+  it("refuses a still that is not on the Tavus image host, and does not fetch it", async () => {
+    configure();
+    process.env.TAVUS_STARTER_MANAGER_FACE_ID = "fblocked";
+    const fetchMock = vi.fn(async (url: string) => url.includes("/v2/faces/")
+      ? Response.json({ thumbnail_image_url: "https://169.254.169.254/latest/meta-data" })
+      : new Response("png", { headers: { "content-type": "image/png" } }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(starterPortrait("manager")).rejects.toMatchObject({ status: 503 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(allowedPortraitUrl("https://cdn.replica.tavus.io.evil.test/still.png")).toBeNull();
+    expect(allowedPortraitUrl("http://cdn.replica.tavus.io/still.png")).toBeNull();
   });
 
   it("returns 503 when the provider has no still", async () => {
