@@ -98,9 +98,9 @@ select pg_catalog.set_config('request.jwt.claims',
   '{"sub":"00000000-0000-4000-8000-00000000d0b1","role":"authenticated","is_anonymous":false}', true);
 do $$
 begin
-  if exists (select 1 from public.practice_sessions) then raise exception 'Cross-owner SELECT leaked session rows'; end if;
+  if exists (select id from public.practice_sessions) then raise exception 'Cross-owner SELECT leaked session rows'; end if;
   if exists (select 1 from public.people) then raise exception 'Cross-owner SELECT leaked people'; end if;
-  if exists (select 1 from public.practice_sessions where person_id is not null) then
+  if exists (select person_id from public.practice_sessions where person_id is not null) then
     raise exception 'Cross-owner SELECT leaked a person id';
   end if;
 end;
@@ -116,7 +116,7 @@ begin
     raise exception 'Person delete left the person row';
   end if;
   if not exists (
-    select 1 from public.practice_sessions
+    select id from public.practice_sessions
     where id = current_setting('test.saved_session')::uuid
       and person_id = current_setting('test.person_id')::uuid
       and person_version = 1
