@@ -57,7 +57,7 @@ Mock-tested only; live not verified.
 - External account action: none
 - Next smallest task: live call with headphones, watching that audio never precedes the first frame and that ringing ends on first video.
 - Ready for review: yes (draft PR)
-- Coordinator integration: pending
+- Coordinator integration (October 3, ~23:55 EDT): independent review (different model) found one blocker and two should-fixes, all fixed by the coordinator before merge. Blocker: unmuting without fresh user activation can pause the element, so after unmute the gate now calls `play()`; if that is refused it re-mutes, keeps the picture playing and unmutes on the next `pointerdown`/`keydown`, and a `pause` listener re-calls `play()`. Should-fix: a decoded frame no longer releases audio while the element is paused. Should-fix: the 45 s watchdog clears once video is playing, even if Daily audio is not yet `playable`. Three tests added (433 total). Coordinator reran typecheck, npm test, build and npm run test:ui. docs/22 line added. Live not verified: needs a headphones call checking that audio never precedes the first frame and that ringing ends on first video, in Chrome and ideally Safari.
 
 The writer owns this handoff; the coordinator records integration and updates STATUS.
 Follow [documentation rules](../20-DOCUMENTATION-STANDARD.md) and

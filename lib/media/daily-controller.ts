@@ -152,7 +152,7 @@ export const createDailyController: CreateMediaController = (onEvent) => {
       readyEmitted = true;
       onEvent({ type: "ready" });
     }
-    if (readyEmitted && videoPlaying) clearWatchdog();
+    if (videoPlaying) clearWatchdog();
   }
 
   return {

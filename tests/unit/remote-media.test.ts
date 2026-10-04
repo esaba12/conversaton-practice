@@ -4,7 +4,7 @@ import { gateRemotePlayback, type GatedVideoElement } from "@/components/practic
 type Listener = () => void;
 
 // Minimal stand-in for HTMLVideoElement: records muted state, listeners and frame callbacks.
-function fakeElement(options: { frames?: boolean } = {}) {
+function fakeElement(options: { frames?: boolean; play?: () => Promise<void>; paused?: boolean } = {}) {
   const listeners = new Map<string, Set<Listener>>();
   const state = { muted: false, srcObject: null as unknown, readyState: 0, videoWidth: 0 };
   const frameCallbacks = new Map<number, () => void>();
@@ -19,6 +19,8 @@ function fakeElement(options: { frames?: boolean } = {}) {
     get videoWidth() { return state.videoWidth; },
     addEventListener: vi.fn((name: string, listener: Listener) => { listeners.set(name, (listeners.get(name) ?? new Set()).add(listener)); }),
     removeEventListener: vi.fn((name: string, listener: Listener) => { listeners.get(name)?.delete(listener); }),
+    ...(options.play ? { play: vi.fn(options.play) } : {}),
+    ...(options.paused !== undefined ? { paused: options.paused } : {}),
     ...(options.frames ? {
       requestVideoFrameCallback: vi.fn((callback: () => void) => { frameCallbacks.set(nextFrame, callback); return nextFrame++; }),
       cancelVideoFrameCallback: vi.fn((handle: number) => { frameCallbacks.delete(handle); }),
@@ -87,7 +89,8 @@ describe("remote media video-first gate", () => {
     [...fake.frameCallbacks.values()][0]();
     expect(fake.state.muted).toBe(false);
     expect(onPlaying).toHaveBeenCalledTimes(1);
-    expect(fake.listenerCount()).toBe(0);
+    // Only the pause watcher stays attached until the stream is detached.
+    expect(fake.listenerCount()).toBe(1);
   });
 
   it("cancels the pending frame callback when playing wins", () => {
@@ -153,5 +156,46 @@ describe("remote media video-first gate", () => {
     expect(fake.state.srcObject).toBeNull();
     expect(fake.listenerCount()).toBe(0);
     expect(onPlaying).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not release audio on a decoded frame while the element is paused", () => {
+    const fake = fakeElement({ paused: true });
+    const onPlaying = vi.fn();
+    gateRemotePlayback(fake.element, stream(), onPlaying, null);
+    fake.state.readyState = 4; fake.state.videoWidth = 640;
+    fake.fire("loadeddata");
+    expect(fake.state.muted).toBe(true);
+    expect(onPlaying).not.toHaveBeenCalled();
+  });
+
+  it("keeps the picture playing muted when unmuting is blocked, and unmutes on the next gesture", async () => {
+    let allowSound = false;
+    const fake = fakeElement({ play: () => (fake.state.muted || allowSound ? Promise.resolve() : Promise.reject(new Error("NotAllowedError"))) });
+    const gestures = new EventTarget();
+    const onPlaying = vi.fn();
+    const detach = gateRemotePlayback(fake.element, stream(), onPlaying, gestures);
+    fake.fire("playing");
+    expect(onPlaying).toHaveBeenCalledTimes(1);
+    await Promise.resolve(); await Promise.resolve();
+    expect(fake.state.muted).toBe(true);
+    allowSound = true;
+    gestures.dispatchEvent(new Event("pointerdown"));
+    expect(fake.state.muted).toBe(false);
+    // A later pause asks the element to keep playing.
+    const playCalls = (fake.element.play as ReturnType<typeof vi.fn>).mock.calls.length;
+    fake.fire("pause");
+    expect((fake.element.play as ReturnType<typeof vi.fn>).mock.calls.length).toBe(playCalls + 1);
+    detach();
+    expect(fake.listenerCount()).toBe(0);
+  });
+
+  it("detaching before a blocked unmute settles adds no gesture listener", async () => {
+    const fake = fakeElement({ play: () => (fake.state.muted ? Promise.resolve() : Promise.reject(new Error("NotAllowedError"))) });
+    const gestures = { addEventListener: vi.fn(), removeEventListener: vi.fn() };
+    const detach = gateRemotePlayback(fake.element, stream(), vi.fn(), gestures);
+    fake.fire("playing");
+    detach();
+    await Promise.resolve(); await Promise.resolve();
+    expect(gestures.addEventListener).not.toHaveBeenCalled();
   });
 });

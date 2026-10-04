@@ -17,6 +17,8 @@ export function StreamVideo({ stream, muted = false }: { stream: MediaStream; mu
 
 // The subset of HTMLVideoElement the gate uses, so tests can drive it without a DOM.
 export type GatedVideoElement = Pick<HTMLVideoElement, "muted" | "srcObject" | "readyState" | "videoWidth" | "addEventListener" | "removeEventListener"> & {
+  paused?: boolean;
+  play?: () => Promise<void>;
   requestVideoFrameCallback?: (callback: () => void) => number;
   cancelVideoFrameCallback?: (handle: number) => void;
 };
@@ -28,8 +30,27 @@ const frameEvents = ["loadeddata", "resize", "timeupdate"] as const;
 // is attached; it unmutes on `playing`, or when it holds a decoded frame (readyState >= HAVE_CURRENT_DATA with a nonzero video size,
 // or requestVideoFrameCallback firing). It then reports to the controller, which only then lets the call go live. The returned
 // function detaches the stream and removes every listener. Muting here is not pausing: playback continues while audio is gated.
-export function gateRemotePlayback(element: GatedVideoElement, stream: MediaStream, onPlaying: (stream: MediaStream) => void = reportRemoteVideoPlaying) {
+export function gateRemotePlayback(element: GatedVideoElement, stream: MediaStream, onPlaying: (stream: MediaStream) => void = reportRemoteVideoPlaying,
+  gestureTarget: Pick<EventTarget, "addEventListener" | "removeEventListener"> | null = typeof document === "undefined" ? null : document) {
   let done = false;
+  let detached = false;
+  const gestures = ["pointerdown", "keydown"] as const;
+  // Browsers may pause an element that unmutes without fresh user activation. Keep the picture going muted and unmute on the next gesture.
+  const resumeWithSound = () => {
+    if (detached) return;
+    gestures.forEach((name) => gestureTarget?.removeEventListener(name, resumeWithSound));
+    element.muted = false;
+    void element.play?.().catch(() => undefined);
+  };
+  const keepPlaying = () => {
+    if (detached || !element.play) return;
+    element.play().catch(() => {
+      if (detached) return;
+      element.muted = true;
+      void element.play?.().catch(() => undefined);
+      gestures.forEach((name) => gestureTarget?.addEventListener(name, resumeWithSound));
+    });
+  };
   let frame: number | undefined;
   const removeListeners = () => {
     element.removeEventListener("playing", release);
@@ -42,10 +63,12 @@ export function gateRemotePlayback(element: GatedVideoElement, stream: MediaStre
     done = true;
     removeListeners();
     element.muted = false;
+    element.addEventListener("pause", keepPlaying);
+    keepPlaying();
     onPlaying(stream);
   }
   function check() {
-    if (element.readyState >= HAVE_CURRENT_DATA && element.videoWidth > 0) release();
+    if (element.readyState >= HAVE_CURRENT_DATA && element.videoWidth > 0 && !element.paused) release();
   }
   element.muted = true;
   element.addEventListener("playing", release);
@@ -55,7 +78,10 @@ export function gateRemotePlayback(element: GatedVideoElement, stream: MediaStre
   check();
   return () => {
     done = true;
+    detached = true;
     removeListeners();
+    element.removeEventListener("pause", keepPlaying);
+    gestures.forEach((name) => gestureTarget?.removeEventListener(name, resumeWithSound));
     element.srcObject = null;
   };
 }
