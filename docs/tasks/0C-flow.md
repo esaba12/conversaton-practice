@@ -207,7 +207,7 @@ Not covered by any automated test: the workspace component itself. The repositor
 - External account action: none
 - Next smallest task: 0D video-first media, which now owns `components/practice/remote-media.tsx`.
 - Ready for review: yes
-- Coordinator integration: pending
+- Coordinator integration (October 3, ~23:30 EDT): rebased onto `883ffa4`. Coordinator reran typecheck, npm test (401 pass), build and npm run test:ui (9 pass, 1 production-only skip). Signed-in mock-browser walk with a temporary confirmed Auth user (deleted after), run on main (port 3000) and 0C (port 3102): sign in, describe with goal and private notes, generate (one real setup-model call per run), review with the tone notice, Back keeps the situation, manual setup, Start with `POST /api/sessions` intercepted and answered 503 (no provider call), sign out. All steps passed on both; screen text identical except model-generated assumptions; start-body keys identical with no private fields. Not covered: a connected call, End, green-room leave and mid-call sign-out (reducer unit tests plus review only). Independent review (different model) found one blocker: `leavePerson` did not clear the private-state store. Same as main, and nothing writes the store yet, but fixed before merge by calling `clearPrivateState()` in `leavePerson`.
 
 The writer owns this handoff; the coordinator records integration and updates STATUS.
 Follow [documentation rules](../20-DOCUMENTATION-STANDARD.md) and

@@ -241,6 +241,7 @@ export function PracticeWorkspace() {
   }
 
   function leavePerson() {
+    clearPrivateState();
     setSavedPerson(null); setSetupMessage("");
     returnToBriefing();
     setMoveFocus(true);
