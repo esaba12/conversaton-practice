@@ -4,7 +4,6 @@ import { Wordmark } from "@/components/site/wordmark";
 import { SignInForm } from "./sign-in-form";
 
 const notices: Record<string, string> = {
-  google: "Google sign-in didn’t finish. You can try again or use email.",
   callback: "Sign-in didn’t finish. You can try again.",
 };
 
@@ -24,7 +23,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
         <h1>Welcome in.</h1>
         <p>Sign in before preparing or starting a conversation. Each practice starts fresh.</p>
         <SignInForm configured={authConfigured()} notice={error ? notices[error] ?? "" : ""} />
-        <p className="disclosure">Practice with fictional AI counterparts. Not therapy or a prediction of a real person’s response.</p>
+        <p className="disclosure">Practice with fictional AI counterparts. It doesn’t predict how a real person will respond.</p>
       </main>
     </>
   );

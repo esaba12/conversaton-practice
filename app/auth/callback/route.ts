@@ -8,7 +8,7 @@ function redirectTo(url: URL, path: string) {
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
-  if (url.searchParams.get("error")) return redirectTo(url, "/auth/sign-in?error=google");
+  if (url.searchParams.get("error")) return redirectTo(url, "/auth/sign-in?error=callback");
   if (code) {
     const client = await createAuthClient();
     const { error } = await client.auth.exchangeCodeForSession(code);

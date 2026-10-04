@@ -25,3 +25,8 @@ Owned files: the sign-in page component under `app/auth/**` or `components/site/
 ## Not in scope
 
 Other OAuth providers, account linking, or changing email sign-in.
+
+
+## Decision (October 4, ~02:55 EDT)
+
+Owner chose option B: email and password only. The Google button, its handler and styles are removed; the auth callback stays for email confirmation and now reports failures as "Sign-in didn’t finish". The Google provider can stay enabled in Supabase; nothing in the app calls it.
