@@ -154,7 +154,8 @@ If "Show me first" is disabled, skip that beat and say it is unavailable. Do not
 
 ## What has been checked, and what has not
 
-- **Live (owner, October 4, ~10:23 AM, deployed app):** saved Jordan through briefing, Show me first, the call, End, recap and "Try that moment once," then a new call after choosing Alex's look and voice. "It all worked." Not itemized. This ran on the deploy just before the redesign ([PR #98](https://github.com/esaba12/conversaton-practice/pull/98)). The redesigned landing, dashboard and lobby have not had a live call.
+- **Live (owner, October 4, ~10:23 AM, deployed app):** saved Jordan through briefing, Show me first, the call, End, recap and "Try that moment once," then a new call after choosing Alex's look and voice. "It all worked." Not itemized. This ran on the deploy just before the redesign ([PR #98](https://github.com/esaba12/conversaton-practice/pull/98)). 
+- **Live (owner, October 4, ~11:20 AM, production `9b7bc93`, after the redesign):** one call. "All was good." Not itemized.
 - **Live (October 3):** the G1 call (talking video, interruption, microphone released on End) and the G2 generated situation.
 - **Automated on `main` `9b7bc93`:** typecheck, 792 unit tests, production build, client-bundle check, Playwright 12 passed / 3 skipped ([run 37210478365](https://github.com/esaba12/conversaton-practice/actions/runs/37210478365)).
 - **Not run live:** the sharing probe, a tone change after editing chips, Your data, video loss, and the behavior probes in [LIVE-01](LIVE-01-human-checks.md).
