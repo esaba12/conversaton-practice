@@ -7,7 +7,7 @@ Coordinator: wow-pass coordinator (main checkout)
 Gate: Wow pass Phase 0
 Requirements/tests: docs/next/04-NEW-SPECS.md W1; docs/30 step 1 (private state clear)
 GitHub issue: https://github.com/esaba12/conversaton-practice/issues/44
-Pull request: https://github.com/esaba12/conversaton-practice/pull/50
+Pull request: https://github.com/esaba12/conversaton-practice/pull/53 (draft)
 CI run: see the pull request checks
 
 ## Assignment and isolation
