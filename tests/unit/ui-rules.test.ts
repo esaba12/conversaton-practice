@@ -14,7 +14,6 @@ export const UI_RULES_ALLOW_LIST = {
     { file: "components/presentation/practice.module.css", reason: "0C presentation refactor; legacy hex fills" },
     { file: "components/presentation/people.module.css", reason: "0C presentation refactor; legacy hex fills" },
     { file: "components/presentation/data.module.css", reason: "0C presentation refactor; legacy hex fills" },
-    { file: "components/presentation/captions.module.css", reason: "0C presentation refactor; legacy hex fallback in var()" },
   ],
   disabledOpacity: [] as { file: string; reason: string }[],
   outlineNoneWithoutFocusVisible: [

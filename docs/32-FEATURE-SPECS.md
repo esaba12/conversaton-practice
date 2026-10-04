@@ -167,7 +167,7 @@ Leaving the green room (back, sign-out, page hide) releases the mic stream used 
 
 ## S4. Natural ending (wrap-up)
 
-**Behavior.** At `durationSeconds − 30`, send `conversation.append_context` with: "About 30 seconds remain. Begin wrapping up naturally as {name}, in character. Do not mention time limits or the app." Show a "Wrapping up" chip and turn the timer arc honey. Server cap unchanged. If the user ends earlier, nothing is sent.
+**Behavior.** At `durationSeconds − 30`, send `conversation.append_llm_context` with: "About 30 seconds remain. Begin wrapping up naturally as {name}, in character. Do not mention time limits or the app." Show a "Wrapping up" chip and turn the timer arc honey. Server cap unchanged. If the user ends earlier, nothing is sent.
 
 **Privacy.** Text is a fixed template plus the reviewed name. No goal or notes.
 
@@ -177,7 +177,7 @@ Leaving the green room (back, sign-out, page hide) releases the mic stream used 
 
 ## S5. Ask them to wait
 
-**Behavior.** Button "Ask {name} to wait". Sends `conversation.interrupt`, then `append_context`: "The user asked for a moment. Stay quiet until they speak again. If they say something, respond normally." Shows "{name} is waiting. The timer is still running." No pause semantics; mute stays separate.
+**Behavior.** Button "Ask {name} to wait". Sends `conversation.interrupt`, then `conversation.append_llm_context`: "The user asked for a moment. Stay quiet until they speak again. If they say something, respond normally." Shows "{name} is waiting. The timer is still running." No pause semantics; mute stays separate.
 
 **Acceptance.** Unit: both messages sent in order; copy never says "pause"; timer continues. **Size:** S.
 
