@@ -59,7 +59,7 @@ export function SignedInHome() {
             {flow.map((item) => <li key={item}>{item}</li>)}
           </ol>
         </section>
-        <p className="disclosure">Practice with fictional AI counterparts. Not therapy or a prediction of a real person’s response.</p>
+        <p className="disclosure">Practice with fictional AI counterparts. A practice tool; it doesn’t predict how a real person will respond.</p>
       </main>
     </>
   );
