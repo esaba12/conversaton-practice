@@ -214,7 +214,7 @@ begin
   end if;
   if (select pg_catalog.count(*) from pg_catalog.pg_proc p join pg_catalog.pg_namespace n on n.oid = p.pronamespace
       where n.nspname = 'public' and p.proowner = 'people_executor'::regrole and p.prosecdef
-        and 'search_path=""' = any(p.proconfig)) <> 8 then
+        and 'search_path=""' = any(p.proconfig)) <> 11 then
     raise exception 'Mutation RPCs lost their restricted executor';
   end if;
   if exists (select 1 from pg_catalog.pg_proc p join pg_catalog.pg_namespace n on n.oid = p.pronamespace

@@ -156,13 +156,16 @@ begin
     select 1 from pg_catalog.pg_proc p
     join pg_catalog.pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname = 'practice_acquire'
-      and pg_catalog.pg_get_function_identity_arguments(p.oid) = 'p_secret text, p_key uuid, p_fingerprint text, p_duration integer'
+      and pg_catalog.pg_get_function_identity_arguments(p.oid) in (
+        'p_secret text, p_key uuid, p_fingerprint text, p_duration integer',
+        'p_secret text, p_key uuid, p_fingerprint text, p_duration integer, p_person_id uuid, p_person_version integer'
+      )
   ) then raise exception 'Old practice_acquire signature still exists'; end if;
   if not exists (
     select 1 from pg_catalog.pg_proc p
     join pg_catalog.pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname = 'practice_acquire'
-      and pg_catalog.pg_get_function_identity_arguments(p.oid) = 'p_secret text, p_key uuid, p_fingerprint text, p_duration integer, p_person_id uuid, p_person_version integer'
+      and pg_catalog.pg_get_function_identity_arguments(p.oid) = 'p_secret text, p_key uuid, p_fingerprint text, p_duration integer, p_person_id uuid, p_person_version integer, p_kind text, p_preset text'
       and p.proowner = 'practice_session_executor'::regrole and p.prosecdef
       and 'search_path=""' = any(p.proconfig)
   ) then raise exception 'New practice_acquire is not the restricted executor function'; end if;
