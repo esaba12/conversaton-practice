@@ -8,6 +8,10 @@ import { CallStage } from "@/components/practice/call-stage";
 import { MeetCard, meetStateFromProgress, useStreamedDraft, type MeetState } from "@/components/practice/meet-card";
 import { personRole, personStartSituation, situationFromRole, type MeetStart } from "@/components/practice/meet-knowledge";
 import { RecapStage } from "@/components/practice/recap-stage";
+import { RemoteStreamVideo, StreamVideo } from "@/components/practice/remote-media";
+import { StandInCall } from "@/components/practice/stand-in-call";
+import { StandInOfferButtons } from "@/components/practice/stand-in-offer";
+import { StandInYourTurn } from "@/components/practice/stand-in-your-turn";
 import { WorkspaceHeader } from "@/components/presentation/workspace-header";
 import type { PracticeDuration } from "@/components/presentation/duration-choice";
 import { emptyRole, parseReviewedRole, type SetupMode } from "@/components/presentation/setup-review";
@@ -20,6 +24,8 @@ import { callPhase, createFlowState, reduceFlow, type FlowEvent, type FlowState,
 import { cleanupMessage, failureMessages, reflectionError, FALLBACK_GOAL, GENERATION_FAILED } from "@/lib/practice/messages";
 import { clearPrivateState, readPrivateState, updatePrivateState } from "@/lib/practice/private-state";
 import type { MediaHandoff } from "@/lib/practice/devices";
+import { startStandInSession, type StandInTarget } from "@/lib/practice/stand-in-client";
+import { beginCall, beginStandIn, canStartCall, endStandIn, initialStandInSitting, standInOffer, type StandInSitting } from "@/lib/practice/stand-in-sitting";
 import { closedOffer, closedReflect, sameName, type CallOrigin, type Cleanup, type CleanupTarget, type ReflectState, type SaveOffer } from "@/lib/practice/types";
 import { requestReflection } from "@/lib/reflection/api-client";
 import type { DraftRequest, StanceOptions } from "@/lib/schemas/draft";
@@ -30,6 +36,8 @@ import { roleContextSchema, type RoleContext } from "@/lib/schemas/role-context"
 import type { EndReason, SessionPreset, StartResponse } from "@/lib/schemas/session";
 import type { Situation } from "@/lib/schemas/situation";
 import { SessionClientError, endSession, markConnected, startPresetSession, startSavedPersonSession, startSession } from "@/lib/session/api-client";
+
+const CALL_CAP_MESSAGE = "That’s three calls for this sitting. Take a break, or practice with someone else.";
 
 // The stages live in lib/practice/flow.ts and the screens in components/practice/*; this shell
 // owns the requests, the media controller and the teardown the reducer asks for.
@@ -70,6 +78,13 @@ export function PracticeWorkspace() {
   const [sharedFactTexts, setSharedFactTexts] = useState<string[]>([]);
   // The green room's chosen microphone, for the call controller once it accepts a device id.
   const micHandoffRef = useRef<MediaHandoff | null>(null);
+  // W10 "Show me first": calls this sitting, whether the current call is the stand-in, and the user's note for their turn (browser memory only).
+  const [sitting, setSitting] = useState<StandInSitting>(initialStandInSitting);
+  const [standInLive, setStandInLive] = useState(false);
+  const standInRef = useRef(false);
+  const standInChosenRef = useRef(false);
+  const [standInChosen, setStandInChosen] = useState(false);
+  const [noteToSelf, setNoteToSelf] = useState("");
   const [assumptions, setAssumptions] = useState<string[]>([]);
   const [setupMode, setSetupMode] = useState<SetupMode>("manual");
   const [examplePreset, setExamplePreset] = useState<SessionPreset | null>(null);
@@ -186,6 +201,14 @@ export function PracticeWorkspace() {
     if (reason === "time_limit") setCallMessage("Time’s up. The practice reached its planned length.");
     else setCallMessage(before.outcome === "interrupted" ? "The call was interrupted before it ended." : "");
     endForTeardown(teardown, reason, "close");
+    dropStandInTurns();
+  }
+
+  // Nothing said in a stand-in call survives its end, and it is never reflected on.
+  function dropStandInTurns() {
+    if (!standInRef.current) return;
+    clearReflection();
+    setTurns([...endStandIn(sitting).turns]);
   }
 
   function interrupt(message: string) {
@@ -194,6 +217,7 @@ export function PracticeWorkspace() {
     if (teardown.releaseMic) releaseMedia();
     setCallMessage(`${message} You can end practice and start again.`);
     endForTeardown(teardown, "connection_failure", "close");
+    dropStandInTurns();
   }
 
   function handleMediaEvent(attempt: number, event: MediaEvent) {
@@ -233,6 +257,7 @@ export function PracticeWorkspace() {
     briefingDrafts.clear(); setSubject(null); setSituations({ status: "ready", items: [] });
     setDraftPerson(null); lastDraftRef.current = null;
     draftStream.cancel(); setStanceOptions(undefined); setSharedFactTexts([]); micHandoffRef.current = null;
+    setSitting(initialStandInSitting); standInRef.current = false; setStandInLive(false); chooseStandIn(false); setNoteToSelf("");
     setReviewRole(emptyRole); setAssumptions([]); setSetupMode("manual");
     setGenerateError(null); setCallInfo({ name: "", goal: "" });
     setSavedPerson(null); setCallOrigin(null); setSaveOffer(closedOffer);
@@ -258,6 +283,7 @@ export function PracticeWorkspace() {
   function openBriefing(next: BriefingSubject, notice = "") {
     returnToLobby();
     const resume = !!subject && briefingKey(subject) === briefingKey(next);
+    if (!resume) { setSitting(initialStandInSitting); setNoteToSelf(""); }
     showStage(next.kind === "new" ? { type: "pickSomeoneNew", resume } : { type: "pickPerson", resume });
     setSubject(next); setSavedPerson(null); setDraftPerson(null);
     setGenerateError(null); setHeaderMessage(""); setPreviousSessionId(null); setSetupMessage(notice);
@@ -353,6 +379,7 @@ export function PracticeWorkspace() {
   function start() {
     const role = parseReviewedRole(reviewRole);
     if (!role) return;
+    if (!canStartCall(sitting)) { setSetupMessage(CALL_CAP_MESSAGE); return; }
     const goal = readPrivateState().goal.trim() || FALLBACK_GOAL;
     const person = savedPerson ?? draftPerson;
     if (person) {
@@ -367,7 +394,39 @@ export function PracticeWorkspace() {
       : startSession({ role, durationSeconds, idempotencyKey }));
   }
 
-  async function launch(origin: CallOrigin, goal: string, request: (idempotencyKey: string) => Promise<StartResponse>) {
+  // W10: a stand-in plays the user's side once. Only the goal and hard-moment line go with it, to the stand-in alone.
+  function startStandIn() {
+    const { goal, hardMomentLine } = readPrivateState();
+    const role = parseReviewedRole(reviewRole);
+    if (!goal.trim() || !role) return;
+    if (!canStartCall(sitting)) { setSetupMessage(CALL_CAP_MESSAGE); return; }
+    const person = savedPerson ?? draftPerson;
+    const situation = person && (draftPerson || personStartSituation(person, role) === "custom") ? situationFromRole(role) : undefined;
+    const target: StandInTarget = person
+      ? { kind: "person", person: { id: person.id, version: person.version }, ...(situation ? { situation } : {}) }
+      : examplePreset && setupMode === "example" && JSON.stringify(role) === JSON.stringify(roleContextSchema.parse(examples[examplePreset].role))
+        ? { kind: "preset", preset: examplePreset } : { kind: "role", role };
+    const origin: CallOrigin = person ? { kind: "person", person } : { kind: "role", role };
+    standInRef.current = true; setStandInLive(true);
+    // An empty goal keeps it off the call screen; the stand-in screen shows no goal.
+    void launch(origin, "", (idempotencyKey) => startStandInSession({ target, goal, hardMomentLine, idempotencyKey }), { standIn: true });
+  }
+
+  // The Your-turn card's "Call {name}": leave the stand-in recap without spending the retry, then the green room again.
+  function callAfterStandIn() {
+    standInRef.current = false; setStandInLive(false); chooseStandIn(false); setNoteToSelf("");
+    const { teardown } = apply({ type: "back" });
+    endForTeardown(teardown, "user", "close");
+    setCallMessage(""); setCleanup(null); setCleanupTarget(null); setSetupMessage("");
+    showStage({ type: "toGreenRoom" });
+  }
+
+  function chooseStandIn(value: boolean) {
+    standInChosenRef.current = value;
+    setStandInChosen(value);
+  }
+
+  async function launch(origin: CallOrigin, goal: string, request: (idempotencyKey: string) => Promise<StartResponse>, options: { standIn?: boolean } = {}) {
     if (startingRef.current || controllerRef.current || sessionIdRef.current || authLostRef.current || generating) return;
     startingRef.current = true;
     plannedDurationRef.current = durationSeconds;
@@ -384,8 +443,9 @@ export function PracticeWorkspace() {
       }
       sessionIdRef.current = session.id;
       setCallInfo({ name: origin.kind === "role" ? origin.role.name : origin.person.name, goal });
-      setCallOrigin(origin); setSaveOffer({ ...closedOffer, open: true });
-      setReflect({ ...closedReflect, sessionId: session.id, goal: reflectGoal });
+      setCallOrigin(origin);
+      setSitting((current) => options.standIn ? beginStandIn(current) : beginCall(current));
+      if (!options.standIn) { setSaveOffer({ ...closedOffer, open: true }); setReflect({ ...closedReflect, sessionId: session.id, goal: reflectGoal }); }
       setMutedState(false); setCameraEnabled(false); setCameraNote(""); setElapsedSeconds(0); setCallMessage(""); setCleanup(null); setCleanupTarget(null);
       // Ringing starts on acceptance, so a failed start stays in the green room with its message.
       apply({ type: "ready" });
@@ -402,6 +462,7 @@ export function PracticeWorkspace() {
     } catch (error) {
       if (attempt !== attemptRef.current) return;
       if (joined) { interrupt(failureMessages.join); return; }
+      if (options.standIn) { standInRef.current = false; setStandInLive(false); }
       if (error instanceof SessionClientError) {
         if (error.code === "UNAUTHENTICATED") { handleAuthLoss(); return; }
         if (error.code === "SESSION_ACTIVE" && error.sessionId) {
@@ -635,6 +696,13 @@ export function PracticeWorkspace() {
   const portraitSrc = examplePreset && !meetPerson ? starterPortraitPath(examplePreset) : null;
   const meetName = meetPerson?.name ?? (meetState.status === "ready" ? meetState.role.name : meetState.status === "streaming" ? meetState.partialRole?.name ?? "" : reviewRole.name);
   const meetRelationship = meetPerson?.relationship ?? reviewRole.role;
+  const offer = standInOffer({
+    counterpartName: meetName,
+    goal: readPrivateState().goal,
+    hasPracticed: meetPerson ? !!meetPerson.hasPracticed : meetStart.kind === "preset" ? practicedPresets.includes(meetStart.preset) : false,
+    sitting,
+  });
+  const toGreenRoom = (withStandIn: boolean) => { chooseStandIn(withStandIn); showStage({ type: "toGreenRoom" }); };
 
   return <><WorkspaceHeader page="practice" signingOut={signingOut} onSignOut={() => void signOut()} quiet={phase !== null} />
     <main id="main">
@@ -644,14 +712,20 @@ export function PracticeWorkspace() {
             editable={meetPerson ? "situation" : "all"} start={meetStart} privateNotes={lastDraftRef.current?.privateNotes ?? ""}
             durationSeconds={durationSeconds} onDurationChange={setDurationSeconds}
             onBack={() => { draftStream.cancel(); if (savedPerson) leavePerson(); else backToDescribe(); }}
-            onCall={() => showStage({ type: "toGreenRoom" })}
+            onCall={() => toGreenRoom(false)}
+            actions={offer.shown ? ({ enabled, reason }) => (
+              <StandInOfferButtons counterpartName={meetName} offer={offer} onShowMeFirst={() => toGreenRoom(true)} onSkip={() => toGreenRoom(false)}
+                callDisabledReason={enabled ? undefined : reason} />) : undefined}
             onRetry={lastDraftRef.current ? () => { const request = lastDraftRef.current; if (request) draftStream.start(request); } : undefined}
             disabled={signingOut} disabledReason="Signing you out…" focusHeading={moveFocus} />
         : flow.stage === "green"
           ? <GreenRoom name={meetName} relationship={meetRelationship} portraitSrc={portraitSrc}
-              onBack={leaveGreenRoom} onReady={(handoff) => { micHandoffRef.current = handoff; start(); }}
+              onBack={leaveGreenRoom} onReady={(handoff) => { micHandoffRef.current = handoff; if (standInChosenRef.current) startStandIn(); else start(); }}
               starting={starting} startError={setupMessage || null} disabled={signingOut || endingPrevious} disabledReason={signingOut ? "Signing you out…" : "Ending the previous practice…"} focusHeading={moveFocus}
-              extras={previousSessionId ? <button type="button" className="button secondary" onClick={() => void endPrevious()} disabled={endingPrevious}>{endingPrevious ? "Ending the previous practice…" : "End the previous practice"}</button> : undefined} />
+              extras={<>
+                {standInChosen && <p className="notice">First, a stand-in plays you. You play {meetName}.</p>}
+                {previousSessionId && <button type="button" className="button secondary" onClick={() => void endPrevious()} disabled={endingPrevious}>{endingPrevious ? "Ending the previous practice…" : "End the previous practice"}</button>}
+              </>} />
         : flow.stage === "briefing" && subject
           ? <Briefing subject={subject} draft={briefingDrafts.draftFor(subject)} onDraftChange={(patch) => briefingDrafts.update(subject, patch)}
               situations={subject.kind === "person" ? situations : undefined} onBack={() => { showStage({ type: "back" }); }} onSetUp={setUp}
@@ -664,11 +738,24 @@ export function PracticeWorkspace() {
               onDeletePerson={async (person) => { await deletePerson(person.id); await loadPeople(); }}
               disabled={signingOut || generating} disabledReason="Please wait a moment." focusHeading={moveFocus} notice={setupMessage || undefined} />
       ) : <>
-        <CallStage counterpartName={callInfo.name} goal={callInfo.goal} phase={phase} muted={muted} cameraEnabled={cameraEnabled} elapsedSeconds={elapsedSeconds} durationSeconds={plannedDurationRef.current}
-          remoteStream={remoteStream} localStream={localStream}
-          onMuteToggle={toggleMute} onCameraToggle={() => void toggleCamera()} onEnd={() => finish("user")} statusMessage={statusMessage} testMedia={testMedia} turns={turns}
-          live={liveCall} onInteraction={sendInteraction} onCancel={backToSetup} />
-        {(phase === "ended" || phase === "interrupted") && <RecapStage ended={phase === "ended"} origin={callOrigin} saveOffer={saveOffer} people={people} peopleStatus={peopleStatus}
+        {standInLive
+          ? <StandInCall counterpartName={callInfo.name} phase={phase} muted={muted} cameraEnabled={cameraEnabled}
+              elapsedSeconds={elapsedSeconds} durationSeconds={plannedDurationRef.current}
+              remoteMedia={remoteStream ? <RemoteStreamVideo stream={remoteStream} /> : null}
+              localPreview={localStream ? <StreamVideo stream={localStream} muted /> : undefined}
+              fear={readPrivateState().prediction}
+              onMuteToggle={toggleMute} onCameraToggle={() => void toggleCamera()} onEnd={() => finish("user")}
+              statusMessage={statusMessage} testMedia={testMedia} turns={turns} />
+          : <CallStage counterpartName={callInfo.name} goal={callInfo.goal} phase={phase} muted={muted} cameraEnabled={cameraEnabled} elapsedSeconds={elapsedSeconds} durationSeconds={plannedDurationRef.current}
+              remoteStream={remoteStream} localStream={localStream}
+              onMuteToggle={toggleMute} onCameraToggle={() => void toggleCamera()} onEnd={() => finish("user")} statusMessage={statusMessage} testMedia={testMedia} turns={turns}
+              live={liveCall} onInteraction={sendInteraction} onCancel={backToSetup} />}
+        {standInLive && (phase === "ended" || phase === "interrupted")
+          ? <StandInYourTurn counterpartName={callInfo.name} goal={readPrivateState().goal} hardMomentLine={readPrivateState().hardMomentLine}
+              note={noteToSelf} onGoalChange={(goal) => updatePrivateState({ goal })}
+              onHardMomentLineChange={(hardMomentLine) => updatePrivateState({ hardMomentLine })} onNoteChange={setNoteToSelf}
+              onCall={callAfterStandIn} starting={starting} />
+          : (phase === "ended" || phase === "interrupted") && <RecapStage ended={phase === "ended"} origin={callOrigin} saveOffer={saveOffer} people={people} peopleStatus={peopleStatus}
           onSave={() => void saveFromCall()} onDismissSave={dismissSave} reflect={reflect} turns={turns}
           onSelfReflectionChange={(selfReflection) => setReflect((state) => ({ ...state, selfReflection }))} onReflect={() => void requestReflectionNow()} onReflectionDone={clearReflection}
           canRetryCleanup={canRetryCleanup} onRetryCleanup={() => cleanupTarget && closeRemote(cleanupTarget.id, cleanupTarget.reason)} onBackToSetup={backToSetup} backToSetupRef={backToSetupRef} />}
