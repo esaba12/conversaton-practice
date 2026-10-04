@@ -46,16 +46,49 @@ export function setupRequestBody(input: DraftRequest, model: string) {
   };
 }
 
+const STOP = new Set("i me my you the a an to and of it is that they them be will do don t s not want like just about feel really".split(" "));
 const words = (text: string) => text.toLowerCase().normalize("NFKC").split(/[^\p{L}\p{N}]+/u).filter(Boolean);
-// True when any role string contains five consecutive words of the notes (the whole note if shorter).
-export function leaksPrivateNotes(role: RoleContext, privateNotes?: string): boolean {
+function ngrams(tokens: string[], size: number): Set<string> {
+  const out = new Set<string>();
+  for (let i = 0; i + size <= tokens.length; i++) out.add(tokens.slice(i, i + size).join(" "));
+  return out;
+}
+function sentenceStart(text: string, index: number): boolean {
+  let i = index;
+  while (i > 0 && /[\s"'“”‘’(\[{]/.test(text.charAt(i - 1))) i -= 1;
+  return i === 0 || /[.!?]/.test(text.charAt(i - 1));
+}
+// Mid-sentence capitals skip stopwords so the pronoun "I" is not treated as a name.
+function distinctive(notes: string, situation: Set<string>): Set<string> {
+  const found = new Set<string>();
+  for (const token of words(notes)) if (/\d/.test(token) && !situation.has(token)) found.add(token);
+  const source = notes.normalize("NFKC");
+  for (const match of source.matchAll(/[\p{L}\p{N}]+/gu)) {
+    const raw = match[0];
+    if (!/^\p{Lu}/u.test(raw) || sentenceStart(source, match.index)) continue;
+    const token = words(raw)[0];
+    if (!token || STOP.has(token) || situation.has(token)) continue;
+    found.add(token);
+  }
+  return found;
+}
+export function leaksPrivateNotes(role: RoleContext, privateNotes: string | undefined, situation: string): boolean {
   const note = words(privateNotes ?? "");
   if (note.length === 0) return false;
-  const size = Math.min(5, note.length);
-  const windows = new Set<string>();
-  for (let i = 0; i + size <= note.length; i++) windows.add(` ${note.slice(i, i + size).join(" ")} `);
-  const fields = [role.name, role.role, role.style, role.publicContext, role.opening, ...role.constraints].map((field) => ` ${words(field).join(" ")} `);
-  return fields.some((field) => [...windows].some((window) => field.includes(window)));
+  const size = Math.min(3, note.length);
+  const situationWords = words(situation);
+  const shared = ngrams(situationWords, size);
+  const leaked = new Set<string>();
+  for (const window of ngrams(note, size)) {
+    if (window.split(" ").every((part) => STOP.has(part)) || shared.has(window)) continue;
+    leaked.add(window);
+  }
+  const fields = [role.name, role.role, role.style, role.publicContext, role.opening, ...role.constraints];
+  const sequences = [words(fields.join(" ")), ...fields.map((field) => words(field))];
+  if (sequences.some((tokens) => [...ngrams(tokens, size)].some((window) => leaked.has(window)))) return true;
+  const roleTokens = new Set(sequences[0]);
+  for (const token of distinctive(privateNotes ?? "", new Set(situationWords))) if (roleTokens.has(token)) return true;
+  return false;
 }
 
 class Invalid extends Error {}
@@ -89,7 +122,7 @@ async function attempt(input: DraftRequest, key: string, model: string): Promise
   if (!response.ok) throw new Invalid();
   const raw: unknown = await response.json().catch(() => undefined);
   const output = extract(raw);
-  if (!output.outOfScope && leaksPrivateNotes(output.role, input.privateNotes)) throw new Invalid();
+  if (!output.outOfScope && leaksPrivateNotes(output.role, input.privateNotes, input.situation)) throw new Invalid();
   return output;
 }
 
