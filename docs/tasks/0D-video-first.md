@@ -1,6 +1,6 @@
 # 0D: Video-first counterpart media (Q3)
 
-Status: planned (starts after 0C is integrated)
+Status: in progress (worker dispatched October 3, ~23:50 EDT)
 Updated: October 3, 2026, 22:45 EDT
 Assigned writer: 0D worker subagent (claude-sonnet-5-5-high)
 Coordinator: wow-pass coordinator (main checkout)
@@ -12,7 +12,7 @@ CI run: not run
 
 ## Assignment and isolation
 
-- Base ref + full SHA: `main` after 0C is integrated (SHA recorded by the coordinator at dispatch).
+- Base ref + full SHA: `main` `51ef56c` (0C merged in PR #53, 0E in PR #55).
 - Branch: `agent/0d-video-first`
 - Worktree: `/Users/ethansaba/code/therapist/.worktrees/0d`
 - Dev port: 3103
