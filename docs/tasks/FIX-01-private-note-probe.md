@@ -7,7 +7,7 @@ Coordinator: Cursor coordinator session
 Gate: G5 follow-up
 Requirements/tests: P02, T03 (private notes never reach counterpart context). Unit checks below. Live call N/A for this probe.
 GitHub issue: https://github.com/esaba12/conversaton-practice/issues/27
-Pull request: not opened
+Pull request: https://github.com/esaba12/conversaton-practice/pull/38
 CI run: not run
 
 ## Assignment and isolation
@@ -50,7 +50,7 @@ Non-goals: probing `goal` or `assumptions`, prompt changes, a second model call,
 - Gate and requirement/test IDs: G5 follow-up; P02, T03
 - Mode: static
 - Outcome: pass
-- Tested commit/dirty state: `df60345ae2ad9ffdfa8e5bfbc2c32191ec6613e8` plus uncommitted edits in the owned files
+- Tested commit/dirty state: checks ran on the tree committed as `d80da383d9ec1bd9a4bab3e44f7b12c1dd4c2bb3` (parent `df60345ae2ad9ffdfa8e5bfbc2c32191ec6613e8`) before that commit was created
 - Environment + working directory: local, Node v20.19.4, `/Users/ethansaba/code/therapist/.worktrees/fix-01`
 - Exact command or manual steps: `npm run typecheck`
 - Exit code: 0
@@ -61,7 +61,7 @@ Non-goals: probing `goal` or `assumptions`, prompt changes, a second model call,
 - Gate and requirement/test IDs: G5 follow-up; P02, T03
 - Mode: unit
 - Outcome: pass
-- Tested commit/dirty state: `df60345ae2ad9ffdfa8e5bfbc2c32191ec6613e8` plus uncommitted edits in the owned files
+- Tested commit/dirty state: checks ran on the tree committed as `d80da383d9ec1bd9a4bab3e44f7b12c1dd4c2bb3` (parent `df60345ae2ad9ffdfa8e5bfbc2c32191ec6613e8`) before that commit was created
 - Environment + working directory: local, Node v20.19.4, Vitest 4.1.11, `/Users/ethansaba/code/therapist/.worktrees/fix-01`
 - Exact command or manual steps: `npm test` (`vitest run`). Acceptance cases live in `tests/unit/setup-generate.test.ts` (24 tests in that file, including the mocked `generateDraft` retry).
 - Exit code: 0
@@ -72,7 +72,7 @@ Non-goals: probing `goal` or `assumptions`, prompt changes, a second model call,
 - Gate and requirement/test IDs: G5 follow-up; P02, T03
 - Mode: static
 - Outcome: pass
-- Tested commit/dirty state: `df60345ae2ad9ffdfa8e5bfbc2c32191ec6613e8` plus uncommitted edits in the owned files
+- Tested commit/dirty state: checks ran on the tree committed as `d80da383d9ec1bd9a4bab3e44f7b12c1dd4c2bb3` (parent `df60345ae2ad9ffdfa8e5bfbc2c32191ec6613e8`) before that commit was created
 - Environment + working directory: local, Node v20.19.4, Next.js 16.3.8, `/Users/ethansaba/code/therapist/.worktrees/fix-01`
 - Exact command or manual steps: `npm run build`
 - Exit code: 0
@@ -81,7 +81,7 @@ Non-goals: probing `goal` or `assumptions`, prompt changes, a second model call,
 
 ## Handoff
 
-- Changed paths and commit(s): `lib/setup/generate.ts`, `tests/unit/setup-generate.test.ts`, `docs/07-PROMPTS.md`, this record, on `agent/fix-01`
+- Changed paths and commit(s): `lib/setup/generate.ts`, `tests/unit/setup-generate.test.ts`, `docs/07-PROMPTS.md`, this record. Implementation commit `d80da383d9ec1bd9a4bab3e44f7b12c1dd4c2bb3` on `agent/fix-01`.
 - Remaining failures/risks: a 1–2 word excerpt of a longer note still passes unless it is a digit or a mid-sentence capital. A name that is the first word of a sentence is not treated as distinctive. Mid-sentence ALL CAPS can look like a name. A common 3-word phrase can false-positive and use the single retry. `Dr.` makes the next word look sentence-initial. Paraphrase is still prompt-only. `goal` and `assumptions` are still not probed (REV-01 accepted risk 4).
 - External account action: none
 - Next smallest task: coordinator review and integration. CI on the draft PR was not run from this worktree.
