@@ -35,7 +35,7 @@ The counterpart's context is built from an allowlist: role, traits, and the fact
 
 `main` `9b7bc93` is in production. CI passes: typecheck, 792 unit tests, build, client-bundle check, and Playwright (12 passed, 3 skipped without the service-role key).
 
-On October 4 at about 10:23 AM, the builder ran the current path live on the deployed app and reported that it all worked. That path was saved Jordan, Show me first, the call, the recap, and one retry, then a call using Alex's look and voice. The report is not itemized, and it was before the landing and lobby redesign shipped. Sharing, chip-tone changes, Your data and video-loss handling are tested automatically and have not been checked live. Details: [STATUS.md](STATUS.md) and [LIVE-01](docs/tasks/LIVE-01-human-checks.md).
+On October 4 at about 10:23 AM, the builder ran the current path live on the deployed app and reported that it all worked. That path was saved Jordan, Show me first, the call, the recap, and one retry, then a call using Alex's look and voice. The report is not itemized. At about 11:20 AM the builder ran another call on the redesigned app in production and reported "all was good." Sharing, chip-tone changes, Your data and video-loss handling are tested automatically and have not been checked live. Details: [STATUS.md](STATUS.md) and [LIVE-01](docs/tasks/LIVE-01-human-checks.md).
 
 ## Run it locally
 

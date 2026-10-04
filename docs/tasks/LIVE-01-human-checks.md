@@ -74,6 +74,13 @@ Use fictional content. Stop if a scene feels wrong.
 
 ## Verification evidence
 
+- Date/time/timezone: October 4, 2026, ~11:20 AM America/Detroit
+- Mode: live
+- Outcome: human-reported, not itemized
+- Tested commit: production `9b7bc93` (redesigned landing, dashboard and lobby, PR #98) at https://speakeasyapp.tech
+- Observed result: the owner's words were "ran a call, all was good"
+- Limitations: one call, not itemized. The longer checklist above stays unchecked.
+
 - Date/time/timezone: October 4, 2026, ~10:23 AM America/Detroit
 - Mode: live
 - Outcome: human-reported, not itemized
