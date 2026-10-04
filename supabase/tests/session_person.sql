@@ -156,13 +156,13 @@ begin
     select 1 from pg_catalog.pg_proc p
     join pg_catalog.pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname = 'practice_acquire'
-      and pg_catalog.pg_get_function_identity_arguments(p.oid) = 'text, uuid, text, integer'
+      and pg_catalog.pg_get_function_identity_arguments(p.oid) = 'p_secret text, p_key uuid, p_fingerprint text, p_duration integer'
   ) then raise exception 'Old practice_acquire signature still exists'; end if;
   if not exists (
     select 1 from pg_catalog.pg_proc p
     join pg_catalog.pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname = 'practice_acquire'
-      and pg_catalog.pg_get_function_identity_arguments(p.oid) = 'text, uuid, text, integer, uuid, integer'
+      and pg_catalog.pg_get_function_identity_arguments(p.oid) = 'p_secret text, p_key uuid, p_fingerprint text, p_duration integer, p_person_id uuid, p_person_version integer'
       and p.proowner = 'practice_session_executor'::regrole and p.prosecdef
       and 'search_path=""' = any(p.proconfig)
   ) then raise exception 'New practice_acquire is not the restricted executor function'; end if;
@@ -171,12 +171,11 @@ begin
     where c.conrelid = 'public.practice_sessions'::regclass and c.contype = 'f'
       and pg_catalog.pg_get_constraintdef(c.oid) ilike '%person%'
   ) then raise exception 'Session person columns must not reference people'; end if;
-  if exists (
-    select 1 from pg_catalog.pg_auth_members m
-    join pg_catalog.pg_roles granted on granted.oid = m.roleid
-    join pg_catalog.pg_roles member on member.oid = m.member
-    where granted.rolname = 'practice_session_executor' and member.rolname = 'postgres'
-  ) then raise exception 'postgres still holds practice_session_executor'; end if;
+  -- supabase_admin grants this role to postgres (same as people_executor). The boundary
+  -- is that the executor cannot log in, bypass RLS, or be superuser.
+  if exists (select 1 from pg_catalog.pg_roles where rolname = 'practice_session_executor' and (rolcanlogin or rolbypassrls or rolsuper)) then
+    raise exception 'practice_session_executor is overprivileged';
+  end if;
   if pg_catalog.has_table_privilege('authenticated', 'public.practice_sessions', 'INSERT')
     or pg_catalog.has_table_privilege('authenticated', 'public.practice_sessions', 'UPDATE')
     or pg_catalog.has_table_privilege('authenticated', 'public.practice_sessions', 'DELETE') then
