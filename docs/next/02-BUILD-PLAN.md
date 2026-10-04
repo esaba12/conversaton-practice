@@ -29,6 +29,19 @@ This keeps the phase order in docs/31 §5 and places every decided spec on a pha
 | 3 | Bridge to real life | 3A planned date + check-in · 3B brave things · 3C appearance catalog · 3D people restyle · 3E demo seed | M3 | Two-owner SQL isolation; deletion covers new tables; preset ids server-mapped |
 | 4 | Reach | 4A clarifying chips · 4B presence ladder · 4C curveballs · 4D languages | none expected | Per-spec acceptance |
 
+## 1a. Compressed finish (owner, October 4, 01:47 EDT)
+
+Owner is short on time: build through Phase 3, combined and simplified. Phase 4 is out. This section overrides §4 and §5 where they differ.
+
+| Slice | Covers | Simplification |
+|---|---|---|
+| X Recap loop | 2A + 2B (L1, docs/30 retry, W4 after, W7, Q2 chips, `quotedLine`, A1, feedback style wording) | One worker owns recap UI, reflection server and `lib/schemas/reflection.ts` |
+| Y Keep it | 2C + 3A (L2 pocket card, L3 feedback style, B1 date, B2 check-in with the "Talked for real" mark, W4 storage) | Feedback style is device-only (`localStorage`), so Phase 2 needs no migration |
+| Z Faces + landing | 3C + 2D (B4 "Look and voice", R6 landing) | Catalog is the four starter faces/voices only (existing PALs, no new provider setup); landing has no recorded clip |
+| Seed | 3E (W8) | Coordinator, after X–Z |
+
+Cut: 3B brave things, 3D people restyle (except the "Talked for real" mark, which Y owns), the 2D recorded clip, new catalog PALs, all of Phase 4. One migration (**M23**: planned conversations with W4 fields, `people.preset_id`) with a two-owner SQL test and delete-all coverage. Exit: recipe green, hero path still passes, two-owner checks on the new tables, live not verified unless the owner runs a call.
+
 ## 2. Phase 0: Foundation
 
 Three lanes run in parallel; 0D starts after 0C merges.
