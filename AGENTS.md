@@ -77,6 +77,12 @@ Work through the build gates in order, with parallel tasks inside each gate. The
 ## Photon stretch
 Follow docs/17-PHOTON-TEXT-PRACTICE.md only after all core gates pass and the solo builder has time beyond demo/submission preparation. Use Spectrum for iMessage, share approved settings, and isolate session histories. Require verified account linking and explicit session start. No existing-chat ingestion, contact access, messages to real counterparts, unsolicited follow-ups, or automatic memory writes. Confirm current SDK/authentication/event behavior before coding; proposed internal contracts are not vendor APIs.
 
+## Cursor Cloud specific instructions
+- Node 22 from `.nvmrc` is the runtime. Install with `npm ci`, then `npx playwright install chromium`. `npm ci` does not download Playwright browsers, and `npm run test:ui` needs them.
+- `npm run dev` serves http://127.0.0.1:3000. On boot, skip that command when the URL already responds.
+- These checks pass without provider secrets: `npm run typecheck`, `npm test`, `npm run build`, `npm run check:standin-bundle` (after the build), and `npm run test:ui`. Unsigned `/practice` redirects to `/auth/sign-in`. Without the public Supabase variables, sign-in shows that configuration is pending and the hero-path browser tests skip.
+- Keep Supabase, Tavus, ElevenLabs, and OpenAI values in ignored `.env.local`. Do not commit them. Live calls are outside this automated setup.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
