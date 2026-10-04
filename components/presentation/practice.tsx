@@ -1,6 +1,8 @@
 "use client";
 
 import { useId, type ReactNode } from "react";
+import type { TranscriptTurn } from "@/lib/schemas/reflection";
+import { Captions } from "./captions";
 import styles from "./practice.module.css";
 
 export type PracticeSetupProps = {
@@ -30,6 +32,8 @@ export type PracticeCallProps = {
   isMock?: boolean;
   // A development-only fake media controller is driving the call.
   testMedia?: boolean;
+  // In-memory turns for this attempt. The captions disclosure stays collapsed until opened.
+  turns?: readonly TranscriptTurn[];
 };
 
 type IconName = "arrow" | "video" | "videoOff" | "mic" | "micOff" | "end" | "person" | "check";
@@ -82,7 +86,7 @@ function formatTime(seconds: number) {
 
 const phaseLabels = { connecting: "Connecting", live: "In conversation", interrupted: "Connection interrupted", ended: "Practice ended" };
 
-export function PracticeCall({ counterpartName, goal, phase, muted, cameraEnabled, elapsedSeconds, durationSeconds, remoteMedia, localPreview, onMuteToggle, onCameraToggle, onEnd, statusMessage, isMock = false, testMedia = false }: PracticeCallProps) {
+export function PracticeCall({ counterpartName, goal, phase, muted, cameraEnabled, elapsedSeconds, durationSeconds, remoteMedia, localPreview, onMuteToggle, onCameraToggle, onEnd, statusMessage, isMock = false, testMedia = false, turns = [] }: PracticeCallProps) {
   const id = useId();
   const ended = phase === "ended";
   const hasRemoteMedia = remoteMedia !== null && remoteMedia !== undefined && typeof remoteMedia !== "boolean";
@@ -112,6 +116,7 @@ export function PracticeCall({ counterpartName, goal, phase, muted, cameraEnable
           <button type="button" className={`${styles.control} ${styles.endControl}`} onClick={onEnd} disabled={ended} aria-label={ended ? "Practice ended" : "End practice"}><Icon name="end" /><span>{ended ? "Ended" : "End"}</span></button>
         </div>
       </div>
+      <Captions turns={turns} counterpartName={counterpartName} />
       <div className={styles.callNotes}><p className={styles.callStatus} role="status">{statusMessage}</p><p>Your camera is a local preview. The counterpart responds to your voice and cannot see you.</p>{muted && !ended && <p className={styles.mutedNote}>Your microphone is muted. The conversation is not paused.</p>}</div>
     </section>
   );

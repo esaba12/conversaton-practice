@@ -598,7 +598,7 @@ export function PracticeWorkspace() {
         <PracticeCall counterpartName={callInfo.name} goal={callInfo.goal} phase={phase} muted={muted} cameraEnabled={cameraEnabled} elapsedSeconds={elapsedSeconds} durationSeconds={plannedDurationRef.current}
           remoteMedia={remoteStream ? <StreamVideo stream={remoteStream} /> : null}
           localPreview={localStream ? <StreamVideo stream={localStream} muted /> : undefined}
-          onMuteToggle={toggleMute} onCameraToggle={() => void toggleCamera()} onEnd={() => finish("user")} statusMessage={statusMessage || undefined} testMedia={testMedia} />
+          onMuteToggle={toggleMute} onCameraToggle={() => void toggleCamera()} onEnd={() => finish("user")} statusMessage={statusMessage || undefined} testMedia={testMedia} turns={turns} />
         {phase === "ended" && callOrigin && saveOffer.open && (() => {
           const match = callOrigin.kind === "role" ? people.find((person) => sameName(person.name, callOrigin.role.name)) : undefined;
           return callOrigin.kind === "person"

@@ -7,7 +7,7 @@ function configured() { vi.stubEnv("TAVUS_API_KEY", "unit-secret"); vi.stubEnv("
 describe("Tavus server boundary", () => {
   it("requires private stateless video and recording off", () => {
     configured(); const body = conversationBody(roommate, 180);
-    expect(body).toMatchObject({ require_auth: true, audio_only: false, participant_tags: [], properties: { enable_recording: false, auto_start_recording: false, max_call_duration: 180 } });
+    expect(body).toMatchObject({ require_auth: true, audio_only: false, participant_tags: [], properties: { enable_recording: false, auto_start_recording: false, enable_closed_captions: false, max_call_duration: 180 } });
     expect(JSON.stringify(body)).not.toContain("unit-secret");
   });
   it("passes server-assembled extras to the builder and keeps the preset body unchanged without them", () => {
