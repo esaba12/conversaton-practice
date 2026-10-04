@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type Ref } from "react";
+import { useEffect, useRef, type ReactNode, type Ref } from "react";
 import { Portrait } from "@/components/ui";
 import { SaveAfterEnd } from "@/components/presentation/people-save";
 import { ReflectionPanel, type AlternativeState } from "@/components/presentation/reflection-panel";
@@ -57,6 +57,8 @@ export type RecapStageProps = {
   /** A1: supplied only when the caller can make the request. */
   alternative?: AlternativeState;
   onAlternative?: () => void;
+  /** Pocket card and the real-conversation day, shown after the save offer. */
+  keep?: ReactNode;
   focusHeading?: boolean;
 };
 
@@ -74,7 +76,7 @@ export function RecapStage({
   canRetryCleanup, onRetryCleanup, onBackToSetup, backToSetupRef,
   counterpartName, portraitSrc = null, role = null, isRetry = false, hardMomentLine = "", retryAvailable = false,
   onRetry, retryStarting = false, prediction = "", likelihoodBefore = null, likelihoodAfter = null, onLikelihoodAfterChange,
-  alternative, onAlternative, focusHeading = false,
+  alternative, onAlternative, keep, focusHeading = false,
 }: RecapStageProps) {
   const name = (counterpartName ?? (origin?.kind === "person" ? origin.person.name : origin?.role.name) ?? "").trim();
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -96,6 +98,7 @@ export function RecapStage({
     {ended && role && name && <RecapStance counterpartName={name} role={role} />}
     {ended && <SaveCard origin={origin} saveOffer={saveOffer} people={people} peopleStatus={peopleStatus} onSave={onSave} onDismissSave={onDismissSave} />}
     {ended && <p className={styles.quiet}>{RECAP_SAVE_NOTE}</p>}
+    {ended && keep}
     {ended && <p className={styles.close}>{isRetry ? RETRY_DONE_COPY : STOP_HERE_COPY}</p>}
     <div className="actions">
       {canRetryCleanup && <button type="button" className="button secondary" onClick={onRetryCleanup}>Retry closing session</button>}

@@ -65,16 +65,36 @@ export function alternativeRequestBody(input: AlternativeRequest, model: string)
   }, model);
 }
 
-// A quoted line must be text the user actually said. Transcription spacing and casing vary between
-// turns, so the comparison normalizes both sides; anything that is not inside one of the user's own
-// turns — including every counterpart line — becomes null.
-const normalize = (text: string) => text.replace(/\s+/g, " ").trim().toLocaleLowerCase();
+// A quoted line must be text the user actually said. Matching tolerates spacing and casing, but the
+// returned line is always the exact slice of the user's own turn, never the model's wording.
+export const MIN_QUOTED_CHARS = 8;
+
+function folded(text: string): { value: string; offsets: number[] } {
+  let value = "";
+  const offsets: number[] = [];
+  for (let i = 0; i < text.length; i++) {
+    if (/\s/.test(text[i])) {
+      if (value && !value.endsWith(" ")) { value += " "; offsets.push(i); }
+      continue;
+    }
+    value += text[i].toLowerCase().length === 1 ? text[i].toLowerCase() : text[i];
+    offsets.push(i);
+  }
+  if (value.endsWith(" ")) { value = value.slice(0, -1); offsets.pop(); }
+  return { value, offsets };
+}
 
 export function verifyQuotedLine(quotedLine: string | null, turns: readonly TranscriptTurn[]): string | null {
   if (!quotedLine) return null;
-  const needle = normalize(quotedLine);
-  if (!needle) return null;
-  return turns.some((turn) => turn.speaker === "user" && normalize(turn.text).includes(needle)) ? quotedLine : null;
+  const needle = folded(quotedLine).value;
+  if (needle.length < MIN_QUOTED_CHARS) return null;
+  for (const turn of turns) {
+    if (turn.speaker !== "user") continue;
+    const hay = folded(turn.text);
+    const at = hay.value.indexOf(needle);
+    if (at >= 0) return turn.text.slice(hay.offsets[at], hay.offsets[at + needle.length - 1] + 1);
+  }
+  return null;
 }
 
 // Server backstops: a support exit carries no feedback, insufficient evidence carries no

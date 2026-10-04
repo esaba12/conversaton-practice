@@ -1,4 +1,4 @@
-import { alternativeResponseSchema, reflectResponseSchema, type AlternativeRequest, type FeedbackStyle, type ReflectRequest, type Reflection } from "@/lib/schemas/reflection";
+import { alternativeResponseSchema, MAX_ALTERNATIVE_CHARS, reflectResponseSchema, type AlternativeRequest, type ReflectRequest, type Reflection } from "@/lib/schemas/reflection";
 import { requestJson } from "@/lib/session/api-client";
 
 // Sends only the in-memory turns plus the user's own goal, note and wording preference; never
@@ -14,8 +14,7 @@ export async function requestReflection(sessionId: string, input: ReflectRequest
 }
 
 // A1: one phrasing of the user's own line, only when they press the button. The goal is the only content sent.
-export async function requestAlternative(sessionId: string, goal: string, feedbackStyle?: FeedbackStyle): Promise<string | null> {
-  const body: AlternativeRequest = { goal: goal.trim() };
-  if (feedbackStyle) body.feedbackStyle = feedbackStyle;
+export async function requestAlternative(sessionId: string, goal: string): Promise<string | null> {
+  const body: AlternativeRequest = { goal: goal.trim().slice(0, MAX_ALTERNATIVE_CHARS) };
   return (await requestJson("POST", `/api/sessions/${encodeURIComponent(sessionId)}/alternative`, body, alternativeResponseSchema)).alternative;
 }

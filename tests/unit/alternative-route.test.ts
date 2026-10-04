@@ -45,7 +45,7 @@ afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
 describe("the alternative contract", () => {
   it("takes the goal line alone and returns one option or null", () => {
     expect(alternativeRequestSchema.safeParse(body).success).toBe(true);
-    expect(alternativeRequestSchema.safeParse({ ...body, feedbackStyle: "direct" }).success).toBe(true);
+    expect(alternativeRequestSchema.safeParse({ ...body, feedbackStyle: "direct" }).success).toBe(false);
     for (const field of ["turns", "selfReflection", "privateNotes", "role", "hardMomentLine", "prediction"]) {
       expect(alternativeRequestSchema.safeParse({ ...body, [field]: "x" }).success).toBe(false);
     }

@@ -65,8 +65,7 @@ export const reflectResponseSchema = z.object({ reflection: reflectionSchema }).
 // The request carries the goal alone: no transcript, no role, no private notes.
 export const MAX_ALTERNATIVE_CHARS = 200;
 export const alternativeRequestSchema = z.object({
-  goal: z.string().trim().min(1).max(200),
-  feedbackStyle: feedbackStyleSchema.optional(),
+  goal: z.string().trim().min(1).max(MAX_ALTERNATIVE_CHARS),
 }).strict();
 export type AlternativeRequest = z.infer<typeof alternativeRequestSchema>;
 export const alternativeModelOutputSchema = z.object({

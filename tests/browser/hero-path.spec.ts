@@ -42,7 +42,7 @@ test.describe("hero path", () => {
     await admin.auth.admin.deleteUser(userId);
   });
 
-  test("lobby to recap with teardown at every stage", async ({ page }) => {
+  async function prepare(page: Page) {
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message.slice(0, 200)));
     page.on("console", (message) => { if (message.type() === "error" && !/Failed to load resource/.test(message.text())) errors.push(message.text().slice(0, 200)); });
@@ -74,8 +74,7 @@ test.describe("hero path", () => {
     });
 
     const startBodies: Record<string, unknown>[] = [];
-    let ends = 0;
-    let reflects = 0;
+    const count = { ends: 0, reflects: 0 };
     const sessionId = randomUUID();
     const sessionBody = (status: string) => JSON.stringify({ session: { id: sessionId, status, expiresAt: new Date(Date.now() + 600_000).toISOString(), cleanup: status === "ended" ? "confirmed" : "not_started" } });
     await page.route("**/api/sessions", async (route) => {
@@ -85,8 +84,8 @@ test.describe("hero path", () => {
       await route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ session: { id: sessionId, status: "connecting", expiresAt, cleanup: "not_started" }, credential: { provider: "tavus", roomUrl: "https://hero.daily.co/room", meetingToken: "fake", expiresAt } }) });
     });
     await page.route("**/api/sessions/*/connected", (route) => route.fulfill({ status: 200, contentType: "application/json", body: sessionBody("active") }));
-    await page.route("**/api/sessions/*/end", (route) => { ends++; return route.fulfill({ status: 200, contentType: "application/json", body: sessionBody("ended") }); });
-    await page.route("**/api/sessions/*/reflect", (route) => { reflects++; return route.abort(); });
+    await page.route("**/api/sessions/*/end", (route) => { count.ends++; return route.fulfill({ status: 200, contentType: "application/json", body: sessionBody("ended") }); });
+    await page.route("**/api/sessions/*/reflect", (route) => { count.reflects++; return route.abort(); });
 
     const liveAudio = () => page.evaluate(() => ((window as unknown as { __tracks: MediaStreamTrack[] }).__tracks).filter((t) => t.kind === "audio" && t.readyState === "live").length);
     const opened = () => page.evaluate(() => (window as unknown as { __tracks: MediaStreamTrack[] }).__tracks.length);
@@ -96,12 +95,21 @@ test.describe("hero path", () => {
     };
     const backToMeet = () => page.getByRole("button", { name: /Back to .*card/ });
 
+    const signIn = async () => {
+      await page.goto("/auth/sign-in");
+      await page.getByLabel("Email", { exact: true }).fill(email);
+      await page.getByLabel("Password", { exact: true }).fill(password);
+      await page.getByRole("button", { name: "Sign in", exact: true }).click();
+      await expect(page.getByRole("heading", { name: "Who do you want to practice with?" })).toBeVisible({ timeout: 30_000 });
+    };
+    return { errors, startBodies, count, liveAudio, opened, allowMic, backToMeet, signIn };
+  }
+
+  test("lobby to recap with teardown at every stage", async ({ page }) => {
+    const { errors, startBodies, count, liveAudio, opened, allowMic, backToMeet, signIn } = await prepare(page);
+
     // Lobby and briefing: no media.
-    await page.goto("/auth/sign-in");
-    await page.getByLabel("Email", { exact: true }).fill(email);
-    await page.getByLabel("Password", { exact: true }).fill(password);
-    await page.getByRole("button", { name: "Sign in", exact: true }).click();
-    await expect(page.getByRole("heading", { name: "Who do you want to practice with?" })).toBeVisible({ timeout: 30_000 });
+    await signIn();
     await page.getByRole("button", { name: "Practice with Jordan" }).click();
     await expect(page.getByRole("heading", { name: /What.s going on with/ })).toBeVisible();
     await page.getByLabel(/What do you want to do/).fill(GOAL);
@@ -134,8 +142,8 @@ test.describe("hero path", () => {
     await page.getByRole("button", { name: "End practice", exact: true }).click();
     await expect(page.getByRole("heading", { name: /Your turn/ })).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText("HERO-TURN", { exact: false })).toHaveCount(0);
-    expect(ends).toBe(1);
-    expect(reflects).toBe(0);
+    expect(count.ends).toBe(1);
+    expect(count.reflects).toBe(0);
     await expect.poll(liveAudio).toBe(0);
 
     // Your turn → green room → ringing: Cancel releases the microphone and ends the session.
@@ -147,7 +155,7 @@ test.describe("hero path", () => {
     await page.getByRole("button", { name: "Cancel call" }).click();
     await expect(page.getByRole("button", { name: "Call Jordan" }).first()).toBeVisible();
     await expect.poll(liveAudio).toBe(0);
-    expect(ends).toBe(2);
+    expect(count.ends).toBe(2);
     expect(await page.getByRole("button", { name: "Show me first" }).count()).toBe(0);
 
     // Own call: preset only, no private goal.
@@ -164,7 +172,45 @@ test.describe("hero path", () => {
     // End → recap: session ended, microphone released.
     await page.getByRole("button", { name: "End practice", exact: true }).click();
     await expect(page.getByRole("button", { name: "Back to setup" })).toBeVisible({ timeout: 10_000 });
-    expect(ends).toBe(3);
+    expect(count.ends).toBe(3);
+    await expect.poll(liveAudio).toBe(0);
+    expect(errors).toEqual([]);
+  });
+
+  test("one-moment retry from the recap", async ({ page }) => {
+    const { errors, startBodies, count, liveAudio, allowMic, signIn } = await prepare(page);
+    await signIn();
+    await page.getByRole("button", { name: "Practice with Jordan" }).click();
+    await page.getByLabel(/What do you want to do/).fill(GOAL);
+    await page.getByRole("button", { name: "Set up the scene" }).click();
+    await page.getByRole("button", { name: "Skip to my turn" }).click();
+    await page.getByLabel(/When it gets hard, I.ll say/).fill("HARD-MARKER I need one thing moved");
+    await allowMic(page);
+    await page.getByRole("button", { name: "I’m ready" }).click();
+    await expect(page.getByRole("heading", { name: /Call with Jordan/ })).toBeVisible({ timeout: 10_000 });
+    await page.getByRole("button", { name: "End practice", exact: true }).click();
+
+    // Recap: the reflection starts itself after the grace; the self-check offers one retry.
+    await expect(page.getByRole("button", { name: "Back to setup" })).toBeVisible({ timeout: 10_000 });
+    await expect.poll(() => count.reflects, { timeout: 5_000 }).toBeGreaterThan(0);
+    await expect(page.getByText("Make a pocket card")).toBeVisible();
+    await page.getByRole("button", { name: "No", exact: true }).click();
+    await page.getByRole("button", { name: "Try that moment once" }).click();
+    await page.getByLabel(/They open with this/).fill("RETRY-OPENING So, what did you want to talk about?");
+    await page.getByRole("button", { name: "Call Jordan" }).click();
+    await expect(page.getByRole("heading", { name: /Call with Jordan/ })).toBeVisible({ timeout: 10_000 });
+
+    // The retry body is the reviewed role with only the opening replaced: no goal, line or transcript.
+    const retry = startBodies.at(-1) as { role?: { opening?: string }; durationSeconds?: number };
+    expect(Object.keys(retry).sort()).toEqual(["durationSeconds", "idempotencyKey", "role"]);
+    expect(retry.durationSeconds).toBe(180);
+    expect(retry.role?.opening).toBe("RETRY-OPENING So, what did you want to talk about?");
+    expect(JSON.stringify(startBodies)).not.toMatch(/GOAL-MARKER|HARD-MARKER|HERO-TURN/);
+
+    await page.getByRole("button", { name: "End practice", exact: true }).click();
+    await expect(page.getByText("You tried the line you planned. You can stop here.")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText("Did you say it?")).toHaveCount(0);
+    expect(count.ends).toBe(2);
     await expect.poll(liveAudio).toBe(0);
     expect(errors).toEqual([]);
   });

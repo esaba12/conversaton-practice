@@ -82,10 +82,12 @@ describe("quotedLine, the user's own words", () => {
     { speaker: "user" as const, text: "Can we agree to clean the kitchen by ten each night?" },
   ];
 
-  it("keeps a verbatim substring of a user turn, ignoring spacing and case", () => {
+  it("returns the user's exact words, matching across spacing and case", () => {
     expect(verifyQuotedLine("clean the kitchen by ten", spoken)).toBe("clean the kitchen by ten");
-    expect(verifyQuotedLine("Clean the  kitchen\nby ten", spoken)).toBe("Clean the  kitchen\nby ten");
+    expect(verifyQuotedLine("CLEAN the  kitchen\nby ten", spoken)).toBe("clean the kitchen by ten");
     expect(verifyQuotedLine(spoken[1].text, spoken)).toBe(spoken[1].text);
+    expect(verifyQuotedLine("can we", spoken)).toBeNull();
+    expect(verifyQuotedLine("a", spoken)).toBeNull();
   });
 
   it("drops counterpart text, paraphrases and anything spanning two turns", () => {

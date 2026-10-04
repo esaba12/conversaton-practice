@@ -157,3 +157,9 @@ The private fields read here (`hardMomentLine`, `prediction`, the likelihoods) s
 - **Pocket card (L2)** and **Save/Update** stay where they are; the recap leaves room for the pocket-card action from slice Y.
 - **W4 before.** The green room half (1D) already writes `prediction` and `likelihoodBefore`; this slice only reads them.
 - `components/presentation/reflection.module.css` gained the quote, status and alternative classes (tokens only). It is still on the UI-rules raw-color allow list from 0C; the new rules add no raw colors.
+
+## Coordinator integration (02:30)
+- Rebased on `main` `e759c71` (after 1E and Y). Workspace wiring applied: retry goes through `launch(..., { retry: true })`, so `beginRetry` and `retryAccepted` run only after the server accepts the call (one call, one retry; a failed start keeps the retry). Retry duration is `RETRY_DURATION_SECONDS`; a saved person restarts through `startSavedPersonSession` with only the opening changed.
+- Recap also shows Y's "Make a pocket card" (collapsed) and, for a saved person, the planned-day section. Reflection sends the device feedback style.
+- Privacy review (opus-thinking): fixed `verifyQuotedLine` to return the exact slice of the user's turn with an 8-character minimum; removed `feedbackStyle` from the A1 alternative request (goal only, truncated to 200). The 3-alternatives cap is per server process memory, not durable.
+- Evidence: typecheck clean; 776 unit tests; production build; Playwright 11 passed / 1 skipped with real Auth, including the new `hero-path` retry test (retry body keys are `durationSeconds`, `idempotencyKey`, `role` only; no goal, hard-moment line or transcript; two ends; mic released; retry recap copy shown). Live not verified.
