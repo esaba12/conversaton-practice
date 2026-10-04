@@ -1,7 +1,7 @@
 # APPEAR-01: Stock face and premade voice for a saved person
 
-Status: planned
-Updated: October 3, 2026, 20:00 EDT
+Status: review
+Updated: October 4, 2026, 10:15 AM America/Detroit
 Assigned writer: unassigned
 Coordinator: Cursor coordinator session
 Gate: after submission, if the human still wants it. docs/10 cut order drops this catalog before generation, live video, or sharing.
@@ -9,6 +9,15 @@ Requirements/tests: P03 “preset catalog is decided for later.” docs/00 appea
 GitHub issue: not opened
 Pull request: not opened
 CI run: not run
+
+## Built October 4 (docs remaining until this update)
+
+The picker shipped in [PR #87](https://github.com/esaba12/conversaton-practice/pull/87) (`9689b15`), narrower than the original catalog: Default plus Alex, Ellis, Sam, and Jordan. Server mapping, unit tests for the mapping and the start body, and the two-owner `person_set_preset` SQL check are recorded on [Z](Z-faces-landing.md). This update covers the remaining docs: docs/00, docs/02, docs/06, and docs/26.
+
+Still open: one live call with a non-default face. The owner runs it. Issue #37 stays open until that call is reported and these docs are on `main`. No upload, no cloning, no provider ids in the browser.
+
+- [x] docs/00, docs/02, docs/06, and docs/26 describe the four-starter picker
+- [ ] One live call with a non-default face (owner)
 
 ## Assignment and isolation
 
@@ -44,10 +53,19 @@ Catalog rules when scheduled:
 
 - Inputs/outputs/errors: person create/update gains `appearancePreset`. Start body for a saved person stays id + version. The server loads the preset.
 - Shared change: coordinator adds the field and the server map. Workers do not invent provider ids.
-- Updated specs: docs/00, docs/02, docs/06, docs/26 “later” section.
+- Updated specs: docs/00, docs/02, docs/06, docs/26. October 4: those four now describe the built picker. The “later / not built” lines were replaced.
 - Decision/source: docs/00, October 3, 17:23 EDT.
 
 ## Verification evidence
+
+- Date/time/timezone: October 4, 2026, 10:15 AM America/Detroit
+- Mode: static
+- Outcome: pass for the doc update only. No typecheck, unit test, build, browser run, or live call in this change.
+- Tested commit/dirty state: docs on `cursor/face-picker-docs-3689`, based on `main` `75f9c7d`
+- Exact command or manual steps: read `components/presentation/people-look.tsx`, `lib/media/presets.server.ts`, `lib/session/server.ts`, migration `20261004020000_planned_and_presets.sql`, and [Z](Z-faces-landing.md), then updated the four specs to match.
+- Exit code: not-run (no test command)
+- Observed result/artifact: the specs name Default plus the four starters, the preset route, and the live-not-verified call.
+- Limitations: behavior is taken from the merged implementation and the Z record. This pass did not re-run those tests and did not start a call.
 
 - Date/time/timezone: October 3, 2026, 20:00 EDT
 - Mode: not-run

@@ -1,7 +1,7 @@
 # DEMO-01: Demo and submission preparation
 
 Status: integrated
-Updated: October 3, 2026, 19:30 EDT
+Updated: October 4, 2026, 10:00 AM America/Detroit
 Assigned writer: coordinator
 Coordinator: Cursor coordinator session
 Gate: submission (docs/10, docs/11, docs/25 Prompt B, docs/28)
@@ -9,6 +9,67 @@ Requirements/tests: N/A — documentation only
 GitHub issue: not opened
 Pull request: not opened
 CI run: not run
+
+## Devpost paste (October 4, morning)
+
+Paste these fields. The October 3 drafts lower in this file still say the app is local-only, that Google sign-in is next, and that a look-and-voice picker is not built. Those three statements are stale. This section is the one to submit from.
+
+Working title: **Conversation practice**. Issue #34 is still open. Use a name only if you have chosen one. Do not invent one for the form.
+
+**Demo URL:** https://conversation-practice-zeta.vercel.app
+
+That is the app. Do not put https://conversation-practice-site.vercel.app in the demo field. That host is a static preview.
+
+Sign-in is email and password. The demo account is `DEMO_EMAIL` / `DEMO_PASSWORD` in `.env.local`. Before you record, reset it with `node --env-file=.env.local scripts/demo/seed.mjs --checkin`. Do not put the password in Devpost, the repo, or an issue.
+
+### Inspiration
+
+I wanted a first try at a conversation I kept putting off. Someone else can play my side once, so I can hear how it might go, and then I play myself. The other person in the app is fictional.
+
+### What it does
+
+Conversation practice is a FaceTime-style rehearsal for an everyday conversation. You sign in, pick a fictional person such as Jordan, a manager, or describe a situation of your own, and you review the setup before anyone talks. You can ask the app to show you first: a stand-in says the line you planned while you play the other person. Then you call on live video, and the counterpart talks back. You can end whenever you want. After the call there is a short recap you can skip, and if you wrote a line for the hard moment you can try that moment once. You can save the person, and they know only the facts you choose to share. You can also give a saved person one of four stock faces and premade voices. Each practice starts fresh. Private notes stay off the call. There is no score, and the product does not keep a recording or a transcript for you to replay.
+
+### How we built it
+
+Next.js App Router and TypeScript. Sign-in, and the data you choose to keep, go through Supabase Auth and PostgreSQL. Each account can read only its own rows. The live video call is Tavus conversational video. The speech is ElevenLabs text-to-speech on that Tavus setup. OpenAI writes the editable setup from the situation you describe, and the optional recap. The browser does not receive provider ids or secrets.
+
+### What has been checked, and what has not
+
+Checked on a live call by the builder on October 3: an earlier version of the call, with a talking counterpart, one interruption, and the microphone releasing on End, plus a generated situation that same afternoon. Checked by automation on current `main`: typecheck, 786 unit tests, a production build, a client-bundle check that provider ids stay off the page, and a Playwright walk of the hero path (13 passed, 1 production-only skip) with real sign-in and a faked video start. The deployed site loads, and opening `/practice` while signed out redirects to sign-in.
+
+Not checked on a live call: the current path. That includes the lobby, Show me first, the recap, trying one moment again, choosing a look and voice, and the same path on the deployed site. Say those are live-checked only after you have done the call and they worked.
+
+### Challenges
+
+A real talking-video call through Tavus with ElevenLabs speech. Keeping private notes and unshared facts out of what the counterpart hears. Making End release the microphone even when the network call is slow.
+
+### What's next
+
+A live pass of the current path, including one call that uses a look other than the default. A project name, if you pick one.
+
+### Built with
+
+Tavus, ElevenLabs, OpenAI, Supabase, Next.js, Daily
+
+Select Actually Intelligent. Add an ElevenLabs category only if you will stand on the stacking rules in docs/16. Those rules were not confirmed with the organizers.
+
+## Two-minute demo video
+
+Record on https://conversation-practice-zeta.vercel.app. Be signed in before you start, on a window wider than 700px so the goal stays visible. Headphones. Fictional content only. If a call fails, end it and say the file is prerecorded. Do not present a faked or prerecorded clip as live.
+
+"Try that moment once" appears only after you fill "When it gets hard, I'll say" and, on the recap, answer "No" to "Did you say it?"
+
+| Time | Do and say |
+| --- | --- |
+| 0:00–0:08 | Already on the lobby. "This is a rehearsal for a conversation I've been putting off. The other person is fictional. It does not predict anyone real." |
+| 0:08–0:25 | Tap "Practice with Jordan." On "What's going on with Jordan," leave the seeded situation. In "What do you want to do?" type "Ask to move one project this week." In "When it gets hard, I'll say" type "I can move the date, and I still need one project off my plate." Tap "Set up the scene." |
+| 0:25–0:48 | Tap "Show me first." Allow the microphone. Tap "I'm ready." You are playing Jordan. Let the stand-in say the line. One short reply, then "End practice." The heading is "Your turn." |
+| 0:48–1:28 | Tap "Call Jordan." Allow the microphone. Tap "I'm ready." Wait until Jordan is on video and speaking. Two turns. Interrupt once while Jordan is talking, then say the request again. |
+| 1:28–1:52 | "End practice." On the recap, tap "Skip" if the reflection is still working. Under "Did you say it?" tap "No," then "Try that moment once." Shorten the opening if you want. Tap "Call Jordan," let one line play, then "End practice." |
+| 1:52–2:00 | "Tavus does the video, ElevenLabs the voice, OpenAI the setup and the recap, and Supabase the account. The early calls were live-checked." Add that this path was live-checked only if this take is that check and it worked. |
+
+If "Show me first" is disabled, skip that beat and say it is unavailable. Do not start a second live call while one is still connected.
 
 ## Assignment and isolation
 
@@ -40,7 +101,7 @@ Times are America/Detroit. Speak to a judge who has not used the app. Use a **ne
 
 | Time | Say / do |
 | --- | --- |
-| 0:00–0:20 | “I wanted to practice conversations I’ve been putting off. A therapist once played the other person for me. SpeakEasy is a rehearsal tool, not therapy, and it does not predict anyone real.” Sign in if needed (already signed in for speed). |
+| 0:00–0:20 | “I wanted to practice a conversation I’ve been putting off. Someone can play my side once, then I play myself. The other person here is fictional, and this does not predict anyone real.” Sign in if needed (already signed in for speed). |
 | 0:20–0:40 | Describe a **new** everyday situation (e.g. asking a fictional coworker to stop booking over lunch). Leave private notes filled with something the counterpart must not know. Generate → **edit one field** (name or style) so judges see the review step. Point at About me / sharing only if time: “Each saved person knows only what I share.” |
 | 0:40–1:55 | Start. Wait for talking video. Three to five turns. **Interrupt once** mid-reply. Restate the request. Counterpart should stay in character. If video fails, End and say the backup recording is labelled prerecorded — do not pretend it is live. |
 | 1:55–2:15 | End. Optional one-line self-note → Get a short reflection **or Skip** if the model is slow. Show “nothing here is saved.” Dismiss or skip Save unless you want a named person for Q&A. |
@@ -67,7 +128,7 @@ Still photos if video fails: the 390 px screenshots in ignored `artifacts/local/
 
 ## Devpost drafts
 
-**Title.** SpeakEasy
+Superseded for submission by **Devpost paste (October 4, morning)** at the top of this file. The paragraphs below were written October 3, before the app was deployed and before the current flow shipped. Do not paste them into Devpost.
 
 **What it does.** SpeakEasy is a FaceTime-style rehearsal for an everyday conversation you have been putting off. You describe the situation, review an editable fictional counterpart, and talk live on video. Private preparation notes stay off the call. After End you can optionally reflect, and you can explicitly save the person and choose what they know about you. Each practice starts fresh.
 
@@ -118,6 +179,11 @@ Organizer confirmation still needed: stacking of the two ElevenLabs awards; tabl
 Replace the 2:15 memory-proposal beat with Save-person / Your data. Replace “approved memory” in technical contribution with explicit Save and per-person sharing. Add the claims list and the 11:30 target already present. Judging-demo line about “approve a preference” is outdated vs G3.
 
 ## Verification evidence
+
+- Date/time/timezone: October 4, 2026, 10:05 AM America/Detroit
+- Mode: static
+- Outcome: pass for copy only. Devpost was not submitted. The two-minute script was not timed on a recording. No live call was run for this update.
+- What the paste claims: the deployed URL is the one in STATUS from the owner's deploy of `fc94cc8` and later `main` `75f9c7d`. Live-checked claims are limited to the October 3 G1 and G2 calls recorded in STATUS. Automated counts (786 unit tests, Playwright 13 passed / 1 skip) are the compressed-finish evidence in STATUS, not a new run this morning.
 
 - Date/time/timezone: October 3, 2026, 19:30 EDT
 - Mode: static

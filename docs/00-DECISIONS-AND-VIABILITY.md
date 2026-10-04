@@ -17,12 +17,13 @@ The founder's experience is specific: a therapist played the other person so he 
 - Sign-in is required before all persona/conversation design and practice. This supersedes anonymous sign-in and guest-first entry.
 - Visual direction: warm and minimal, with crisp, modern typography, spacing, and controls.
 
-## Appearance presets, October 3, 17:23 EDT
-Decided, not built. A closer face and voice make practice more useful, so a saved person should be able to look and sound like that relationship. For now the user picks from a short preset catalog: stock Tavus faces and premade ElevenLabs voices. There is no photo upload, no generated likeness, and no voice cloning. The counterpart stays fictional; a preset does not make them the real person and does not change traits or which About-me facts they know.
+## Appearance presets
 
-This is not part of the in-progress G3 gate. Do not add a picker, person fields, or extra provider characters while G3 is open. Current calls keep the one configured face and voice.
+Decided October 3, 17:23 EDT. Built October 4 as the four-starter picker ([PR #87](https://github.com/esaba12/conversaton-practice/pull/87), issue #37). A saved person can keep the default look or use one of the four starters: Alex (roommate), Ellis (professor), Sam (saying no), or Jordan (manager). Each starter is a stock Tavus face and a premade ElevenLabs voice, on its own PAL. There is no photo upload, no generated likeness, and no voice cloning. The choice does not change traits or which About-me facts that person knows, and it does not make the counterpart a real person.
 
-When it is scheduled: the face is already chosen per call. The voice is fixed on the immutable PAL, so each distinct premade voice needs its own PAL with the same roleplay settings (docs/06). The person stores a preset id; the server maps it to provider ids. The browser does not send those ids. Do not create the extra PALs until that work starts. If demo time is short, drop the catalog before cutting generation, live video, or G3 sharing (docs/10).
+The picker is on the saved-person page, under "Look and voice." The browser sends a starter name (`roommate`, `professor`, `decline`, `manager`) or null for Default. It never sends a provider id. The server maps that name to the starter's face and PAL. The larger catalog of about eight faces was cut with Phase 4. The stand-in face stays reserved and is not one of the four.
+
+A live call with a non-default face has not been reported. Until that call, this picker is automated-tested and **live not verified**. Details: [docs/02](02-UX.md), [docs/06](06-ELEVENLABS.md), [docs/26](26-PEOPLE-AND-SHARING.md).
 
 ## One-moment retry, October 3, 21:26 EDT
 
@@ -78,7 +79,7 @@ The owner corrected the origin story: in the original practice, the other person
 | D8 | No reminders outside the app. The real-conversation date is optional, a side option, never a required or repeated prompt. | B1, B2 |
 | D17 | The owner gives the pitch himself. The product never uses "therapy" or "therapist". | W9 |
 | UI deps (22:35) | Add `lucide-react` for all icons and `motion` for springs, staggers and in-screen layout animation, both with reduced-motion fallbacks. Screen-to-screen morphs stay on React `<ViewTransition>`. Rive is not approved. | [05-UI-UPGRADE](next/05-UI-UPGRADE.md) §8 |
-| Faces (22:41) | More faces in the product, split across phases. **Phase 1:** real portraits (Tavus face thumbnails, served by preset id) and a distinct stock face plus premade voice for each starter (Jordan, Alex, Ellis, Sam). **Phase 3:** the full catalog of about 8 faces with 4–6 premade voices and the "Look and voice" picker for saved people (B4). Same limits as before: stock faces and premade voices only, no photo upload, likeness or cloning; the stand-in face stays reserved. | B4, W6; [02-BUILD-PLAN](next/02-BUILD-PLAN.md) §3 C1 |
+| Faces (22:41) | More faces in the product, split across phases. **Phase 1:** real portraits (Tavus face thumbnails, served by preset id) and a distinct stock face plus premade voice for each starter (Jordan, Alex, Ellis, Sam). **Phase 3:** the full catalog of about 8 faces with 4–6 premade voices and the "Look and voice" picker for saved people (B4). Same limits as before: stock faces and premade voices only, no photo upload, likeness or cloning; the stand-in face stays reserved. **Built October 4, narrower than this row:** the picker shipped with Default plus these four starters only. The rest of the catalog was cut. | B4, W6; [02-BUILD-PLAN](next/02-BUILD-PLAN.md) §3 C1 |
 
 ## Research direction
 NICE recommends disorder-specific CBT that includes behavioral experiments or graduated exposure, depending on the model, with practice beyond treatment sessions (S05). CCI's assertiveness materials cover expressing needs, saying no, responding to criticism, and progressively practicing chosen challenges (S39). These sources support focusing practice on a concrete action followed by an optional real-world step; they do not establish this AI app as treatment.
