@@ -1,6 +1,7 @@
 import "server-only";
 import { createHmac } from "node:crypto";
 import { decline } from "@/fixtures/decline";
+import { manager } from "@/fixtures/manager";
 import { professor } from "@/fixtures/professor";
 import { roommate } from "@/fixtures/roommate";
 import { loadPersonContext } from "@/lib/data/person-context";
@@ -18,7 +19,7 @@ function capability() {
   return secret;
 }
 const startFailed = () => new AppError("PROVIDER_UNAVAILABLE", "The call could not be started. Wait a moment before trying again.", 503, false);
-const presetRoles: Record<SessionPreset, RoleContext> = { roommate, professor, decline };
+const presetRoles: Record<SessionPreset, RoleContext> = { roommate, professor, decline, manager };
 
 // Leaves cleanup pending/unresolved unless the remote call is verified ended and hard-deleted.
 async function cleanUp(db: Db, secret: string, row: SessionRow) {
@@ -42,6 +43,10 @@ export function startFingerprint(role: RoleContext, durationSeconds: 180 | 300, 
 }
 
 export async function startSession(db: Db, input: z.output<typeof startRequestSchema>): Promise<StartResponse> {
+  // C1 staging: these branches are frozen in the contract but built in 1C (situation, openingOverride) and 1G (stand-in).
+  if ("standIn" in input || "situation" in input || "openingOverride" in input) {
+    throw new AppError("VALIDATION_ERROR", "This kind of start isn't available yet.", 400);
+  }
   const secret = capability();
   assertTavusConfigured();
   let role: RoleContext, extras: RoleExtras | undefined, fingerprint: string;

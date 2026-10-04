@@ -5,6 +5,7 @@ import { personToRole } from "@/lib/schemas/people";
 import { sessionResponseSchema, startRequestSchema, startResponseSchema } from "@/lib/schemas/session";
 import { decline } from "@/fixtures/decline";
 import { professor } from "@/fixtures/professor";
+import { manager } from "@/fixtures/manager";
 import { roommate } from "@/fixtures/roommate";
 
 const identity = vi.hoisted(() => ({ requireIdentity: vi.fn() }));
@@ -151,11 +152,11 @@ describe("session routes", () => {
     expect(custom).toBe(startFingerprint(reviewed, 180, SECRET));
   });
 
-  it("maps professor and decline to their fixtures and rejects a fourth preset", async () => {
+  it("maps professor, decline and manager to their fixtures and rejects an unknown preset", async () => {
     handlers.practice_acquire = () => ({ data: { created: true, session: row() } });
     handlers.practice_bind = (args) => ({ data: row({ provider_conversation_id: args.p_provider_id }) });
     const fetchMock = tavus();
-    for (const [preset, fixture] of [["professor", professor], ["decline", decline]] as const) {
+    for (const [preset, fixture] of [["professor", professor], ["decline", decline], ["manager", manager]] as const) {
       expect((await start(post("/api/sessions", { idempotencyKey: key, preset, durationSeconds: 180 }))).status).toBe(201);
       const sent = JSON.parse(String(fetchMock.mock.calls.at(-1)?.[1].body));
       expect(sent.conversational_context).toBe(buildRoleContext(fixture));
@@ -165,7 +166,14 @@ describe("session routes", () => {
     }
     const providerCalls = fetchMock.mock.calls.length;
     const storageCalls = rpc.mock.calls.length;
-    await errorOf(await start(post("/api/sessions", { idempotencyKey: key, preset: "manager", durationSeconds: 180 })), 400);
+    await errorOf(await start(post("/api/sessions", { idempotencyKey: key, preset: "boss", durationSeconds: 180 })), 400);
+    // C1 staging: frozen branches that 1C and 1G build are rejected before any storage or provider call.
+    const situation = { publicContext: "x", opening: "Hi.", constraints: [], challenge: "neutral", pace: "patient" };
+    for (const body of [
+      { idempotencyKey: key, preset: "manager", durationSeconds: 180, openingOverride: "Hey." },
+      { idempotencyKey: key, personId: crypto.randomUUID(), expectedVersion: 1, situation, durationSeconds: 180 },
+      { idempotencyKey: key, standIn: true, goal: "Ask for one thing.", preset: "manager", durationSeconds: 180 },
+    ]) await errorOf(await start(post("/api/sessions", body)), 400);
     await errorOf(await start(post("/api/sessions", { idempotencyKey: key, preset: "professor", privateNotes: "PRIVATE-NOTE", durationSeconds: 180 })), 400);
     expect(fetchMock.mock.calls.length).toBe(providerCalls);
     expect(rpc.mock.calls.length).toBe(storageCalls);

@@ -349,7 +349,7 @@ Leaving the green room (back, sign-out, page hide) releases the mic stream used 
 
 ## A1. Another way to say it (owner answer D3, "whatever is best")
 
-**Chosen shape.** Under "Next time" on the recap, a button "Another way to say it". It is never shown automatically. On press, the reflection model returns **one** phrasing (≤200) of the user's own goal line, preserving their meaning and request, labeled "One option. Use your own words if you prefer." A second press is not offered (no list of variants). It is never spoken by the counterpart and never inserted into a retry opening.
+**Chosen shape.** Under "Next time" on the recap, a button "Another way to say it". It is never shown automatically. On press, the reflection model returns **one** phrasing (≤200) of the user's own goal line, preserving their meaning and request, labeled "One option. Use your own words if you prefer." A second press is not offered (no list of variants). It is never spoken by the counterpart and never inserted into a retry opening. The Show me first stand-in (W10) may say the user's own line, never an alternative the app wrote.
 
 **Why this shape.** Users and competitors want concrete words [R01, R06]; autistic participants rated suggestions highly [R06 §3]. One optional option on request keeps docs/07's intent (no optimal script, no line-by-line critique) and avoids rehearsal loops.
 

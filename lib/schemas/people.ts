@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { aboutMeFactTextSchema, roleContextSchema, traitChipsSchema, type RoleContext, type TraitChips } from "./role-context";
+import { aboutMeFactTextSchema, baseRoleContextSchema, roleContextSchema, traitChipsSchema, type RoleContext, type TraitChips } from "./role-context";
+import { sessionPresetSchema, situationSchema } from "./situation";
 
 // G3 contracts (docs/26). Every route requires sign-in before reading the body and is owner-scoped;
 // another user's IDs return 404 NOT_FOUND without revealing whether they exist.
@@ -14,15 +15,20 @@ export const aboutMeWriteSchema = z.object({ text: aboutMeFactTextSchema }).stri
 export const aboutMeListResponseSchema = z.object({ facts: z.array(aboutMeFactSchema).max(MAX_ABOUT_ME_FACTS) }).strict();
 export const aboutMeFactResponseSchema = z.object({ fact: aboutMeFactSchema }).strict();
 
-// A saved person is a role plus trait chips; `relationship` maps to RoleContext.role.
-const { role: relationship, ...roleFields } = roleContextSchema.shape;
-export const personFieldsSchema = z.object({ ...roleFields, relationship, traits: traitChipsSchema }).strict();
+// A saved person is a role plus trait chips; `relationship` maps to RoleContext.role. The scenario fields are the person's default situation (UI label).
+// Stance chips belong to a situation, not to the person.
+// background (M1): who this person is, 1–600. Optional on writes; the server stores left(publicContext, 600) when absent and always returns it after M1.
+const { role: relationship, ...roleFields } = baseRoleContextSchema.shape;
+export const personBackgroundSchema = z.string().trim().min(1).max(600);
+export const personFieldsSchema = z.object({ ...roleFields, relationship, traits: traitChipsSchema, background: personBackgroundSchema.optional() }).strict();
 export type PersonFields = z.infer<typeof personFieldsSchema>;
+// hasPracticed (W10): server-derived, true when the owner has an ended kind='practice' session with this person. Optional until 1G derives it.
 export const personSchema = z.object({
   ...personFieldsSchema.shape,
   id: z.uuid(),
   version: versionSchema,
   sharedFactIds: z.array(z.uuid()).max(MAX_ABOUT_ME_FACTS),
+  hasPracticed: z.boolean().optional(),
   createdAt: timestamp,
   updatedAt: timestamp,
 }).strict();
@@ -36,6 +42,18 @@ export const sharedFactsRequestSchema = z.object({
 export const peopleListResponseSchema = z.object({ people: z.array(personSchema).max(MAX_PEOPLE) }).strict();
 export const personResponseSchema = z.object({ person: personSchema }).strict();
 export const deletedResponseSchema = z.object({ deleted: z.literal(true) }).strict();
+
+// P2 saved situations (M1). They never enter the person's identity or context, and saving one does not bump the person's version.
+export const MAX_PERSON_SITUATIONS = 5;
+export const personSituationLabelSchema = z.string().trim().min(1).max(60);
+export const personSituationSchema = z.object({ id: z.uuid(), label: personSituationLabelSchema, situation: situationSchema, createdAt: timestamp, updatedAt: timestamp }).strict();
+export type PersonSituation = z.infer<typeof personSituationSchema>;
+export const createPersonSituationRequestSchema = z.object({ label: personSituationLabelSchema, situation: situationSchema }).strict();
+export const personSituationsResponseSchema = z.object({ situations: z.array(personSituationSchema).max(MAX_PERSON_SITUATIONS) }).strict();
+export const personSituationResponseSchema = z.object({ situation: personSituationSchema }).strict();
+
+// W10: presets the owner has an ended kind='practice' session with (M1 practice_sessions.preset).
+export const practiceHistoryResponseSchema = z.object({ practicedPresets: z.array(sessionPresetSchema) }).strict();
 
 // For the user's own reference only. Never joined to people, never shareable, never read by the context builder.
 export const privatePrepSchema = z.object({ notes: z.string().max(1000), updatedAt: timestamp.nullable() }).strict();
@@ -65,3 +83,7 @@ export function roleToPersonFields(role: RoleContext, traits: TraitChips = {}): 
 //        404 person; 400 VALIDATION_ERROR for an unknown/foreign fact ID; 409 VERSION_CONFLICT. All-or-nothing.
 // GET    /api/private-prep                     -> 200 privatePrepResponseSchema (empty notes, updatedAt null when none)
 // PUT    /api/private-prep (privatePrepWriteSchema, ≤ 2048)     -> 200 privatePrepResponseSchema; empty notes delete the row
+// GET    /api/people/[id]/situations           -> 200 personSituationsResponseSchema (≤5, newest first); 404 (1C)
+// POST   /api/people/[id]/situations (createPersonSituationRequestSchema, ≤ 8192) -> 201 personSituationResponseSchema; 409 USAGE_LIMIT at 5; 404 (1C)
+// DELETE /api/people/[id]/situations/[situationId] -> 200 deletedResponseSchema; 404 (1C)
+// GET    /api/practice-history                 -> 200 practiceHistoryResponseSchema (1G)
