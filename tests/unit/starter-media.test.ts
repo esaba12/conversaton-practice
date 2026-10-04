@@ -43,6 +43,22 @@ describe("starter media", () => {
     expect(JSON.stringify([...response.headers])).not.toContain("cdn.example.test");
   });
 
+  it("types a generic CDN response from its image extension, and refuses anything else", async () => {
+    configure();
+    process.env.TAVUS_STARTER_MANAGER_FACE_ID = "fgeneric";
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => url.includes("/v2/faces/")
+      ? Response.json({ thumbnail_image_url: "https://cdn.example.test/still.jpg" })
+      : new Response("jpg", { headers: { "content-type": "binary/octet-stream" } })));
+    const response = await starterPortrait("manager");
+    expect(response.headers.get("content-type")).toBe("image/jpeg");
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+    process.env.TAVUS_STARTER_MANAGER_FACE_ID = "fhtml";
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => url.includes("/v2/faces/")
+      ? Response.json({ thumbnail_image_url: "https://cdn.example.test/page.html" })
+      : new Response("<html>", { headers: { "content-type": "text/html" } })));
+    await expect(starterPortrait("manager")).rejects.toMatchObject({ status: 503 });
+  });
+
   it("returns 503 when the provider has no still", async () => {
     configure();
     process.env.TAVUS_STARTER_MANAGER_FACE_ID = "fother";

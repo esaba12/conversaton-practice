@@ -1,29 +1,30 @@
 "use client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { BriefingStage } from "@/components/practice/briefing-stage";
+import { Briefing, briefingKey, useBriefingDrafts, type BriefingPlan, type BriefingSubject } from "@/components/practice/briefing";
+import { Lobby } from "@/components/practice/lobby";
 import { CallStage } from "@/components/practice/call-stage";
 import { MeetStage } from "@/components/practice/meet-stage";
 import { RecapStage } from "@/components/practice/recap-stage";
 import { WorkspaceHeader } from "@/components/presentation/workspace-header";
 import type { PracticeDuration } from "@/components/presentation/duration-choice";
-import type { SetupDescribeError } from "@/components/presentation/setup-describe";
 import { emptyRole, parseReviewedRole, type SetupMode } from "@/components/presentation/setup-review";
 import { examples } from "@/fixtures/examples";
 import { createBrowserAuthClient } from "@/lib/auth/browser";
 import { selectMediaController } from "@/lib/media/controller-factory";
-import { createPerson, getPerson, listPeople, updatePerson } from "@/lib/people/api-client";
+import { createPerson, deletePerson, getPerson, getPracticeHistory, listPeople, listPersonSituations, updatePerson } from "@/lib/people/api-client";
 import { callPhase, createFlowState, reduceFlow, type FlowEvent, type FlowState, type Teardown } from "@/lib/practice/flow";
 import { cleanupMessage, failureMessages, reflectionError, FALLBACK_GOAL, GENERATION_FAILED } from "@/lib/practice/messages";
-import { clearPrivateState } from "@/lib/practice/private-state";
+import { clearPrivateState, readPrivateState } from "@/lib/practice/private-state";
 import { closedOffer, closedReflect, sameName, type CallOrigin, type Cleanup, type CleanupTarget, type ReflectState, type SaveOffer } from "@/lib/practice/types";
 import { requestReflection } from "@/lib/reflection/api-client";
 import type { DraftRequest } from "@/lib/schemas/draft";
 import type { MediaController, MediaEvent } from "@/lib/schemas/media";
-import { roleToPersonFields, type Person } from "@/lib/schemas/people";
+import { roleToPersonFields, type Person, type PersonSituation } from "@/lib/schemas/people";
 import { appendTurn, type TranscriptTurn } from "@/lib/schemas/reflection";
 import { roleContextSchema, type RoleContext } from "@/lib/schemas/role-context";
 import type { EndReason, SessionPreset, StartResponse } from "@/lib/schemas/session";
+import type { Situation } from "@/lib/schemas/situation";
 import { SessionClientError, endSession, generateDraft, markConnected, startPresetSession, startSavedPersonSession, startSession } from "@/lib/session/api-client";
 
 // The stages live in lib/practice/flow.ts and the screens in components/practice/*; this shell
@@ -31,9 +32,8 @@ import { SessionClientError, endSession, generateDraft, markConnected, startPres
 export function PracticeWorkspace() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Today's first screen is the description form, which is the briefing stage. The lobby and the
-  // green room have no screen yet, so the shell never rests on them.
-  const [flow, setFlow] = useState<FlowState>(() => createFlowState("briefing"));
+  // The lobby is the first screen. The green room has no screen yet, so the shell never rests on it.
+  const [flow, setFlow] = useState<FlowState>(() => createFlowState("lobby"));
   const [durationSeconds, setDurationSeconds] = useState<PracticeDuration>(180);
   const [starting, setStarting] = useState(false);
   const [setupMessage, setSetupMessage] = useState("");
@@ -52,16 +52,23 @@ export function PracticeWorkspace() {
   const [headerMessage, setHeaderMessage] = useState("");
   // Setup content is transient: never persisted, and private notes go only to generateDraft.
   const [moveFocus, setMoveFocus] = useState(false);
-  const [situation, setSituation] = useState("");
-  const [intent, setIntent] = useState("");
-  const [privateNotes, setPrivateNotes] = useState("");
+  const [subject, setSubject] = useState<BriefingSubject | null>(null);
+  const briefingDrafts = useBriefingDrafts();
+  const [situations, setSituations] = useState<{ status: "loading" | "ready" | "error"; items: PersonSituation[] }>({ status: "ready", items: [] });
+  const [practicedPresets, setPracticedPresets] = useState<SessionPreset[]>([]);
+  // A saved person's situation for this practice; null starts with the person's default situation.
+  const [personSituation, setPersonSituation] = useState<Situation | null>(null);
+  // Set when a draft was generated around a saved person: the start sends the person's id and the
+  // reviewed situation, never identity fields.
+  const [draftPerson, setDraftPerson] = useState<Person | null>(null);
+  const lastDraftRef = useRef<DraftRequest | null>(null);
   const [reviewRole, setReviewRole] = useState<RoleContext>(emptyRole);
   const [reviewGoal, setReviewGoal] = useState("");
   const [assumptions, setAssumptions] = useState<string[]>([]);
   const [setupMode, setSetupMode] = useState<SetupMode>("manual");
   const [examplePreset, setExamplePreset] = useState<SessionPreset | null>(null);
   const [generating, setGenerating] = useState(false);
-  const [generateError, setGenerateError] = useState<SetupDescribeError | null>(null);
+  const [generateError, setGenerateError] = useState<{ message: string; outOfScope: boolean } | null>(null);
   const [callInfo, setCallInfo] = useState({ name: "", goal: "" });
   const [people, setPeople] = useState<Person[]>([]);
   const [peopleStatus, setPeopleStatus] = useState<"loading" | "ready" | "error">("loading");
@@ -106,9 +113,15 @@ export function PracticeWorkspace() {
     setSetupMessage("");
   }
 
-  // Back to the description screen. Idempotent, because the lobby and the briefing share it today.
+  // Back to the briefing from the Meet card. Idempotent.
   function returnToBriefing() {
     if (flowRef.current.stage === "meet") apply({ type: "back" });
+  }
+
+  function returnToLobby() {
+    returnToBriefing();
+    if (flowRef.current.stage === "briefing") apply({ type: "back" });
+    setSubject(null);
   }
 
   // Releases local media without waiting on any network request; later events from this attempt are ignored.
@@ -199,7 +212,8 @@ export function PracticeWorkspace() {
     clearReflection();
     clearPrivateState();
     generationRef.current++;
-    setSituation(""); setIntent(""); setPrivateNotes("");
+    briefingDrafts.clear(); setSubject(null); setSituations({ status: "ready", items: [] });
+    setPersonSituation(null); setDraftPerson(null); lastDraftRef.current = null;
     setReviewRole(emptyRole); setReviewGoal(""); setAssumptions([]); setSetupMode("manual");
     setGenerating(false); setGenerateError(null); setCallInfo({ name: "", goal: "" });
     setSavedPerson(null); setCallOrigin(null); setSaveOffer(closedOffer);
@@ -220,29 +234,35 @@ export function PracticeWorkspace() {
     }
   }
 
-  // A saved person is a new setup: the briefing is skipped until slice 1B gives it a screen.
-  function choosePerson(person: Person, notice = "") {
-    apply({ type: "pickPerson" });
-    apply({ type: "draftReady" });
-    setSavedPerson(person);
-    setMoveFocus(true);
-    setSetupMessage(notice); setPreviousSessionId(null); setHeaderMessage("");
+  // P3: every pick opens the briefing. Re-entering the same subject in this sitting keeps the
+  // goal and hard-moment line; a different subject is a new sitting and clears them.
+  function openBriefing(next: BriefingSubject, notice = "") {
+    returnToLobby();
+    const resume = !!subject && briefingKey(subject) === briefingKey(next);
+    showStage(next.kind === "new" ? { type: "pickSomeoneNew", resume } : { type: "pickPerson", resume });
+    setSubject(next); setSavedPerson(null); setPersonSituation(null); setDraftPerson(null);
+    setGenerateError(null); setHeaderMessage(""); setPreviousSessionId(null); setSetupMessage(notice);
+    if (next.kind !== "person") return;
+    setSituations({ status: "loading", items: [] });
+    listPersonSituations(next.person.id).then(
+      (items) => setSituations({ status: "ready", items }),
+      (error) => { if (isAuthError(error)) handleAuthLoss(); else setSituations({ status: "error", items: [] }); });
   }
 
   async function openPerson(personId: string, notice = "") {
     try {
-      choosePerson(await getPerson(personId), notice);
+      openBriefing({ kind: "person", person: await getPerson(personId) }, notice);
     } catch (error) {
       if (isAuthError(error)) { handleAuthLoss(); return; }
-      setSavedPerson(null); returnToBriefing();
+      setSavedPerson(null); returnToLobby();
       setHeaderMessage(error instanceof SessionClientError && error.code === "NOT_FOUND" ? "That saved person wasn’t found." : "We couldn’t load that person. Please try again.");
       void loadPeople();
     }
   }
 
+  // Meet's Back for a saved person: the briefing for the same person, with what was typed kept.
   function leavePerson() {
-    clearPrivateState();
-    setSavedPerson(null); setSetupMessage("");
+    setSavedPerson(null); setPersonSituation(null); setSetupMessage("");
     returnToBriefing();
     setMoveFocus(true);
     if (searchParams.get("person")) router.replace("/practice", { scroll: false });
@@ -261,17 +281,17 @@ export function PracticeWorkspace() {
     routeToSignIn();
   }
 
-  async function generate() {
-    if (generating || authLostRef.current || !situation.trim()) return;
+  async function generate(request: DraftRequest) {
+    if (generating || authLostRef.current) return;
     const generation = ++generationRef.current;
-    const request: DraftRequest = { situation: situation.trim() };
-    if (intent.trim()) request.goal = intent.trim();
-    if (privateNotes.trim()) request.privateNotes = privateNotes.trim();
+    lastDraftRef.current = request;
+    const person = subject?.kind === "person" && request.personId === subject.person.id ? subject.person : null;
     setGenerating(true); setGenerateError(null); setSetupMessage("");
     try {
       const draft = await generateDraft(request);
       if (generation !== generationRef.current) return;
       setReviewRole(draft.role); setReviewGoal(draft.goal); setAssumptions(draft.assumptions); setSetupMode("generated"); setExamplePreset(null);
+      setDraftPerson(person);
       showStage({ type: "draftReady" });
     } catch (error) {
       if (generation !== generationRef.current) return;
@@ -284,16 +304,26 @@ export function PracticeWorkspace() {
     }
   }
 
-  function setUpManually() {
-    if (generating) return;
-    setReviewRole(emptyRole); setReviewGoal(intent.trim()); setAssumptions([]); setSetupMode("manual"); setExamplePreset(null); setGenerateError(null);
-    showStage({ type: "draftReady" });
+  // "Set up the scene" (P3). Only a draft plan calls the setup model.
+  function setUp(plan: BriefingPlan) {
+    if (generating || signingOut) return;
+    switch (plan.kind) {
+      case "preset": applyExample(plan.preset); return;
+      case "person-default":
+      case "person-situation":
+        if (subject?.kind !== "person") return;
+        setSavedPerson(subject.person); setDraftPerson(null);
+        setPersonSituation(plan.kind === "person-situation" ? plan.situation : null);
+        showStage({ type: "draftReady" });
+        return;
+      case "draft": void generate(plan.request); return;
+    }
   }
 
   function applyExample(preset: SessionPreset) {
     if (generating) return;
     const example = examples[preset];
-    setReviewRole(example.role); setReviewGoal(example.goal); setAssumptions([]); setSetupMode("example"); setExamplePreset(preset); setGenerateError(null);
+    setReviewRole(example.role); setReviewGoal(readPrivateState().goal.trim() || example.goal); setAssumptions([]); setSetupMode("example"); setExamplePreset(preset); setGenerateError(null);
     showStage({ type: "draftReady" });
   }
 
@@ -307,17 +337,25 @@ export function PracticeWorkspace() {
   function start() {
     const role = parseReviewedRole(reviewRole);
     if (!role) return;
+    const person = draftPerson;
+    if (person) {
+      const { publicContext, opening, constraints, challenge, pace, wants, holdsBackBecause, softensWhen } = role;
+      const situation: Situation = { publicContext, opening, constraints, challenge, pace, ...(wants ? { wants } : {}), ...(holdsBackBecause ? { holdsBackBecause } : {}), ...(softensWhen ? { softensWhen } : {}) };
+      void launch({ kind: "person", person }, reviewGoal.trim() || FALLBACK_GOAL, (idempotencyKey) => startSavedPersonSession({ personId: person.id, expectedVersion: person.version, situation, durationSeconds, idempotencyKey }));
+      return;
+    }
     const preset = examplePreset && setupMode === "example" && JSON.stringify(role) === JSON.stringify(roleContextSchema.parse(examples[examplePreset].role)) ? examplePreset : null;
     void launch({ kind: "role", role }, reviewGoal.trim() || FALLBACK_GOAL, (idempotencyKey) => preset
       ? startPresetSession({ preset, durationSeconds, idempotencyKey })
       : startSession({ role, durationSeconds, idempotencyKey }));
   }
 
-  // Sends only the person's ID and version; private notes and goal stay in the browser.
+  // Sends only the person's ID and version (and a chosen saved situation); private notes and goal stay in the browser.
   function startPerson() {
     const person = savedPerson;
     if (!person) return;
-    void launch({ kind: "person", person }, FALLBACK_GOAL, (idempotencyKey) => startSavedPersonSession({ personId: person.id, expectedVersion: person.version, durationSeconds, idempotencyKey }));
+    const situation = personSituation ?? undefined;
+    void launch({ kind: "person", person }, readPrivateState().goal.trim() || FALLBACK_GOAL, (idempotencyKey) => startSavedPersonSession({ personId: person.id, expectedVersion: person.version, situation, durationSeconds, idempotencyKey }));
   }
 
   async function launch(origin: CallOrigin, goal: string, request: (idempotencyKey: string) => Promise<StartResponse>) {
@@ -325,7 +363,7 @@ export function PracticeWorkspace() {
     startingRef.current = true;
     plannedDurationRef.current = durationSeconds;
     const attempt = ++attemptRef.current;
-    const reflectGoal = origin.kind === "role" ? reviewGoal.trim() : "";
+    const reflectGoal = (origin.kind === "role" || draftPerson ? reviewGoal.trim() : "") || readPrivateState().goal.trim();
     clearReflection();
     setStarting(true); setSetupMessage(""); setPreviousSessionId(null); setGenerateError(null);
     let joined = false;
@@ -521,6 +559,8 @@ export function PracticeWorkspace() {
   useEffect(() => {
     mediaRef.current ??= selectMediaController();
     setTestMedia(mediaRef.current.testMode);
+    // W10 history orders the starters; until its route exists the lobby simply has none.
+    getPracticeHistory().then(setPracticedPresets, () => undefined);
   }, []);
 
   useEffect(() => {
@@ -544,7 +584,7 @@ export function PracticeWorkspace() {
       clearPrivateSetup();
       // Only the setup screens start over, as they do today; a finished call screen stays put.
       if (!callPhase(flowRef.current)) {
-        const state = createFlowState("briefing");
+        const state = createFlowState("lobby");
         flowRef.current = state;
         setFlow(state);
       }
@@ -577,12 +617,19 @@ export function PracticeWorkspace() {
         ? (savedPerson
           ? <MeetStage kind="person" person={savedPerson} onStart={startPerson} onBack={leavePerson} durationDisabled={starting || signingOut} {...meetCommon} />
           : <MeetStage kind="review" mode={setupMode} role={reviewRole} goal={reviewGoal} assumptions={assumptions} onRoleChange={setReviewRole} onGoalChange={setReviewGoal}
-              onBack={backToDescribe} onRegenerate={situation.trim() ? () => void generate() : undefined} onStart={() => void start()} regenerating={generating}
+              onBack={backToDescribe} onRegenerate={lastDraftRef.current ? () => { const request = lastDraftRef.current; if (request) void generate(request); } : undefined} onStart={() => void start()} regenerating={generating}
               error={generateError} durationDisabled={starting || signingOut || generating} {...meetCommon} />)
-        // The lobby and the green room share today's description screen until slices 1B and 1D.
-        : <BriefingStage situation={situation} goal={intent} privateNotes={privateNotes} onSituationChange={setSituation} onGoalChange={setIntent} onPrivateNotesChange={setPrivateNotes}
-            onGenerate={() => void generate()} onManual={setUpManually} onUseExample={applyExample} generating={generating} disabled={signingOut} error={generateError} focusHeading={moveFocus}
-            people={people} peopleStatus={peopleStatus} peopleDisabled={signingOut || generating} onPickPerson={(person) => choosePerson(person)} onRetryPeople={() => void loadPeople()} />
+        : flow.stage === "briefing" && subject
+          ? <Briefing subject={subject} draft={briefingDrafts.draftFor(subject)} onDraftChange={(patch) => briefingDrafts.update(subject, patch)}
+              situations={subject.kind === "person" ? situations : undefined} onBack={() => { showStage({ type: "back" }); }} onSetUp={setUp}
+              generating={generating} error={generateError} disabled={signingOut} disabledReason="Signing you out…" focusHeading={moveFocus} />
+          : <Lobby people={people} status={peopleStatus} practicedPresets={practicedPresets} onRetry={() => void loadPeople()}
+              onPickPerson={(person) => openBriefing({ kind: "person", person })} onPickStarter={(preset) => openBriefing({ kind: "starter", preset })}
+              onSomeoneNew={() => openBriefing({ kind: "new" })}
+              onAddStarter={async (preset) => { await createPerson(roleToPersonFields(examples[preset].role)); await loadPeople(); }}
+              onEditPerson={(person) => router.push(`/practice/people/${encodeURIComponent(person.id)}`)}
+              onDeletePerson={async (person) => { await deletePerson(person.id); await loadPeople(); }}
+              disabled={signingOut || generating} disabledReason="Please wait a moment." focusHeading={moveFocus} notice={setupMessage || undefined} />
       ) : <>
         <CallStage counterpartName={callInfo.name} goal={callInfo.goal} phase={phase} muted={muted} cameraEnabled={cameraEnabled} elapsedSeconds={elapsedSeconds} durationSeconds={plannedDurationRef.current}
           remoteStream={remoteStream} localStream={localStream}

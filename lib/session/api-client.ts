@@ -3,6 +3,7 @@ import { draftResponseSchema, type DraftRequest, type DraftResponse } from "@/li
 import { errorSchema, type ErrorCode } from "@/lib/schemas/errors";
 import type { RoleContext } from "@/lib/schemas/role-context";
 import { sessionResponseSchema, startResponseSchema, type EndReason, type PracticeSession, type SessionPreset, type StartResponse } from "@/lib/schemas/session";
+import { situationSchema, type Situation } from "@/lib/schemas/situation";
 
 export type SessionClientErrorCode = ErrorCode | "NETWORK" | "MALFORMED_RESPONSE";
 
@@ -43,8 +44,9 @@ export function generateDraft(input: DraftRequest): Promise<DraftResponse> {
 
 // Only the reviewed role leaves the browser; goal and private notes never enter the start request.
 export function startSession({ role, durationSeconds, idempotencyKey = crypto.randomUUID() }: { role: RoleContext; durationSeconds: 180 | 300; idempotencyKey?: string }): Promise<StartResponse> {
-  const { name, role: roleText, style, publicContext, opening, constraints, challenge, pace } = role;
-  return post("/api/sessions", { idempotencyKey, role: { name, role: roleText, style, publicContext, opening, constraints: [...constraints], challenge, pace }, durationSeconds }, startResponseSchema);
+  const { name, role: roleText, style, publicContext, opening, constraints, challenge, pace, wants, holdsBackBecause, softensWhen } = role;
+  const stance = { ...(wants ? { wants } : {}), ...(holdsBackBecause ? { holdsBackBecause } : {}), ...(softensWhen ? { softensWhen } : {}) };
+  return post("/api/sessions", { idempotencyKey, role: { name, role: roleText, style, publicContext, opening, constraints: [...constraints], challenge, pace, ...stance }, durationSeconds }, startResponseSchema);
 }
 
 // A preset start sends only the id. Role text, goals, and private notes stay in the browser; the server loads the fixture.
@@ -52,9 +54,10 @@ export function startPresetSession({ preset, durationSeconds, idempotencyKey = c
   return post("/api/sessions", { idempotencyKey, preset, durationSeconds }, startResponseSchema);
 }
 
-// A saved person sends only its ID and version; the server loads its fields and shared facts.
-export function startSavedPersonSession({ personId, expectedVersion, durationSeconds, idempotencyKey = crypto.randomUUID() }: { personId: string; expectedVersion: number; durationSeconds: 180 | 300; idempotencyKey?: string }): Promise<StartResponse> {
-  return post("/api/sessions", { idempotencyKey, personId, expectedVersion, durationSeconds }, startResponseSchema);
+// A saved person sends only its ID and version, plus the situation for this practice when one was chosen;
+// the server loads identity and shared facts.
+export function startSavedPersonSession({ personId, expectedVersion, situation, durationSeconds, idempotencyKey = crypto.randomUUID() }: { personId: string; expectedVersion: number; situation?: Situation; durationSeconds: 180 | 300; idempotencyKey?: string }): Promise<StartResponse> {
+  return post("/api/sessions", { idempotencyKey, personId, expectedVersion, ...(situation ? { situation: situationSchema.parse(situation) } : {}), durationSeconds }, startResponseSchema);
 }
 
 export async function markConnected(id: string): Promise<PracticeSession> {

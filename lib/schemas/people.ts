@@ -66,7 +66,8 @@ export function personToRole(person: PersonFields): RoleContext {
   return roleContextSchema.parse({ ...rest, role });
 }
 export function roleToPersonFields(role: RoleContext, traits: TraitChips = {}): PersonFields {
-  const { role: relationship, ...rest } = roleContextSchema.parse(role);
+  // Stance chips belong to a situation, not a person.
+  const { role: relationship, wants: _wants, holdsBackBecause: _holds, softensWhen: _softens, ...rest } = roleContextSchema.parse(role);
   return personFieldsSchema.parse({ ...rest, relationship, traits });
 }
 
