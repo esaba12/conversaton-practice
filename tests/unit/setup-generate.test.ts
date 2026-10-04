@@ -5,7 +5,7 @@ import { draftResponseSchema } from "@/lib/schemas/draft";
 const identity = vi.hoisted(() => ({ requireIdentity: vi.fn() }));
 vi.mock("@/lib/auth/server", () => identity);
 import { POST } from "@/app/api/scenarios/draft/route";
-import { DRAFT_FORMAT_NAME, draftJsonSchema, leaksPrivateNotes } from "@/lib/setup/generate";
+import { DRAFT_FORMAT_NAME, draftJsonSchema, generateDraft, leaksPrivateNotes } from "@/lib/setup/generate";
 import { SETUP_SYSTEM_PROMPT } from "@/lib/setup/prompt";
 import { resetDraftLimitsForTests } from "@/lib/setup/rate-limit";
 
@@ -173,12 +173,70 @@ describe("POST /api/scenarios/draft", () => {
 });
 
 describe("private-note leak check", () => {
-  it("matches five consecutive normalized words, or the whole short note", () => {
+  const situation = "I need to ask my manager for Friday off.";
+
+  it("still flags a five-word copy and a whole three-word note", () => {
     const notes = "I always freeze when my voice starts shaking";
-    expect(leaksPrivateNotes({ ...role, style: "Says: MY voice—starts   shaking!" } as never, notes)).toBe(false);
-    expect(leaksPrivateNotes({ ...role, style: "When... my VOICE starts shaking." } as never, notes)).toBe(true);
-    expect(leaksPrivateNotes({ ...role, constraints: ["fear of rejection"] } as never, "Fear of rejection")).toBe(true);
-    expect(leaksPrivateNotes({ ...role, constraints: ["fear of rejections"] } as never, "Fear of rejection")).toBe(false);
-    expect(leaksPrivateNotes(role as never, undefined)).toBe(false);
+    expect(leaksPrivateNotes({ ...role, style: "When... my VOICE starts shaking." } as never, notes, situation)).toBe(true);
+    expect(leaksPrivateNotes({ ...role, constraints: ["fear of rejection"] } as never, "Fear of rejection", situation)).toBe(true);
+    expect(leaksPrivateNotes({ ...role, constraints: ["fear of rejections"] } as never, "Fear of rejection", situation)).toBe(false);
+  });
+
+  it("flags a three-word excerpt from a thirty-word note", () => {
+    const notes = "The hallway light flickered while I practiced asking for a quieter desk near the window because the copy machine keeps humming through every sentence I try to finish before lunch";
+    expect(notes.split(/\s+/)).toHaveLength(30);
+    expect(leaksPrivateNotes({ ...role, publicContext: "The copy machine keeps running downstairs." } as never, notes, situation)).toBe(true);
+  });
+
+  it("flags a copy split across the end of style and the start of publicContext", () => {
+    const notes = "Please do not mention the cedar closet key during this practice at all";
+    const quiet = "I want to ask for a quieter morning.";
+    expect(leaksPrivateNotes({ ...role, style: "Sounds tired and keeps saying cedar closet" } as never, notes, quiet)).toBe(false);
+    expect(leaksPrivateNotes({ ...role, style: "Sounds tired and keeps saying cedar closet", publicContext: "key stays off the table today." } as never, notes, quiet)).toBe(true);
+  });
+
+  it("flags a name or a number that appears only in the notes", () => {
+    expect(leaksPrivateNotes({ ...role, name: "Priya" } as never, "I still owe Priya for the borrowed scanner", "I need to return a scanner to a classmate.")).toBe(true);
+    expect(leaksPrivateNotes({ ...role, name: "Priya" } as never, "I still owe Priya for the borrowed scanner", "Priya is my classmate.")).toBe(false);
+    expect(leaksPrivateNotes({ ...role, constraints: ["Replacement budget is $400"] } as never, "The spare key costs $400 to replace if it is lost", "I need to ask about a spare key.")).toBe(true);
+    expect(leaksPrivateNotes({ ...role, constraints: ["Replacement budget is $400"] } as never, "The spare key costs $400 to replace if it is lost", "The spare key costs $400.")).toBe(false);
+  });
+
+  it("does not flag words shared with the situation", () => {
+    const dishes = "My roommate never does the dishes";
+    expect(leaksPrivateNotes({ ...role, publicContext: "You never do the dishes." } as never, "Honestly the dishes thing makes me feel invisible", dishes)).toBe(false);
+    expect(leaksPrivateNotes({ ...role, publicContext: "You are the roommate who never does the dishes." } as never, "It bothers me that my roommate never does the dishes and I stay quiet", dishes)).toBe(false);
+  });
+
+  it("does not flag a stopword-only window", () => {
+    expect(leaksPrivateNotes({ ...role, style: "I don't want to drag this out." } as never, "I don't want to", situation)).toBe(false);
+  });
+
+  it("never flags when there are no notes", () => {
+    expect(leaksPrivateNotes(role as never, undefined, situation)).toBe(false);
+    expect(leaksPrivateNotes(role as never, "", situation)).toBe(false);
+  });
+});
+
+describe("generateDraft private-note retry", () => {
+  it("returns PROVIDER_UNAVAILABLE when both attempts leak", async () => {
+    const leaked = output({ role: { ...role, opening: "So your voice starts shaking again?" } });
+    const fetchMock = provider(() => ok(leaked), () => ok(leaked));
+    await expect(generateDraft(body)).rejects.toMatchObject({ code: "PROVIDER_UNAVAILABLE", retryable: true });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns the clean role when the first attempt leaks and the retry does not", async () => {
+    const leaked = output({ role: { ...role, style: "When my voice starts shaking." } });
+    const fetchMock = provider(() => ok(leaked), () => ok(output()));
+    await expect(generateDraft(body)).resolves.toMatchObject({ role });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not probe a private name that appears only in the goal or assumptions", async () => {
+    provider(() => ok(output({ goal: "Ask Priya about the scanner", assumptions: ["Priya already knows the time"] })));
+    const result = await generateDraft({ situation: "I need to return a scanner.", privateNotes: "I still owe Priya for the borrowed scanner" });
+    expect(result.goal).toBe("Ask Priya about the scanner");
+    expect(result.assumptions).toEqual(["Priya already knows the time"]);
   });
 });
