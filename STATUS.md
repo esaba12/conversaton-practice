@@ -1,25 +1,17 @@
 # Project status
 
-## Name (October 4, ~10:10 EDT)
+## Final submission (October 4, ~11:15 AM EDT)
 
-The product name is **SpeakEasy** (owner decision). Wordmark, document title, README, static preview, and the Devpost draft title use it. The GitHub repository and `package.json` name are unchanged. The owner also said they have a domain; the hostname was not in that message, so it is not attached yet.
+**Owner action now:** submit Devpost between 11:30 and 12:00 from the paste in [DEMO-01](docs/tasks/DEMO-01-submission-prep.md). The rules say noon. The Devpost banner says 12:15; do not rely on it. Judging is 1:00–3:00 PM in the Duderstadt Basement, science-fair style, and you must stay at your table. The event rules and live schedule were re-read at ~11:10 and are recorded in [docs/16](docs/16-MHACKS-STRATEGY.md).
 
-## Submission morning (October 4, ~10:05 AM EDT, main `91ba25e`)
-
-Nothing broken has been reported from a live call. Every feature is still **live not verified** until the owner reports one.
-
-Merged this morning, docs only, CI `verify` success on each:
-
-- [PR #94](https://github.com/esaba12/conversaton-practice/pull/94) (`d1e0c21`): Devpost paste and a two-minute demo script in [DEMO-01](docs/tasks/DEMO-01-submission-prep.md). The demo URL is https://conversation-practice-zeta.vercel.app. The static preview host is not the demo. CI: typecheck, 786 unit tests, build, client-bundle check, Playwright 11 passed / 3 skipped (the hero path skips without the service-role key). [Run](https://github.com/esaba12/conversaton-practice/actions/runs/37207371897).
-- [PR #95](https://github.com/esaba12/conversaton-practice/pull/95) (`91ba25e`): docs/00, 02, 06, and 26 now describe the four-starter look-and-voice picker. Same CI shape. [Run](https://github.com/esaba12/conversaton-practice/actions/runs/37207440488).
-
-Sign-in is email and password. (Superseded at ~10:10: the name is SpeakEasy; see above.)
-
-**Owner, before noon:** reset the demo account with `node --env-file=.env.local scripts/demo/seed.mjs --checkin`, record from the DEMO-01 script, and submit Devpost (#36). One useful live check (#35): Jordan, briefing, Show me first once, your call, End, recap, "Try that moment once." Fill "When it gets hard, I'll say" or that button will not appear. For #37, one extra call with a saved person set to Alex, Ellis, or Sam (not Default).
-
-**#30** auth/database scripts (`auth-database-check.mjs --g3-ui` and `--g5-ui`, plus the three SQL files) were **not** re-run. This checkout has no `.env.local` and no Supabase CLI login. The issue stays open. Evidence: [VERIFY-01](docs/tasks/VERIFY-01-regression-on-main.md).
-
-**#31** is written for the pre-redesign screens. Proposal: close it as superseded by the hero-path Playwright test and the owner's live call. Not closed. Waiting on the owner.
+- **Name:** SpeakEasy (owner, ~10:10). The repository and `package.json` names are unchanged.
+- **Domain:** https://speakeasyapp.tech (owner, ~10:29), on the Vercel project `conversation-practice`. Apex `A` records `216.198.79.1` and `64.29.17.1`; Vercel verify `configured-correctly` at ~10:33. HTTP 200 with title "SpeakEasy" at ~11:08.
+- **Production:** `main` `9b7bc93` ([PR #98](https://github.com/esaba12/conversaton-practice/pull/98), the redesigned landing, dashboard, lobby and logo), deployment `dpl_Drotqpqj8pPQZAHnkafUYPb9BPwu` at ~10:46. Also aliased at https://conversation-practice-zeta.vercel.app. Smoke check: SpeakEasy on the landing, no "therapy", favicon and share image load, signed-out `/practice` redirects to sign-in, no Tavus ids in the landing HTML, demo sign-in reaches the dashboard. No production call was made by the coordinator.
+- **CI on `9b7bc93`:** `verify` success ([run 37210478365](https://github.com/esaba12/conversaton-practice/actions/runs/37210478365)): typecheck, 792 unit tests in 50 files, build, client-bundle check, Playwright 12 passed / 3 skipped (the real-Auth hero path skips in CI without the service-role key).
+- **Owner live report, ~10:23 AM:** on the deployed app after the demo seed, the owner ran saved Jordan through briefing, Show me first, the call, End, recap and "Try that moment once", then a new sitting after choosing Alex's look and voice, and said **"it all worked."** Not itemized; no defect named. That run was on the deploy before PR #98. The redesigned landing, dashboard and lobby have not had a live call. The longer [LIVE-01](docs/tasks/LIVE-01-human-checks.md) list (sharing probe, chip tone, Your data, video loss, behavior probes) was not run. Recorded from [PR #97](https://github.com/esaba12/conversaton-practice/pull/97), merged into this update.
+- **Demo account:** it has a third Jordan call from today. Reset before recording or judging: `node --env-file=.env.local scripts/demo/seed.mjs --checkin`.
+- **Not on `main`, left uncommitted in the main checkout:** a host allowlist change (call rooms only on `tavus.daily.co`, face stills only from `cdn.replica.tavus.io`, `redirect: "error"` on provider fetches) across `lib/media/*`, `lib/schemas/media.ts`, three model callers, tests and docs/08, 22 and next/03. It has no PR and no live call. Do not deploy it before judging; if Tavus ever returns another Daily host, calls would fail.
+- **Still open:** #30 (auth/database scripts not re-run on the redesign), #31 (proposed: close as superseded). Devpost #36 is the owner's.
 
 No new features. No deploy in this pass.
 

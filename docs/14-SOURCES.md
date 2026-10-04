@@ -224,7 +224,7 @@ Official live-page link. Lists grand prize, main tracks, sponsor requirements, a
 
 [Open source](https://safe-banon-80d.notion.site/2026-Hacker-Handbook-3ca24ca0c81b80fb8adee2e26c8508af)
 
-All coding/building during the hackathon; teams of 1-4 accepted students; Devpost submission before noon Sunday; description/table number/teammates; in-person judging 12:30-2:30 PM Sunday at Duderstadt; three-minute pitch. Lists judging factors without numeric weights. This summary does not record acceptance of event terms.
+All coding/building during the hackathon; teams of 1-4 accepted students; Devpost submission before noon Sunday; description/table number/teammates; in-person judging 12:30-2:30 PM Sunday at Duderstadt; three-minute pitch. (October 4 re-read: judging is 1:00–3:00 PM in the Duderstadt Basement, science-fair style; see docs/16.) Lists judging factors without numeric weights. This summary does not record acceptance of event terms.
 
 ## S38: MHacks 26 Tracks
 

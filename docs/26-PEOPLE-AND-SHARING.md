@@ -123,7 +123,7 @@ Submission target: Oct 4, 11:30 AM America/Detroit.
 
 ## Look and voice (built after G3)
 
-Built October 4 in [PR #87](https://github.com/esaba12/conversaton-practice/pull/87). On the saved-person page, "Look and voice" offers Default plus the four starters (Alex, Ellis, Sam, Jordan). Each is a stock face and a premade voice. Choosing one saves immediately through `person_set_preset`, which checks `expected_version` and bumps the person version. The next practice with that person uses the mapped face and PAL. Null keeps the default pair. The choice does not change traits or shared About-me facts. `person_context` does not return `preset_id`. There is no upload and no voice cloning. A live call with a non-default face has not been reported. See [docs/00](00-DECISIONS-AND-VIABILITY.md) and [docs/06](06-ELEVENLABS.md).
+Built October 4 in [PR #87](https://github.com/esaba12/conversaton-practice/pull/87). On the saved-person page, "Look and voice" offers Default plus the four starters (Alex, Ellis, Sam, Jordan). Each is a stock face and a premade voice. Choosing one saves immediately through `person_set_preset`, which checks `expected_version` and bumps the person version. The next practice with that person uses the mapped face and PAL. Null keeps the default pair. The choice does not change traits or shared About-me facts. `person_context` does not return `preset_id`. There is no upload and no voice cloning. On October 4, ~10:23 AM America/Detroit, the owner reported a call after choosing Alex’s look as part of "it all worked." Not itemized. See [docs/00](00-DECISIONS-AND-VIABILITY.md) and [docs/06](06-ELEVENLABS.md).
 
 ## Out of scope for G3
 

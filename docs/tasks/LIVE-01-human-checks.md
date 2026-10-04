@@ -1,7 +1,7 @@
 # LIVE-01: Human live checks still open
 
-Status: planned
-Updated: October 3, 2026, 20:00 EDT
+Status: review
+Updated: October 4, 2026, 10:25 AM America/Detroit
 Assigned writer: human builder
 Coordinator: Cursor coordinator session
 Gate: G3–G5 live verification. The 19:00 EDT decision says these do not block other work.
@@ -74,6 +74,15 @@ Use fictional content. Stop if a scene feels wrong.
 
 ## Verification evidence
 
+- Date/time/timezone: October 4, 2026, ~10:23 AM America/Detroit
+- Mode: live
+- Outcome: human-reported, not itemized
+- Tested commit/dirty state: deployed app (production of `main` through `75f9c7d` and later docs). The owner had just seeded the demo account.
+- Exact command or manual steps: the two tests sent that morning. First: saved Jordan under Your people, briefing, Show me first, own call, End, recap, "Try that moment once." Second: Alex’s look and voice, reload, one short call, End.
+- Exit code: N/A
+- Observed result/artifact: the owner’s words were "Just ran the tests. it all worked."
+- Limitations: not itemized. The checklist boxes above stay unchecked. No Supabase read-back from this checkout (no CLI login). No defect filed.
+
 - Date/time/timezone: October 3, 2026, 20:00 EDT
 - Mode: not-run
 - Outcome: not-run
@@ -86,8 +95,8 @@ Use fictional content. Stop if a scene feels wrong.
 ## Handoff
 
 - Changed paths and commit(s): none
-- Remaining failures/risks: sharing and saved-person speech are the pitch facts most likely to be wrong in front of a judge
-- External account action: a signed-in session on the local app
-- Next smallest task: human runs the G3 list when they want a live check
-- Ready for review: no
-- Coordinator integration: pending a human report
+- Remaining failures/risks: the longer checklist was not run. Nothing was reported broken.
+- External account action: Devpost submission
+- Next smallest task: owner submits Devpost
+- Ready for review: yes
+- Coordinator integration: pending the record of this report

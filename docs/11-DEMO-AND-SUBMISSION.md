@@ -3,21 +3,14 @@
 ## Positioning
 The app lets people practice a conversation they have been putting off with an editable fictional counterpart. The other person is fictional. Do not claim to predict anyone real.
 
-The demo field is the deployed app: https://conversation-practice-zeta.vercel.app. The static preview at conversation-practice-site.vercel.app is not the demo. Paste-ready Devpost fields and a two-minute video script are in [DEMO-01](tasks/DEMO-01-submission-prep.md).
+The product is **SpeakEasy**. The demo link is https://speakeasyapp.tech (also https://conversation-practice-zeta.vercel.app). The static preview at conversation-practice-site.vercel.app is not the demo. Paste-ready Devpost fields, the science-fair pitch and an optional two-minute video script are in [DEMO-01](tasks/DEMO-01-submission-prep.md).
 
-Primary targets: Actually Intelligent and the two listed ElevenLabs categories. See [event strategy](16-MHACKS-STRATEGY.md) for requirements and unresolved eligibility.
+Main track: Actually Intelligent. Sponsor prizes: Best Project Built with ElevenLabs and the .Tech domain prize. The rules allow one main track and any number of sponsor prizes. See [event strategy](16-MHACKS-STRATEGY.md).
 
-## Three-minute pitch
-| Time | What to show |
-| --- | --- |
-| 0:00-0:20 | Personal motivation and one concrete user problem |
-| 0:20-0:40 | New generated situation (an example — roommate, professor, or saying no — only if generation fails); edit one field; private notes stay off the call |
-| 0:40-1:55 | Live conversation: counterpart responds on video, user interrupts once, restates the request |
-| 1:55-2:15 | End, optional short reflection (or Skip), no automatic save |
-| 2:15-2:40 | Your data cleanup label; optional Save this person / sharing — explicit only |
-| 2:40-3:00 | Stack (Tavus CVI + ElevenLabs TTS, OpenAI, Supabase, Next.js) and what was actually verified |
+## Pitch
+Judging is science-fair style at the table, so the pitch is a two- to three-minute walk-through per judge. It goes: hook, briefing with a goal and a hard-moment line, an optional Show me first, a live call with one interruption, the recap and "Try that moment once," a saved person's sharing (the theme beat), then the stack. The full script with rubric mapping and likely questions is in [DEMO-01](tasks/DEMO-01-submission-prep.md).
 
-Rehearse to finish comfortably inside three minutes. The live exchange should be 60-90 seconds and can be ended early. Test character behavior, but do not require an exact scripted line. A second session showing an edited persona is optional for Q&A, not required in the timed pitch.
+The October 3 three-minute staged pitch (generated situation, edit, call, reflection, Your data) is kept as superseded in DEMO-01.
 
 ## What makes the demo strong
 Believable behavior is the main demonstration: the counterpart reacts to what the user says, stays in character, and accepts interruptions. Show realistic pushback without escalating into abuse. A visibly separate private goal illustrates the context boundary; the character must not know it unless the user expresses it aloud or explicitly shares it.
@@ -35,31 +28,28 @@ Explain real-time voice interaction, expressive delivery, turn-taking, selected 
 - Tested owner isolation and honest no-app-save behavior.
 
 ## Claims and evidence
-Describe a working rehearsal prototype, not clinical efficacy, prediction of a real person's response, or a market first. State only actual tests performed and outcomes observed. Never claim a mock, prerecorded voice, or scripted playback is live inference. G1 and G2 were live-checked; G3–G5 are automated and labelled live not verified. Do not claim instant global erasure of provider copies. Full do-not-claim list: [DEMO-01](tasks/DEMO-01-submission-prep.md).
+Describe a working rehearsal prototype, not clinical efficacy, prediction of a real person's response, or a market first. State only actual tests performed and outcomes observed. Never claim a mock, prerecorded voice, or scripted playback is live inference. Live-checked: the October 3 G1 and G2 calls, and the owner's October 4 ~10:23 AM run of saved Jordan, Show me first, the call, recap, one retry and Alex's look ("it all worked," not itemized, before the redesign deployed). Sharing, chip tone, Your data and video loss are automated only. Do not claim instant global erasure of provider copies. Full do-not-claim list: [DEMO-01](tasks/DEMO-01-submission-prep.md).
 
 ## Backup
 Record a real working session using fictional data. Clearly label prerecorded material. Bring a headset and charged laptop. A local frontend still needs network access for provider calls.
 
 ## Submission and judging
-The handbook requires submission through Devpost before noon Sunday, October 4, 2026, America/Detroit. Internal target: 11:30 AM. Include the project description, table number, teammates, and requested materials. Judging is Sunday 12:30-2:30 PM at Duderstadt, with three-minute presentations and possible repeat judging. The team must be present for any track.
+Re-read October 4, ~11:10 AM from the [Devpost rules](https://mhacks-2026.devpost.com/rules) and the [live schedule](https://www.mhacks.org/live). Submit on Devpost by **noon**. The schedule shows "Submissions Close @12 PM" from 11:30, and the Devpost banner says 12:15, which we do not rely on. The submission must include code access (the public GitHub repository). Judging is **1:00–3:00 PM in the Duderstadt Basement**, in person and science-fair style. Stay at your table for the whole period.
 
-Judging factors listed: innovation, technical complexity, usability, and presentation quality. No numeric weights were published in the reviewed handbook.
+Rubric: Innovation, Technical Complexity, Usability, and Adherence to Theme ("build something that grows"). No weights are published.
 
 ## Checklist
 Execution steps, including the push of local polish and the backup recording, are [SUB-01](tasks/SUB-01-submission-execution.md). Pitch copy stays in [DEMO-01](tasks/DEMO-01-submission-prep.md).
 
-- [ ] Coding/building occurred during the hackathon; disclose reused dependencies and planning artifacts as required.
-- [ ] Actually Intelligent selected as the main theme.
-- [ ] Both ElevenLabs awards checked with organizers for entry and stacking rules.
-- [ ] Sponsor categories reflect integrations that really work.
-- [ ] Figma design eligibility checked if entering.
-- [ ] Notability Pro screenshots (at least two), tools tag, and usage note included if entering.
-- [ ] Gemini contribution documented if that provider was selected and implemented.
-- [ ] Demo URL is https://conversation-practice-zeta.vercel.app (the app), not the static preview site.
+- [x] Coding/building occurred during the hackathon.
+- [ ] Actually Intelligent selected as the main track.
+- [ ] Best Project Built with ElevenLabs and the .Tech domain prize checked.
+- [ ] No Figma, Notability, Gemini, Photon or Relay entries; none are in the build.
+- [ ] Try-it-out links: https://speakeasyapp.tech and the GitHub repository.
 - [ ] No keys or private user data in screenshots, logs, or demo.
-- [ ] Successful submission confirmation retained before noon.
-- [ ] Backup recording labelled prerecorded (shot list in DEMO-01).
-- [ ] Do not claim G3–G5 live verification.
+- [ ] Submission confirmation kept, before noon.
+- [ ] Demo account reset with `scripts/demo/seed.mjs --checkin` before judging.
+- [ ] Only claim the live checks listed above.
 
 Sources: S35-S38 in [sources](14-SOURCES.md).
 

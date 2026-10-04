@@ -1,6 +1,6 @@
 # One-moment retry
 
-Decided October 3, 2026, 21:26 EDT. Not built. Rationale is in [docs/00](00-DECISIONS-AND-VIABILITY.md).
+Decided October 3, 2026, 21:26 EDT. Built October 4 in slice X ([PR #84](https://github.com/esaba12/conversaton-practice/pull/84)) as "Try that moment once" on the recap, shown when the user wrote a hard-moment line and answers "No" to "Did you say it?" The owner ran it live on October 4, ~10:23 AM ("it all worked," not itemized). Rationale is in [docs/00](00-DECISIONS-AND-VIABILITY.md).
 
 Where this file conflicts with an older "repeat the practice" or "one more take" note, this file wins. Scores, a recording of the user, a transcript replay, and a branching tree stay out (docs/08).
 

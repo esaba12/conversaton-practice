@@ -89,7 +89,7 @@ Gate G5: no critical ownership/context/teardown defects.
 - [ ] Verify demo link/repo visibility according to event rules.
 - [ ] Submit by the internal target of 11:30 AM Sunday; retain confirmation. Official deadline is before noon.
 - [ ] Include table number and all teammates. Verify sponsor opt-ins and required evidence.
-- [ ] Be present for judging Sunday 12:30-2:30 PM at Duderstadt; expect repeat presentations.
+- [ ] Be present for judging Sunday 1:00–3:00 PM in the Duderstadt Basement (science-fair style, confirmed October 4); expect repeat presentations.
 
 ## Final 30 minutes: submission buffer
 Verify receipt and required fields, charge devices, and prepare the headset and backup. Avoid feature work that risks the submitted build.
@@ -101,7 +101,7 @@ G1–G5 are implemented. The empty checkboxes above are the original elapsed tar
 Keep the live video call, situation generation, and the core loop first. Defer Relay and Photon for the solo MVP. Gemini can replace the setup/reflection provider before that layer is implemented, but do not maintain two providers. Notability requires genuine Pro usage, a tools tag, a usage note, and two screenshots. Figma eligibility and prize stacking remain questions for organizers.
 
 ## Scope cuts
-Cut in order: Photon/other extra channels -> decorative UI motion -> the appearance preset catalog (docs/00; still unbuilt) -> the one-moment retry (docs/30; decided, not built; this replaces the older optional repeat-practice shortcut) -> automated reflection (keep self-reflection and explicit preference review). Recovery from a failed connection remains required. Do not start the preset catalog during the open G3 gate.
+Cut in order: Photon/other extra channels -> decorative UI motion -> the appearance preset catalog (docs/00; shipped October 4 as the four-starter picker) -> the one-moment retry (docs/30; built October 4 in slice X; this replaces the older optional repeat-practice shortcut) -> automated reflection (keep self-reflection and explicit preference review). Recovery from a failed connection remains required. Do not start the preset catalog during the open G3 gate.
 Do not cut situation generation, responsive synchronized counterpart video/audio, editable persona, approved-memory boundary, End, or ownership protection.
 If database setup blocks progress, continue isolated development with a labeled mock and record the blocker. G1/G3 cannot pass without their real ownership and persistence checks; do not present a local mock as an authenticated multi-user integration.
 

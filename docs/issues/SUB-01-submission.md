@@ -20,7 +20,7 @@ Existing record: [docs/tasks/SUB-01-submission-execution.md](../tasks/SUB-01-sub
 - [ ] Rehearse once in under three minutes, with a 60–90 second live exchange on a generated situation.
 - [ ] Screenshots contain no keys, real emails, or private notes.
 - [ ] Submit, keep the confirmation, and check the submitted box in docs/11.
-- [ ] Before 12:30: laptop charged, headset ready, throwaway account signed in, `npm run dev -- --port 3000` running. Be at Duderstadt 12:30–2:30 PM.
+- [ ] Before 12:30: laptop charged, headset ready, throwaway account signed in, `npm run dev -- --port 3000` running. Be in the Duderstadt Basement 1:00–3:00 PM (science-fair judging, confirmed October 4).
 
 ## What an agent can do on request
 
