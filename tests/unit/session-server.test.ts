@@ -167,10 +167,10 @@ describe("session routes", () => {
     const providerCalls = fetchMock.mock.calls.length;
     const storageCalls = rpc.mock.calls.length;
     await errorOf(await start(post("/api/sessions", { idempotencyKey: key, preset: "boss", durationSeconds: 180 })), 400);
-    // 1G still owns the stand-in branch.
+    // W10: the stand-in branch is live, but fails closed without its reserved face and PAL (1G).
     await errorOf(await start(post("/api/sessions", {
       idempotencyKey: key, standIn: true, goal: "Ask for one thing.", preset: "manager", durationSeconds: 180,
-    })), 400);
+    })), 503);
     await errorOf(await start(post("/api/sessions", { idempotencyKey: key, preset: "professor", privateNotes: "PRIVATE-NOTE", durationSeconds: 180 })), 400);
     expect(fetchMock.mock.calls.length).toBe(providerCalls);
     expect(rpc.mock.calls.length).toBe(storageCalls);
