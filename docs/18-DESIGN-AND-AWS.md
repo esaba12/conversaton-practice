@@ -15,6 +15,8 @@ Updated October 3, 2026. The user cannot obtain AWS credits in time and approved
 
 The signed-in home should open with “What conversation would you like to practice?” and a prominent situation input. Place three short preset links underneath. Keep saved personas and preferences in quiet secondary navigation. The account control remains visible.
 
+**As built:** signed-in `/` is a home whose primary card is Practice a conversation, with About me and Your data beside it. The situation field and the three examples (professor, roommate, saying no) are on `/practice`, not on that home. Sign-in offers Continue with Google plus email and password. Captions on the call are optional and collapsed. A stock-face catalog is still unbuilt.
+
 | Element | Proposed treatment |
 | --- | --- |
 | Page | Warm ivory `#F7F5F0` |

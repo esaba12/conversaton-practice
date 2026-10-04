@@ -69,7 +69,7 @@ Confirmed event strategy: Actually Intelligent plus both listed ElevenLabs categ
 
 Confirmed: one human with parallel coding agents, fresh sessions, user-described situations as the primary input, warm minimal/crisp modern design, and sign-in before all workspace actions. The user supplied a fresh Supabase project; Auth and owner isolation are automated-tested. Situation generation is core scope.
 
-Open items are planned in [docs/29](docs/29-REMAINING-WORK.md): verify the workspace polish, then submission execution, with optional live checks. Unscheduled product gaps are the 3/5-minute choice, professor and saying-no presets, captions, session attribution, and appearance presets. The project is unnamed and the authenticated app is local-only. Photon/Relay remain deferred.
+On `main`: three example starts (Alex, Ellis, Sam), a 3- or 5-minute choice, collapsed captions, saved-person session attribution, and a public landing with a signed-in home and a Google sign-in button. Google sign-in is not live-checked. Still open, in [docs/29](docs/29-REMAINING-WORK.md): appearance presets, a project name, app hosting, live G3–G5 checks, and Devpost. Photon/Relay remain deferred.
 
 ## Evidence policy
 

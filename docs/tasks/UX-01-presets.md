@@ -1,6 +1,7 @@
 # UX-01: Professor and saying-no presets
 
-Status: review
+Status: integrated
+Coordinator, October 3, 2026, 20:40 EDT: merged to `main`. Unedited starts of the roommate, professor, and saying-no examples send only the preset id.
 Updated: October 3, 2026, 8:05 PM EDT
 Assigned writer: UX-01 worker
 Coordinator: Cursor coordinator session

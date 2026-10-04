@@ -47,7 +47,7 @@ Times are America/Detroit. Speak to a judge who has not used the app. Use a **ne
 | 2:15–2:40 | Open **Your data**: cleanup label is truthful (Deleted at provider / pending). “Sessions start fresh. Saving a person is explicit. Private notes never go to the call.” |
 | 2:40–3:00 | Stack: Tavus CVI + ElevenLabs TTS for the talking counterpart; OpenAI for setup and optional reflection (`store: false`); Supabase for Auth and owner-scoped data; Next.js. “G1 and G2 were live-checked. G3–G5 are automated; I have not claimed a live G3/G4/G5 call.” |
 
-If generation is slow or out of scope, use **Use roommate example**, then still edit a field so the review step is visible.
+If generation is slow or out of scope, start an example (roommate, professor, or saying no), then still edit a field so the review step is visible.
 
 ## Backup-demo shot list (human records)
 
@@ -73,7 +73,7 @@ Still photos if video fails: the 390 px screenshots in ignored `artifacts/local/
 
 **Challenges.** Getting a real talking-video path through Tavus + ElevenLabs in one day; keeping private notes and unshared About-me facts out of counterpart context; tearing down mic and camera independently of a reachable End route; advancing G3–G5 on automated evidence when live calls could not be waited on.
 
-**What's next.** Human live checks of G3–G5 (saved-person start, reflection from a real call, sharing changing tone). Session `person_id` attribution. Appearance presets (stock face + premade voice), already decided, not built. Photon/Relay deferred.
+**What's next.** Human live checks of G3–G5 (saved-person start, reflection from a real call, sharing changing tone). Enable Google in the Supabase dashboard and try Continue with Google once. Appearance presets (stock face + premade voice) are decided and not built. Photon/Relay deferred. Session attribution, the 3/5-minute choice, professor and saying-no examples, and collapsed captions are on `main`.
 
 **Built with.** Tavus CVI, ElevenLabs TTS, OpenAI Responses, Supabase (Auth + PostgreSQL), Next.js, Daily.js, Zod, Playwright, Vitest.
 

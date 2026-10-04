@@ -1,6 +1,7 @@
 # UI-01: Landing page, signed-in home, and Google sign-in
 
-Status: review
+Status: integrated
+Coordinator, October 3, 2026, 20:40 EDT: merged to `main`. Google sign-in is in the UI and has not been completed against the provider.
 Updated: October 3, 2026, 20:20 EDT
 Assigned writer: UI worktree agent
 Coordinator: main checkout (planning agent is separate; do not edit STATUS.md here)

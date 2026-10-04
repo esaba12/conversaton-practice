@@ -9,7 +9,7 @@ Primary targets: Actually Intelligent and the two listed ElevenLabs categories. 
 | Time | What to show |
 | --- | --- |
 | 0:00-0:20 | Personal motivation and one concrete user problem |
-| 0:20-0:40 | New generated situation (roommate example only if generation fails); edit one field; private notes stay off the call |
+| 0:20-0:40 | New generated situation (an example — roommate, professor, or saying no — only if generation fails); edit one field; private notes stay off the call |
 | 0:40-1:55 | Live conversation: counterpart responds on video, user interrupts once, restates the request |
 | 1:55-2:15 | End, optional short reflection (or Skip), no automatic save |
 | 2:15-2:40 | Your data cleanup label; optional Save this person / sharing — explicit only |

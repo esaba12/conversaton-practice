@@ -1,6 +1,7 @@
 # UX-02: Choose a 3- or 5-minute practice
 
-Status: planned
+Status: integrated
+Coordinator, October 3, 2026, 20:40 EDT: merged to `main`. The review and saved-person screens offer 3 minutes (default) or 5. The “always 180” line below is the state before this task.
 Updated: October 3, 2026, 20:00 EDT
 Assigned writer: unassigned
 Coordinator: Cursor coordinator session

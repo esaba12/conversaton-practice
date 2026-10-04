@@ -1,6 +1,7 @@
 # POST-01: Verify the workspace polish
 
 Status: planned
+Coordinator, October 3, 2026, 20:40 EDT: the polish commit is an ancestor of `main`. The “not pushed” and single-commit notes below were true at 20:00 and are not the current branch state. A recorded browser pass of that polish still does not exist.
 Updated: October 3, 2026, 20:00 EDT
 Assigned writer: unassigned
 Coordinator: Cursor coordinator session

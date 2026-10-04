@@ -1,6 +1,7 @@
 # UX-03: Optional collapsed captions
 
-Status: planned
+Status: integrated
+Coordinator, October 3, 2026, 20:40 EDT: merged to `main`. Show captions is collapsed on the call and uses in-memory turns. `enable_closed_captions` stayed false. The “no captions control” line below is the state before this task.
 Updated: October 3, 2026, 20:00 EDT
 Assigned writer: unassigned
 Coordinator: Cursor coordinator session

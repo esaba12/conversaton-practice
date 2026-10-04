@@ -1,6 +1,6 @@
 # Coordinator handoff
 
-**October 3, 2026, 20:00 EDT.** This file’s “next evidence” steps below are historical. Current state is [STATUS.md](../STATUS.md). Remaining work is [docs/29](29-REMAINING-WORK.md). Next task is [POST-01](tasks/POST-01-workspace-polish.md).
+**October 3, 2026, 20:40 EDT.** This file’s “next evidence” steps below are historical. Current state is [STATUS.md](../STATUS.md). Remaining work is [docs/29](29-REMAINING-WORK.md). The workspace polish is already on `main`. What is left is human: live checks, Devpost, a project name, and hosting.
 
 The user is moving to Cursor. Frontend PR #7 and foundation PR #8 are merged to main at c178d37. **Read [the complete Cursor handoff](23-CURSOR-HANDOFF.md) and STATUS.md for current state, commands, evidence and a paste-ready prompt.** Read AGENTS.md, README.md, PRD, build gate and assigned task before edits.
 

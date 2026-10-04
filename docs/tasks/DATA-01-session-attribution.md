@@ -1,6 +1,7 @@
 # DATA-01: Store which saved person a session used
 
-Status: review
+Status: integrated
+Coordinator, October 3, 2026, 20:40 EDT: merged to `main`. Migrations `20261003220000` and `20261003220100` are applied. `session_person.sql` and `session_foundation.sql` passed and rolled back. The worker’s “not applied” lines below are the state before that apply.
 Updated: October 3, 2026, 8:14 PM EDT
 Assigned writer: DATA-01 worker
 Coordinator: Cursor coordinator session

@@ -1,6 +1,6 @@
 # Project status
 
-Updated October 3, 2026, 20:33 EDT. **G1 and G2 passed** (human live calls). **G3–G5 accepted on automated evidence (live not verified)**. Local `main` (not pushed) includes the privacy review, session person attribution, three example presets, 3/5-minute choice, collapsed captions, and the public landing with a signed-in home and Google sign-in button. Typecheck passed. Unit tests: 157 passed. Migrations `20261003220000_session_person.sql` and `20261003220100_revoke_session_executor.sql` are **applied**. Google sign-in is not live-checked; the provider still has to be enabled in the Supabase dashboard. Branches with no commits were not a second merge: polish verification and appearance presets. Live checks, Devpost, the project name, and hosting stay with the human.
+Updated October 3, 2026, 20:40 EDT. **G1 and G2 passed** (human live calls). **G3–G5 accepted on automated evidence (live not verified)**. `main` includes the privacy review, session person attribution, three example presets, a 3/5-minute choice, collapsed captions, and a public landing with a signed-in home and a Google sign-in button. Typecheck passed. Unit tests: 157 passed. Migrations `20261003220000_session_person.sql` and `20261003220100_revoke_session_executor.sql` are **applied**. Google sign-in is not live-checked; the provider still has to be enabled in the Supabase dashboard. Appearance presets were not built. Live checks, Devpost, the project name, and hosting stay with the human. Current open list: [docs/29](docs/29-REMAINING-WORK.md).
 
 ## Integrated October 3, 20:32 EDT
 
@@ -16,7 +16,7 @@ Updated October 3, 2026, 20:33 EDT. **G1 and G2 passed** (human live calls). **G
 | [LIVE-01](docs/tasks/LIVE-01-human-checks.md), [SUB-01](docs/tasks/SUB-01-submission-execution.md), [NAME-01](docs/tasks/NAME-01-project-name.md), [HOST-01](docs/tasks/HOST-01-hosting.md) | Still human decisions |
 
 ## G5 merged (19:26 EDT)
-[PR #26](https://github.com/esaba12/conversaton-practice/pull/26) CI [verify SUCCESS](https://github.com/esaba12/conversaton-practice/actions/runs/37161341412). Issues #22–#25 closed. Draft rate limit, test-media seam (dev only), no duplicate save, a11y/mobile, `--g5-ui` real-Auth checks. Evidence: [G5-04](docs/tasks/G5-04-integration.md), docs/09 G5 coverage table. Deferred: session `person_id` attribution. Dependencies frozen (do not upgrade).
+[PR #26](https://github.com/esaba12/conversaton-practice/pull/26) CI [verify SUCCESS](https://github.com/esaba12/conversaton-practice/actions/runs/37161341412). Issues #22–#25 closed. Draft rate limit, test-media seam (dev only), no duplicate save, a11y/mobile, `--g5-ui` real-Auth checks. Evidence: [G5-04](docs/tasks/G5-04-integration.md), docs/09 G5 coverage table. At 19:26, session `person_id` attribution was still deferred; it was applied later the same day (see the top of this file). Dependencies frozen (do not upgrade).
 
 **History below this line is G4/G3-era notes.** Do not start demo/submission until the human says the product is good enough.
 
