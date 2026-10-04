@@ -102,7 +102,7 @@
 
 .stateGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 232px), 1fr));
   gap: 12px;
 }
 
@@ -132,8 +132,23 @@
 .portraitRow {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
   gap: 24px;
+  align-items: flex-end;
+}
+
+.nightSurface {
+  display: inline-flex;
+  padding: 16px;
+  border-radius: var(--r-md);
+  background: var(--night);
+  color: var(--night-ink);
+}
+
+.galleryCapture {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: inherit;
 }
 
 .portraitFigure {

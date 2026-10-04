@@ -33,7 +33,8 @@
 .button:active,
 .button[data-preview-state="active"] {
   transform: translateY(.5px);
-  box-shadow: none;
+  background: color-mix(in srgb, var(--sage) 68%, var(--ink));
+  box-shadow: inset 0 2px 4px color-mix(in srgb, var(--sage) 40%, transparent);
 }
 
 .button[aria-disabled="true"],
