@@ -1,5 +1,19 @@
 # MHacks strategy and confirmed requirements
 
+## Confirmed October 4, ~11:10 AM (supersedes the sections below where they differ)
+
+Re-read from the [Devpost overview](https://mhacks-2026.devpost.com/), the [rules](https://mhacks-2026.devpost.com/rules) and the [live schedule](https://www.mhacks.org/live):
+
+- **Deadline:** the rules say noon on Sunday, October 4. The schedule shows "Submissions Close @12 PM" from 11:30 to 12:00. The Devpost banner says 12:15 PM; do not rely on it.
+- **Judging:** 1:00–3:00 PM in the Duderstadt Basement, in person and science-fair style. Teams stay at their table. This replaces the 12:30–2:30 three-minute pitch below.
+- **Rubric:** Innovation, Technical Complexity, Usability, Adherence to Theme. The theme is "build something that grows."
+- **Tracks:** one main MHacks track plus any number of eligible sponsor prizes. That settles stacking.
+- **Code:** the submission must include access to the code.
+- **ElevenLabs:** the listing has one ElevenLabs prize, "Best Project Built with ElevenLabs" (three months of Scale per member). An MLH ElevenLabs prize is no longer listed. The grand prize adds three months of ElevenLabs Pro per member.
+- **.Tech:** a domain-name prize (desktop microphone and a .Tech domain). We use https://speakeasyapp.tech.
+- **Our entries:** Actually Intelligent (main), Best Project Built with ElevenLabs, the .Tech prize, and optionally "Judged by an LLM."
+
+
 Updated October 3, 2026, America/Detroit. Based on the official live page, linked prize list, track definitions, and handbook (S35-S38). This is a researched plan, not confirmation of entry, eligibility, prize stacking, or acceptance of rules.
 
 ## Primary target
@@ -45,7 +59,7 @@ All times America/Detroit, October 3-4, 2026.
 - Saturday noon: hacking starts. Handbook requires all coding and building during the event.
 - Sunday 11:30 AM: our internal submission target.
 - Sunday before noon: official Devpost submission deadline.
-- Sunday 12:30-2:30 PM: on-site judging at Duderstadt. Three-minute pitch; repeat judging possible; team must be present.
+- Sunday 1:00–3:00 PM: on-site science-fair judging, Duderstadt Basement (confirmed October 4; earlier notes said 12:30–2:30 with a three-minute pitch). Team must be present.
 
 Teams: 1-4 accepted students. Include teammates, project description, table number, and any additional requested materials in Devpost. Confirm sponsor selections and evidence in the actual form. The handbook lists innovation, technical complexity, usability, and presentation quality; no scoring weights were found.
 
