@@ -14,7 +14,15 @@
   font-weight: 500;
   line-height: 1;
   white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
   transition: background-color var(--t-quick), border-color var(--t-quick), box-shadow var(--t-quick);
+}
+
+.chip > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* 36 px visual chip, 44 px hit target. */
