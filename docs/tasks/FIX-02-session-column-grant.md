@@ -1,14 +1,15 @@
 # FIX-02: Limit what signed-in users can read from practice_sessions
 
-Status: review
+Status: integrated
+Coordinator, October 3, 2026, 21:30 EDT: merged as `b9f68c1` (PR #39, CI verify pass). Migration applied with `supabase db push --linked --yes`. `session_foundation.sql`, `session_person.sql`, and `people_sharing.sql` each returned their completion line and rolled back. Docker catalog-cache warning only.
 Updated: October 3, 2026, 8:52 PM EDT
 Assigned writer: FIX-02 worker
 Coordinator: Cursor coordinator session
 Gate: G5 follow-up
 Requirements/tests: P12, T01/T12 (ownership, minimal metadata). SQL assertions written; not executed.
 GitHub issue: https://github.com/esaba12/conversaton-practice/issues/28
-Pull request: not opened
-CI run: not run
+Pull request: https://github.com/esaba12/conversaton-practice/pull/39
+CI run: verify pass, https://github.com/esaba12/conversaton-practice/actions/runs/37168061814
 
 ## Assignment and isolation
 

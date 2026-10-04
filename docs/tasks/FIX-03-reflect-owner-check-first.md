@@ -1,6 +1,7 @@
 # FIX-03: Check session ownership before reading the reflection transcript
 
-Status: review
+Status: integrated
+Coordinator, October 3, 2026, 21:29 EDT: merged as `723e1d7` (PR #40, CI verify pass). `--g5-ui` still not re-run.
 Updated: October 3, 2026, 21:07 EDT
 Assigned writer: coordinator, after the FIX-03 agent stalled mid-edit
 Coordinator: Cursor coordinator session

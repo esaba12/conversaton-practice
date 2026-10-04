@@ -1,6 +1,7 @@
 # FIX-01: Reject shorter and split private-note copies in a generated setup
 
-Status: review
+Status: integrated
+Coordinator, October 3, 2026, 21:28 EDT: merged as `06bd8d4` (PR #38, CI verify pass).
 Updated: October 3, 2026, 20:53 EDT
 Assigned writer: FIX-01 coding agent
 Coordinator: Cursor coordinator session
