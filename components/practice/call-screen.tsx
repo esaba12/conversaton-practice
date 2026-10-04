@@ -17,6 +17,7 @@ import { shortcutFor } from "./call-shortcuts";
 import { GoalPill } from "./goal-pill";
 import { Ringing } from "./ringing";
 import styles from "./call.module.css";
+import { PortraitTransition } from "@/components/practice/transitions";
 
 export const CONTROLS_IDLE_MS = 3_000;
 
@@ -188,7 +189,7 @@ export function CallScreen(props: CallScreenProps) {
   if (ended) {
     return (
       <section className={styles.endedCard} data-surface="night" aria-labelledby={headingId}>
-        <Portrait name={name} size={64} src={portraitSrc} />
+        <PortraitTransition><Portrait name={name} size={64} src={portraitSrc} /></PortraitTransition>
         <div>
           <h1 id={headingId} className={styles.endedTitle} tabIndex={-1}>{phase === "ended" ? <>Call with <span className={styles.serifName}>{name}</span> ended</> : <>The call with <span className={styles.serifName}>{name}</span> was interrupted</>}</h1>
           <p className={styles.endedNote} role="status">{statusMessage || (phase === "ended" ? "Your microphone and camera are off." : "Your microphone and camera are off. You can start again.")}</p>

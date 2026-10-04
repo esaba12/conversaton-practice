@@ -167,3 +167,8 @@ Exactly one element may carry `practice-portrait` at a time, which holds because
 - Rebased onto `945ac92`. Wired in `app/practice/practice-workspace.tsx`: stage output wrapped in `<StageTransition>`; user-driven stage changes (`showStage`) and End (`finish`) commit inside `startStage`; other flow changes (start acceptance, video playing, sign-out, auth loss, page hide) stay immediate. Sound: `unlock` on I'm ready, `ring` after acceptance, `stopRing` + `connect` when video plays, `stopRing` in `releaseMedia` (every teardown path), `hangup` after End.
 - Not wired (time): per-portrait morphs (`PortraitTransition` in seven components) and the call-screen `FadeTransition`s; screens crossfade by stage group instead.
 - Evidence: typecheck clean; 639 unit tests; build; Playwright 10 passed / 1 skipped including `hero-path.spec.ts` (real Auth/database, test media) with the transitions in place. UI screenshot review skipped: the change is motion, which stills don't show. Nobody has listened to the cues. Live not verified.
+
+### Portrait morphs wired (October 4, ~03:20 EDT)
+
+- `PortraitTransition` now wraps the lobby card (only the picked card, via `morphSource` and `startMorph`), briefing, Meet card, green room, ringing and the ended-call card. The recap portrait is not wrapped because the ended card is on screen with it and only one element may carry the name. The in-call `FadeTransition`s are still not wired.
+- Evidence: typecheck clean; 786 unit tests; build; Playwright 13 passed / 1 skipped. `hero-path.spec.ts` now asserts that `::view-transition-group(practice-portrait)` runs on lobby card → briefing, and that the whole path logs no console errors. Not checked by eye or live.

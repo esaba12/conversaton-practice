@@ -9,6 +9,7 @@ import { readPrivateState, subscribePrivateState, updatePrivateState, type Priva
 import { GOAL_MAX, HARD_MOMENT_MAX, ToneNotice } from "./meet-card";
 import { reflectionDisclosure } from "./meet-knowledge";
 import styles from "./green-room.module.css";
+import { PortraitTransition } from "@/components/practice/transitions";
 
 // S2 green room (docs/32, docs/33 §4.5) with W4 "before". Nothing asks for the microphone until the
 // user presses "Allow microphone". The meter is Web Audio, local only. Leaving (back, unmount,
@@ -169,7 +170,7 @@ export function GreenRoom({
         </button>
 
         <header className={styles.who}>
-          <span className={styles.breathe}><Portrait name={name} size={240} src={portraitSrc} className={styles.portrait} /></span>
+          <PortraitTransition><span className={styles.breathe}><Portrait name={name} size={240} src={portraitSrc} className={styles.portrait} /></span></PortraitTransition>
           <h2 id={`${id}-name`} ref={headingRef} tabIndex={-1} className={styles.name}>{name}</h2>
           {relationship ? <p className={styles.relationship}>{relationship}</p> : null}
         </header>

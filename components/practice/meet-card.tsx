@@ -12,6 +12,7 @@ import {
   challengeLabel, knowsLabel, meetKnowledge, neverSees, paceLabel, roleProblem, toneNotice, type KnowsItem, type MeetStart,
 } from "./meet-knowledge";
 import styles from "./meet.module.css";
+import { PortraitTransition } from "@/components/practice/transitions";
 
 // S1 Meet card (docs/32, docs/33 §4.4) with U1 streaming and the U2 knowledge panel. The character is
 // a card, not a form: the form lives behind "Edit details". Only a validated role (state "ready") can
@@ -340,7 +341,7 @@ export function MeetCard({
         <div className={styles.left}>
           <article className={styles.character} aria-labelledby={`${id}-name`}>
             <div className={styles.identity}>
-              <Portrait name={name} size={120} src={identity.portraitSrc} className={styles.portrait} />
+              <PortraitTransition><Portrait name={name} size={120} src={identity.portraitSrc} className={styles.portrait} /></PortraitTransition>
               <div className={styles.identityText}>
                 <h2 id={`${id}-name`} ref={headingRef} tabIndex={-1} className={styles.name}>{name}</h2>
                 {relationship ? <p className={styles.relationship}>{relationship}</p> : null}
