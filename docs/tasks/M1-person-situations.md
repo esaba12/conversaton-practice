@@ -1,6 +1,6 @@
 # M1: Person situations and practice history metadata
 
-Status: ready for coordinator review; not applied
+Status: reviewed; applying
 Updated: October 3, 2026, 11:59 PM EDT
 Assigned writer: M1 worker
 Coordinator: parent coordinator session
@@ -78,6 +78,10 @@ Existing call sites checked:
 - Checked migration ordering, function identity signatures, restricted owners, `search_path = ''`, grants/revokes, error markers, existing named callers, and rolled-back SQL coverage.
 - `git diff --check` passed.
 - SQL was not executed. No Supabase command, remote database connection, provider call, or environment-file read was made.
+
+Coordinator, October 4, ~00:20 EDT:
+- Privacy review (claude-opus-5-thinking-high, read-only): approve with should-fixes, no blockers. Applied: (1) migration wrapped in `begin;`/`commit;`; (2) `practice_private.valid_situation` (and `valid_stance_chip`) mirrors `situationSchema` with every key optional, plus a test that rejects an unknown `goal` key, a 41+-character chip and a bad `pace`; (3) composite `(person_id, owner_id)` foreign key to `people`; nit: `btrim` in the `background` check. Not applied: (4) stripping provider/idempotency columns from `practice_acquire`'s return. `lib/data/sessions.ts` reads `provider_conversation_id` for idempotent replay, and the function requires the server capability secret, so no browser caller can reach it.
+- Pre-apply, against the linked project in one rolled-back transaction each (outer `begin;` + migration without its own BEGIN/COMMIT + test body + `rollback;`): `person_situations.sql`, `people_sharing.sql`, `session_person.sql` and `session_foundation.sql` all completed.
 
 ## Handoff
 
