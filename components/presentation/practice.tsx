@@ -117,7 +117,7 @@ export function PracticeCall({ counterpartName, goal, phase, muted, cameraEnable
         </div>
       </div>
       <Captions turns={turns} counterpartName={counterpartName} />
-      <div className={styles.callNotes}><p className={styles.callStatus} role="status">{statusMessage}</p><p>Your camera is a local preview. The counterpart responds to your voice and cannot see you.</p>{muted && !ended && <p className={styles.mutedNote}>Your microphone is muted. The conversation is not paused.</p>}</div>
+      <div className={styles.callNotes}><p className={styles.callStatus} role="status">{statusMessage}</p><p>Your camera is a local preview. The counterpart responds to your voice and cannot see you. It can hear your tone and may react to it; nothing about your tone is saved.</p>{muted && !ended && <p className={styles.mutedNote}>Your microphone is muted. The conversation is not paused.</p>}</div>
     </section>
   );
 }

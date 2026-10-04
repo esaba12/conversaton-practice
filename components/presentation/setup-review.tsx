@@ -133,6 +133,7 @@ export function SetupReview({ mode, role, goal, assumptions, onRoleChange, onGoa
           {statusMessage && !regenerating && <p className={styles.status} role="status">{statusMessage}</p>}
           {errorMessage && !regenerating && <p className={styles.error} role="alert">{errorMessage}</p>}
           <p className={styles.mediaNote}>Microphone needed. Camera is optional and only visible to you.</p>
+          <p className={styles.mediaNote}>{role.name.trim() || "The character"} can hear your tone of voice (for example, if you sound unsure) and may react to it. Nothing about your tone is saved.</p>
           <button type="submit" className={styles.primaryButton} disabled={!canStart} aria-describedby={!valid ? `${id}-missing` : undefined}>Start practice</button>
           <div className={styles.linkRow}>
             <button type="button" className={styles.linkButton} onClick={onBack} disabled={busy}>Back</button>

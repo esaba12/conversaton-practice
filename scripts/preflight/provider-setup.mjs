@@ -52,8 +52,12 @@ if (!palId) {
 }
 const observed = await request(`pals/${encodeURIComponent(palId)}`);
 if (observed.layers?.tts?.tts_engine !== "elevenlabs") throw new Error("PAL speech engine verification failed.");
-if (observed.layers?.perception?.perception_model !== "off") throw new Error("PAL perception-off verification failed.");
-console.log("PAL readback confirms ElevenLabs TTS and perception off. No live audiovisual verification.");
+// Quality PAL (SPIKE-01, switched after the owner's A/B): Raven-1 audio tone only; no queries, tools or callbacks.
+const perception = observed.layers?.perception ?? {};
+const noQueries = ["visual_awareness_queries", "audio_awareness_queries", "screen_awareness_queries", "perception_analysis_queries", "ambient_awareness_queries"].every((k) => !perception[k]?.length);
+const noTools = ["visual_tools", "audio_tools", "screen_tools", "perception_tools"].every((k) => !perception[k]?.length) && !observed.tool_ids?.length && !observed.layers?.llm?.tools?.length;
+if (perception.perception_model !== "raven-1" || perception.emotion_recognition !== "full" || !noQueries || !noTools) throw new Error("PAL perception verification failed.");
+console.log("PAL readback confirms ElevenLabs TTS and Raven-1 audio perception with no queries, tools or callbacks. No live audiovisual verification.");
 const testCall = await request("conversations", "POST", {
   pal_id: palId, face_id: faceId, audio_only: false, require_auth: true, max_participants: 2,
   participant_tags: [], test_mode: true,

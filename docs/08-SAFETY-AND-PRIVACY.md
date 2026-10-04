@@ -42,7 +42,7 @@ Tavus CVI, ElevenLabs TTS and the configured model providers process conversatio
 
 Decided, not built (docs/00):
 
-- A later PAL may use Tavus Raven-1 audio perception with emotion recognition set to full, so the counterpart can react to vocal tone during the call (docs/32 T1). The character card and the green room say that. Tone is not saved or shown. There are no visual perception queries, and the camera rule is unchanged.
+- **Built October 3, 22:55 EDT (local configuration; the Vercel deployment still uses the previous PAL):** calls use a PAL with Tavus Raven-1 audio perception and emotion recognition set to full, so the counterpart can react to vocal tone during the call (docs/32 T1). Tavus infers tone for the live response only. The review card, the saved-person start card and the call notes say so; the green room will when it exists (1D). The browser drops `user_audio_analysis` fields and inline analysis tags at parse time, so tone is never shown, sent to reflection or saved. No perception queries, tools or callbacks are configured, and the camera rule is unchanged.
 - Reflection is requested after End unless the user presses Skip during a short grace period, and the green room says so before the call (docs/32 L1).
 - If the user turns on the goal light, that same text provider may receive the goal and recent user lines during the call to answer whether the line was said. The counterpart does not receive them. The check is off unless the user opts in (docs/32 G1). No-app-save does not mean anonymous processing, zero provider retention or account deletion.
 Do not use therapy transcripts or actual third-party voice samples for the demo.

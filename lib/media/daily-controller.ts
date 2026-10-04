@@ -19,7 +19,8 @@ function utteranceReader() {
     const parsed = utteranceSchema.safeParse(data);
     if (!parsed.success) return null;
     const { role, speech } = parsed.data.properties;
-    const text = speech.trim().slice(0, MAX_TURN_CHARS).trim();
+    // Raven tone notes travel in a separate field; an inline tag, if one ever appears, is dropped too.
+    const text = speech.replace(/<user_(?:audio|visual)_analysis>[\s\S]*?<\/user_(?:audio|visual)_analysis>/g, "").trim().slice(0, MAX_TURN_CHARS).trim();
     if (!text) return null;
     if (role === "user") return { type: "utterance", speaker: "user", text };
     if (role === "replica" && sawPal) return null;

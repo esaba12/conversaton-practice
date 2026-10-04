@@ -42,6 +42,7 @@ export function SavedPersonStart({ person, onStart, onBack, disabled = false, st
           {actions}
           {statusMessage && <p className={setup.status} role="status">{statusMessage}</p>}
           <p className={setup.mediaNote}>Microphone needed. Camera is optional and only visible to you.</p>
+          <p className={setup.mediaNote}>{person.name} can hear your tone of voice (for example, if you sound unsure) and may react to it. Nothing about your tone is saved.</p>
           <button type="button" className={setup.primaryButton} disabled={disabled || startDisabled} onClick={onStart}>Start practice</button>
           <div className={setup.linkRow}>
             <button type="button" className={setup.linkButton} onClick={onBack} disabled={disabled}>Back</button>
