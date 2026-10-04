@@ -1,6 +1,6 @@
 # Remaining work
 
-Updated October 3, 2026, 20:40 EDT. G1–G5 are merged. G1 and G2 passed on human live calls. G3–G5 are accepted on automated evidence and stay **live not verified**.
+Updated October 3, 2026, 21:26 EDT. G1–G5 are merged. G1 and G2 passed on human live calls. G3–G5 are accepted on automated evidence and stay **live not verified**.
 
 Submission target: **11:30 AM America/Detroit, October 4** (hard noon). Dependencies stay frozen.
 
@@ -8,7 +8,7 @@ On `main` since the 20:00 draft of this plan: three example presets, a 3- or 5-m
 
 ## Still open
 
-Agent-ready briefs for every open item, including the three REV-01 should-fix items, a post-merge regression run, and the Google sign-in decision, are in [docs/issues](issues/README.md).
+Agent-ready briefs for every open item are in [docs/issues](issues/README.md). The October 3, 21:44 snapshot of what is done and what is left is [docs/next](next/README.md).
 
 | When | Task | State |
 | --- | --- | --- |
@@ -51,14 +51,14 @@ Around 18:48–18:52 EDT the human saved a person and edited chips on a real cal
 
 - Memory proposals (PRD P07 / tests T04–T07). G3 replaced them with explicit Save / Update.
 - Photon and Relay. First stretch only after submission prep is covered (docs/17).
-- Repeat-practice shortcut. Optional, and early in the docs/10 cut order.
+- A full repeat of the call. The later shape is the one-moment retry in [docs/30](30-ONE-MOMENT-RETRY.md): decided, not built, and after submission. The old optional shortcut stays early in the docs/10 cut order.
 - A second model provider, voice cloning, photo upload, group calls, scores, and branching replay.
 - Dependency upgrades.
 - The empty checkboxes in docs/10. Those targets were met by the gate records. This document is the remaining plan.
 
 ## Cut order if the clock wins
 
-Keep generation, live video, editable personas, explicit save and sharing, End, and owner isolation. Drop, in order: Photon → decorative motion → the appearance catalog → a repeat-practice shortcut → automated reflection (keep the self-note and Skip). Presets, duration, and captions are already merged.
+Keep generation, live video, editable personas, explicit save and sharing, End, and owner isolation. Drop, in order: Photon → decorative motion → the appearance catalog → the one-moment retry (docs/30) → automated reflection (keep the self-note and Skip). Presets, duration, and captions are already merged.
 
 ## Working rules
 
