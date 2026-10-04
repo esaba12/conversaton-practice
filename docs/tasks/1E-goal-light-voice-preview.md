@@ -193,3 +193,8 @@ Also for the coordinator: docs/05 entries for both routes (the shapes match `lib
 - Limits are per server process (like the draft limit): multiple Vercel instances each count separately.
 - A session reported `active` by the browser before `markConnected` lands gets 409 from the route; the watcher swallows it and retries after the next user turn.
 - Owner isolation was tested with a mocked request-scoped client (RLS behavior assumed as in the reflect route), not with two real users.
+
+### Coordinator integration (October 4, ~02:20 EDT)
+
+- Rebased onto `d0a71c5` (1F merged). Applied Handoff diffs 1–6 as written: `.env.example`, Meet-card bubble highlight, call-screen/call-stage goal pill, workspace wiring (Hear button on a ready Meet card with the starter id only for an unchanged starter; goal-light toggle in the green room, off by default; `useGoalLight` only for the user's own live call), docs/08 as-built paragraph.
+- Evidence: typecheck clean; 713 unit tests; build; Playwright 10 passed / 1 skipped including `hero-path.spec.ts` (real Auth/database, test media); built client bundle grepped for 20 configured provider id values (Tavus faces/PALs, ElevenLabs voices): 0 hits. Live not verified (no provider call; goal-light accuracy and preview/voice match untested).

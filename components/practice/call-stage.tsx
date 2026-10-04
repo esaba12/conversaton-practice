@@ -3,6 +3,7 @@
 import { initialLiveCallState, type Interaction, type LiveCallState } from "@/lib/media/interactions";
 import type { PracticePhase } from "@/lib/practice/flow";
 import type { TranscriptTurn } from "@/lib/schemas/reflection";
+import type { GoalLightState } from "@/lib/goal-check/client";
 import { CallScreen } from "./call-screen";
 import { RemoteStreamVideo, StreamVideo } from "./remote-media";
 
@@ -11,6 +12,7 @@ import { RemoteStreamVideo, StreamVideo } from "./remote-media";
 export type CallStageProps = {
   counterpartName: string;
   goal: string;
+  goalLight?: GoalLightState;
   phase: PracticePhase;
   muted: boolean;
   cameraEnabled: boolean;

@@ -52,6 +52,8 @@ export type MeetCardProps = {
   disabledReason?: string;
   /** Slot for 1E's "Hear {name}" button next to the opening line. */
   hear?: ReactNode;
+  /** Added to the opening-line bubble while "Hear {name}" plays (useHearHighlight gives none under reduced motion). */
+  bubbleClassName?: string;
   /** Slot under the knowledge panel, e.g. 1G's "The stand-in gets: your line." */
   extras?: ReactNode;
   /** Replaces the Call button when it returns content, e.g. 1G's "Show me first" offer. Gets whether a call may start and why not. */
@@ -304,7 +306,7 @@ export function ToneNotice({ name, tone = "room" }: { name: string; tone?: "room
 
 export function MeetCard({
   identity, state, onRoleChange, editable = "all", start, privateNotes = "", durationSeconds, onDurationChange, onBack, onCall, onRetry,
-  disabled = false, disabledReason = "Please wait a moment.", hear, extras, actions, focusHeading = false,
+  disabled = false, disabledReason = "Please wait a moment.", hear, bubbleClassName, extras, actions, focusHeading = false,
 }: MeetCardProps) {
   const id = useId();
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -371,7 +373,7 @@ export function MeetCard({
                 </div>
                 <figure className={styles.bubbleWrap}>
                   <figcaption className={styles.srOnly}>{name}’s opening line</figcaption>
-                  {role ? <blockquote className={styles.bubble}>{role.opening}</blockquote> : <span className={styles.bubble} aria-hidden="true"><Skeleton lines={2} /></span>}
+                  {role ? <blockquote className={[styles.bubble, bubbleClassName].filter(Boolean).join(" ")}>{role.opening}</blockquote> : <span className={styles.bubble} aria-hidden="true"><Skeleton lines={2} /></span>}
                   {ready && hear ? <div className={styles.hear}>{hear}</div> : null}
                 </figure>
               </>

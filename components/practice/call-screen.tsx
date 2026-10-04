@@ -9,10 +9,12 @@ import { buildAskToWait, buildTypedTurn, buildWrapUp, inWrapUpWindow, MAX_TYPED_
 import type { PracticePhase } from "@/lib/practice/flow";
 import type { TranscriptTurn } from "@/lib/schemas/reflection";
 import { motionTransition } from "@/lib/ui/motion";
+import type { GoalLightState } from "@/lib/goal-check/client";
 import { CallBar } from "./call-bar";
 import { SelfView } from "./call-self-view";
 import { EndConfirmSheet, HelpSheet, ShortcutsSheet } from "./call-sheets";
 import { shortcutFor } from "./call-shortcuts";
+import { GoalPill } from "./goal-pill";
 import { Ringing } from "./ringing";
 import styles from "./call.module.css";
 
@@ -27,6 +29,8 @@ export type CallScreenProps = {
   counterpartName: string;
   portraitSrc?: string | null;
   goal?: string;
+  // G1. "off" keeps the plain pill. The goal light never reaches the call provider.
+  goalLight?: GoalLightState;
   phase: PracticePhase;
   muted: boolean;
   cameraEnabled: boolean;
@@ -91,7 +95,7 @@ function useIdle(enabled: boolean, root: React.RefObject<HTMLElement | null>) {
 
 export function CallScreen(props: CallScreenProps) {
   const { counterpartName: name, portraitSrc, goal, phase, muted, cameraEnabled, cameraPending, elapsedSeconds, durationSeconds, remoteMedia, localPreview, live,
-    turns, statusMessage, testMedia, onMuteToggle, onCameraToggle, onEnd, onCancel, onInteraction, layout = "fullscreen", preview, standIn } = props;
+    turns, statusMessage, testMedia, onMuteToggle, onCameraToggle, onEnd, onCancel, onInteraction, layout = "fullscreen", preview, standIn, goalLight = "off" } = props;
   const reduced = useReducedMotion();
   const rootRef = useRef<HTMLElement>(null);
   const typeInputRef = useRef<HTMLInputElement>(null);
@@ -258,7 +262,9 @@ export function CallScreen(props: CallScreenProps) {
             <button type="button" className={styles.shortcutsLink} onClick={() => setSheet("shortcuts")}>Keyboard shortcuts <kbd className={styles.kbd}>?</kbd></button>
           </div>
           {standIn ? standIn.prompt && <p className={`${styles.goalPill} ${styles.fadeable}`}><span className={styles.goalLabel}>Your part</span>{standIn.prompt}</p>
-            : goal?.trim() && <p className={`${styles.goalPill} ${styles.fadeable}`}><span className={styles.goalLabel}>Your line</span>{goal}</p>}
+            : goal?.trim() && (goalLight === "off"
+              ? <p className={`${styles.goalPill} ${styles.fadeable}`}><span className={styles.goalLabel}>Your line</span>{goal}</p>
+              : <GoalPill goal={goal} state={goalLight} className={`${styles.goalPill} ${styles.fadeable}`} />)}
         </div>
       )}
 
