@@ -7,7 +7,7 @@ Coordinator: wow-pass coordinator (main checkout)
 Gate: Wow pass Phase 1
 Requirements/tests: docs/next/02-BUILD-PLAN.md §3 1D; docs/32 S1, S2, T1 (and the U1/U2/D2 sections in docs/32 or docs/next/04-NEW-SPECS.md); docs/next/04-NEW-SPECS.md W4 (before), W11 (streamed draft events); docs/next/03-CONTRACTS.md §2; docs/33 Meet/green-room screens; docs/next/05-UI-UPGRADE.md
 GitHub issue: https://github.com/esaba12/conversaton-practice/issues/63
-Pull request: not opened
+Pull request: https://github.com/esaba12/conversaton-practice/pull/75 (draft)
 CI run: not run
 
 ## Assignment and isolation
@@ -57,7 +57,7 @@ All mock or local; **live not verified** (no provider call, no real call, no hum
 
 ## Handoff
 
-- Changed paths and commits: `e62545f` (devices, mic meter, stream client, `lib/session/api-client.ts` stance), `c630745` (Meet card, knowledge, green room, unit tests), `472d2fb` (`app/design-preview/page.tsx`, `meet-green-room-gallery.tsx`, `gallery.module.css`), plus this record.
+- Changed paths and commits (PR #75): `e62545f` (devices, mic meter, stream client, `lib/session/api-client.ts` stance), `c630745` (Meet card, knowledge, green room, unit tests), `472d2fb` (`app/design-preview/page.tsx`, `meet-green-room-gallery.tsx`, `gallery.module.css`), plus this record.
 - Shared-file change made (required for U2 acceptance, minimal): `lib/session/api-client.ts` `startSession` now forwards `wants`, `holdsBackBecause`, `softensWhen` when present. Before, the edited stance chips were silently dropped from the role start body, so the counterpart never got them and "Knows" could not match the body. `roleContextSchema` already allows them and the server already uses them; the existing api-client tests still pass (their fixture has no stance).
 - File naming note: the pure U2 module is `components/practice/meet-knowledge.ts` (inside the `meet*` family, no JSX). The existing `components/practice/meet-stage.tsx` is untouched.
 - Remaining risks:
