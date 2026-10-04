@@ -211,7 +211,7 @@ export function GreenRoom({
                     : <PrimaryButton label="Allow microphone" icon={Mic} onClick={() => allow()} />}
                 </>
               )}
-              {startError && !starting ? <p className={styles.problemTitle} role="alert">{startError}</p> : null}
+              {startError && !starting ? <div className={styles.problem} role="alert"><p className={styles.problemTitle}>{startError}</p></div> : null}
 
               <div className={styles.cameraRow}>
                 <label className={styles.switch}>

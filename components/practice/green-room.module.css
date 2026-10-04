@@ -27,8 +27,7 @@
 .back,
 .panel,
 .actions,
-.settle,
-.quietDark { --focus: var(--focus-night); }
+.settle { --focus: var(--focus-night); }
 
 .back,
 .quiet,

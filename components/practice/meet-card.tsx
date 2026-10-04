@@ -322,6 +322,7 @@ export function MeetCard({
 
   const reason = disabled ? disabledReason
     : state.status === "streaming" ? `Wait for ${name} to finish coming together.`
+    : state.status === "error" ? "The scene couldn’t be set up. Try again, or change the briefing."
     : problem?.reason ?? "";
   const canCall = ready && !problem && !disabled;
 
