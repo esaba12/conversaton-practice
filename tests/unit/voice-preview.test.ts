@@ -96,12 +96,15 @@ describe("POST /api/voice-preview", () => {
     expect(JSON.parse(String(init?.body))).toEqual({ text: OPENING, model_id: "eleven_v4_turbo" });
   });
 
-  it("maps a starter preset to its voice, falls back to the default voice, and honors the model env", async () => {
+  it("maps a starter preset to its voice, never borrows the default for a starter, and honors the model env", async () => {
     vi.stubEnv("ELEVENLABS_PREVIEW_TTS_MODEL", "configured-model");
     const fetchMock = provider(mp3, mp3);
     await preview({ text: OPENING, presetId: "manager" });
-    await preview({ text: OPENING, presetId: "roommate" });
+    const unset = await preview({ text: OPENING, presetId: "roommate" });
+    await preview({ text: OPENING });
     expect(fetchMock.mock.calls[0][0]).toContain(`/text-to-speech/${MANAGER_VOICE}/stream`);
+    expect(unset.status).toBe(503);
+    expect(JSON.parse(await unset.text()).code).toBe("NOT_CONFIGURED");
     expect(fetchMock.mock.calls[1][0]).toContain(`/text-to-speech/${DEFAULT_VOICE}/stream`);
     expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body)).model_id).toBe("configured-model");
   });

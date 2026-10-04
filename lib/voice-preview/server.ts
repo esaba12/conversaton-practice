@@ -10,7 +10,8 @@ const TIMEOUT_MS = 15_000;
 // Same env names as lib/media/presets.server.ts, so the preview uses the voice the call will use. Ids stay on the server.
 export function voicePreviewConfiguration(presetId?: SessionPreset) {
   const key = process.env.ELEVENLABS_API_KEY;
-  const voiceId = (presetId && process.env[`ELEVENLABS_STARTER_${presetId.toUpperCase()}_VOICE_ID`]) || process.env.ELEVENLABS_VOICE_ID;
+  // A starter never borrows the default voice: the preview must be the voice its call uses.
+  const voiceId = presetId ? process.env[`ELEVENLABS_STARTER_${presetId.toUpperCase()}_VOICE_ID`] : process.env.ELEVENLABS_VOICE_ID;
   const model = process.env.ELEVENLABS_PREVIEW_TTS_MODEL || DEFAULT_TTS_MODEL;
   if (!key || !voiceId) throw new AppError("NOT_CONFIGURED", "Voice preview isn't set up.", 503);
   return { key, voiceId, model };
