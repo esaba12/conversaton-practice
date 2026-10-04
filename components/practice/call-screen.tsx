@@ -96,6 +96,7 @@ export function CallScreen(props: CallScreenProps) {
   const headingId = useId();
   const typeInputId = useId();
   const typeCountId = useId();
+  const typeErrorId = useId();
   const modal = layout === "fullscreen";
   const isLive = phase === "live";
   const ringing = phase === "connecting";
@@ -204,7 +205,7 @@ export function CallScreen(props: CallScreenProps) {
         {present(remoteMedia) ? <div className={styles.remoteMedia}>{remoteMedia}</div> : isLive && <div className={styles.noVideo}><Portrait name={name} size={120} src={portraitSrc} /><p>Video is unavailable right now.</p></div>}
       </div>
 
-      <header className={styles.topBar}>
+      <header className={styles.topBar} data-ringing={ringing || undefined}>
         <div className={styles.identity}>
           {!ringing && <span className={styles.arc} data-wrapping={wrapping || undefined} style={{ "--progress": progress } as React.CSSProperties} aria-hidden="true"><Portrait name={name} size={40} src={portraitSrc} /></span>}
           <div className={styles.identityText}>
@@ -241,9 +242,10 @@ export function CallScreen(props: CallScreenProps) {
                 <motion.form key="type" className={styles.typeForm} onSubmit={sendTyped} initial={{ opacity: 0, y: reduced ? 0 : 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: reduced ? 0 : 8 }} transition={fade} data-reduced-fade>
                   <label htmlFor={typeInputId} className="sr-only">Type what you want to say to {name}</label>
                   <input ref={typeInputRef} id={typeInputId} className={styles.typeInput} value={draft} maxLength={MAX_TYPED_TURN_CHARS} placeholder={`Say it to ${name} in writing`} autoComplete="off" spellCheck
-                    aria-describedby={typeCountId} onChange={(event) => { setDraft(event.target.value); setSendError(false); }}
+                    aria-describedby={sendError ? `${typeErrorId} ${typeCountId}` : typeCountId} onChange={(event) => { setDraft(event.target.value); setSendError(false); }}
                     onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); setTypeOpen(false); } }} />
-                  <span id={typeCountId} className={styles.typeCount}>{sendError ? "That didn’t send. Try again, or say it out loud." : `${draft.length}/${MAX_TYPED_TURN_CHARS}`}</span>
+                  {sendError && <p id={typeErrorId} className={styles.typeError} role="alert">That didn’t send. Try again, or say it out loud.</p>}
+                  <span id={typeCountId} className={styles.typeCount}>{`${draft.length}/${MAX_TYPED_TURN_CHARS}`}</span>
                   <button type="submit" className={styles.typeSend} aria-disabled={!typedValid || undefined} aria-label={typedValid ? `Send to ${name}` : `Send to ${name}. Type something first.`}><Send size={20} strokeWidth={1.75} aria-hidden="true" /></button>
                 </motion.form>
               )}

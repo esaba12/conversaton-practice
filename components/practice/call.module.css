@@ -337,8 +337,10 @@
   font-size: var(--text-12);
 }
 .shortcutsLink:hover { color: var(--night-ink); }
+@media (pointer: coarse) { .shortcutsLink { display: none; } }
 
 .typeForm {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -361,6 +363,23 @@
 .typeInput::placeholder { color: var(--night-muted); }
 .typeInput:focus { outline: none; }
 .typeInput:focus-visible { outline: 3px solid var(--focus-night); outline-offset: 2px; border-radius: var(--r-sm); }
+.typeError {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 16px);
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: var(--r-md);
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  color: var(--night-ink);
+  font-size: var(--text-14);
+  text-align: center;
+}
 .typeCount { color: var(--night-muted); font-size: var(--text-12); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .typeSend {
   display: grid;
@@ -475,6 +494,7 @@
 
 @container (max-width: 700px) {
   .topBar { top: 16px; left: 16px; right: 16px; flex-direction: column; }
+  .topBar[data-ringing] { flex-direction: row; justify-content: space-between; align-items: flex-start; }
   .chips { max-width: none; justify-content: flex-start; }
   .stage { inset: 0; border-radius: 0; }
   .bottom { bottom: 16px; }
