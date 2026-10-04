@@ -1,14 +1,14 @@
 # FIX-02: Limit what signed-in users can read from practice_sessions
 
 Status: review
-Updated: October 3, 2026, 8:52 PM EDT
+Updated: October 3, 2026, 9:08 PM EDT
 Assigned writer: FIX-02 worker
 Coordinator: Cursor coordinator session
 Gate: G5 follow-up
 Requirements/tests: P12, T01/T12 (ownership, minimal metadata). SQL assertions written; not executed.
 GitHub issue: https://github.com/esaba12/conversaton-practice/issues/28
-Pull request: not opened
-CI run: not run
+Pull request: https://github.com/esaba12/conversaton-practice/pull/39 (draft)
+CI run: not checked
 
 ## Assignment and isolation
 
@@ -77,7 +77,7 @@ Non-goals: applying the migration, views, RPC changes, deleting session rows, ap
 
 ## Handoff
 
-- Changed paths and commit(s): this commit on `agent/fix-02`
+- Changed paths and commit(s): `a4f8bdd0eaa441afd1e21120db55f9f296013c8a` and `772e53542394ebc23038a0ffc0c5d9d7bd13e2a8` on `agent/fix-02`. This record update follows.
 - Remaining failures/risks: migration is not applied, so signed-in users can still read the three columns on their own rows. `SELECT` with no granted column (`select 1`, `count(*)`) now needs a granted column for `authenticated`; the two session SQL files were updated for that. `practice_acquire` and the other session RPCs still return the full row, including the three columns, to a caller who has the server capability. A direct table read does not. Rollback is `grant select on public.practice_sessions to authenticated;`.
 - External account action: coordinator applies the migration and runs the three SQL files. Do not run the SQL files before the migration.
 - Next smallest task: coordinator applies `20261004000000_session_column_select.sql`, runs `session_foundation.sql`, `session_person.sql`, and `people_sharing.sql`, then re-runs VERIFY-01
