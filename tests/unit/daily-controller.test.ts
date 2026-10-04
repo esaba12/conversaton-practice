@@ -224,8 +224,9 @@ describe("Daily media controller", () => {
       call.emit("app-message", { fromId: "replica", data: { message_type: "conversation", event_type: "conversation.utterance", properties: { role, speech, ...extra } } });
     message("pal", "  Hey, got a minute?  ", { user_audio_analysis: "sounds nervous" });
     message("replica", "Hey, got a minute?");
-    message("user", "Sure, about the kitchen.");
+    message("user", "<user_audio_analysis>The user sounded hesitant</user_audio_analysis>Sure, about the kitchen.");
     message("user", "   ");
+    message("user", "<user_audio_analysis>tone only</user_audio_analysis>");
     message("user", 42);
     call.emit("app-message", { data: { event_type: "conversation.utterance.streaming", properties: { role: "pal", speech: "partial" } } });
     call.emit("app-message", { data: "not an object" });
@@ -239,6 +240,7 @@ describe("Daily media controller", () => {
     expect(turns).toHaveLength(3);
     expect((turns[2] as { text: string }).text).toHaveLength(2_000);
     expect(JSON.stringify(turns)).not.toContain("nervous");
+    expect(JSON.stringify(turns)).not.toMatch(/hesitant|tone only|analysis/);
     await controller.end();
     message("user", "after end");
     expect(events.filter((event) => event.type === "utterance")).toHaveLength(3);

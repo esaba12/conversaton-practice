@@ -74,9 +74,24 @@ Interruptibility stays `high` (the G1-verified setting); medium remains an A/B o
 - Harness: `node --env-file=.env.local scripts/preflight/video-server.mjs` on `http://127.0.0.1:3010` (loopback). Page loaded in Chromium with variants A, B, S, T and zero page errors (`artifacts/local/spike-01/harness.png`). No call started by the coordinator.
 - Limitations: no live call yet, so TTS audio, tags, append-context timing, respond latency, Raven behavior and stand-in behavior are **live not verified**.
 
+### Owner A/B call (human-reported, October 3, ~22:50 EDT)
+
+Mode: live, human. Harness `http://127.0.0.1:3010`, variants A, B, S, T. Reported by the owner, not itemized by the coordinator:
+
+- **B felt more natural than A.** In A, Jordan did not soften. In B, Jordan seemed sensitive to the owner's feelings without naming specific emotions (T1 guard held).
+- **Stand-in (S)** said the user's line, twice (once early, once after pushback, which matches "repeat the request"). Coaching and kindness were not separately reported.
+- **Audio tag (T):** the sigh was performed, not read aloud, through Tavus with `eleven_v4_turbo`.
+- **Voice match:** the direct ElevenLabs clip matches the call voice. W3 can keep the label "Hear {name}".
+- **Mic** turned off after each End.
+- Not reported: the timing log for `append_context` and `respond`. Those stay **live not verified**; 1A should keep the wrap-up at T–30 s and record actuals on the first hero call.
+
+### Switch (October 3, 22:55 EDT)
+
+`TAVUS_PAL_ID`/`TAVUS_FACE_ID` in `.env.local` now hold the quality values. The previous values are kept as `TAVUS_PAL_ID_PREVIOUS`/`TAVUS_FACE_ID_PREVIOUS` (rollback: copy them back), plus `.env.local.pre-switch` (ignored). `provider-setup.mjs` readback now requires Raven-1, emotion recognition full, and no queries or tools; run after the switch: exit 0, readback ok, test-mode create `ended` + hard delete ok. **Vercel production env is unchanged** (still the previous PAL) until the owner asks for a deploy. T1 notice added to the review card, saved-person start card and call notes; the browser strips inline analysis tags (unit test).
+
 ## Handoff
 
-- Changed paths and commit(s): see the SPIKE-01 PR.
+- Changed paths and commit(s): see the SPIKE-01 PR and the quality-PAL switch PR.
 - Remaining failures/risks: `eleven_v4_turbo` may be accepted at create but fail or lag on a call; fallback is a new PAL with `eleven_v3_conversational`, then `eleven_flash_v2_5`. Raven `full` may make Jordan name emotions; the delivery line forbids it.
 - External account action: owner A/B call on the harness (checklist in STATUS.md).
 - Next smallest task: after the A/B, switch `TAVUS_PAL_ID`/`TAVUS_FACE_ID` to the quality values if B wins, update `provider-setup.mjs` readback to "raven-1 audio, no queries, no callbacks", and record the notes here.

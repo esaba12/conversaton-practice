@@ -12,10 +12,19 @@ let activeId = null, starting = false, cancelled = false;
 const jordan = "You are Jordan, a fictional manager. Style: busy and fair, protective of the team, talks in short practical sentences. Situation: the user has taken on more than they can do well and wants to ask you to move one project off their plate; you are planning a launch and are short on people. Constraints: keep it about this week's work; do not bring up performance reviews. Challenge: mild pushback. You want to keep the launch on track. You hold back because you are worried the team falls behind. You soften when the user says what to drop. Keep your want and reason consistent across the call. Change your stance only when what the user does matches that; then soften gradually. If the user goes quiet for a while, check in once briefly in character, then wait. Let your face and voice show how the character feels, within the role's tone. React to how the user sounds in character; never name or diagnose the user's emotions. Respond in one to three sentences as Jordan, never as a coach.";
 const jordanGreeting = "Hey, you wanted to chat? I've got about ten minutes before planning.";
 const standIn = `You are a fictional stand-in playing the user in a short practice, so they can see the conversation once before trying it. The user is playing Jordan. Say the user's line below close to word for word early in the conversation. When Jordan pushes back, acknowledge their concern once and repeat the request. Stay warm, civil and brief (one to three sentences). Do not over-apologize, add new demands, coach, comment on how the user is playing, or claim to be the real user. ${JSON.stringify({ counterpartName: "Jordan", counterpartRole: "Your manager", situation: "The user has taken on more than they can do well and wants to move one project off their plate. Jordan is planning a launch and is short on people.", yourLine: "I need to move the Atlas report to next sprint so I can do the API work well.", whenItGetsHard: "If they say the team needs me, I'll say I get that, and I still need to drop one thing." })}`;
+// Face audition (Q1 step 2): any ready phoenix-4.5 stock face may override the variant's face for one call.
+let auditionFaces = [];
+async function loadFaces() {
+  const pages = await Promise.all([1, 2].map((page) => provider(`faces?face_type=system&verbose=true&limit=100&page=${page}`, "GET").then((r) => r.json())));
+  auditionFaces = pages.flatMap((p) => p.data ?? [])
+    .filter((f) => f.status === "completed" && f.model_name === "phoenix-4.5" && f.face_id !== process.env.TAVUS_STANDIN_FACE_ID)
+    .map((f) => { const tags = (f.tags ?? []).map((t) => t.tag_name); return { id: f.face_id, name: f.face_name.trim(), thumb: f.thumbnail_image_url, pro: tags.includes("pro"), recommended: Boolean(f.is_recommended), tags: tags.filter((t) => t !== "pro") }; })
+    .sort((a, b) => Number(b.pro) - Number(a.pro) || Number(b.recommended) - Number(a.recommended) || a.name.localeCompare(b.name));
+}
 const variants = {
   friendly: { pal, face, context: "You are Alex, a fictional friendly roommate who deflects a chore discussion with one light joke, then listens. Dishes have been left in the shared kitchen. Respond casually in one or two sentences as the roommate, never as a coach.", greeting: "Hey! What's up?" },
   reserved: { pal, face, context: "You are Jamie, a fictional reserved roommate. Be concise, direct and serious, without jokes. You want specific agreements about shared kitchen chores. Respond in one brief sentence as the roommate, never as a coach.", greeting: "Hi. What did you want to discuss?" },
-  "jordan-old": { pal, face, context: jordan, greeting: jordanGreeting },
+  "jordan-old": { pal: process.env.TAVUS_PAL_ID_PREVIOUS ?? pal, face: process.env.TAVUS_FACE_ID_PREVIOUS ?? face, context: jordan, greeting: jordanGreeting },
   "jordan-quality": { pal: process.env.TAVUS_QUALITY_PAL_ID, face: process.env.TAVUS_QUALITY_FACE_ID, context: jordan, greeting: jordanGreeting },
   "jordan-tag-probe": { pal: process.env.TAVUS_QUALITY_PAL_ID, face: process.env.TAVUS_QUALITY_FACE_ID, context: `${jordan} In your first reply only, begin one sentence with the audio tag [sighs].`, greeting: jordanGreeting },
   "stand-in": { pal: process.env.TAVUS_STANDIN_PAL_ID, face: process.env.TAVUS_STANDIN_FACE_ID, context: standIn, greeting: "Hey, Jordan, do you have a minute?" },
@@ -48,6 +57,7 @@ const server = http.createServer(async (request, response) => {
       response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Set-Cookie": `preflight=${nonce}; HttpOnly; SameSite=Strict; Path=/` });
       return response.end(await readFile(new URL("./video.html", import.meta.url)));
     }
+    if (request.method === "GET" && request.url === "/faces") return send(response, 200, { faces: auditionFaces });
     if (request.method === "GET" && request.url === "/daily.js") { response.writeHead(200, { "Content-Type": "text/javascript" }); return response.end(await readFile(new URL("../../node_modules/@daily-co/daily-js/dist/daily.js", import.meta.url))); }
     if (request.method !== "POST" || !authorized(request)) return send(response, 403, { error: "Use the local preflight page." });
     if (request.url === "/end") return send(response, 200, await cleanup());
@@ -56,11 +66,13 @@ const server = http.createServer(async (request, response) => {
     starting = true; cancelled = false;
     let text = "";
     for await (const chunk of request) { text += chunk; if (text.length > 1000) throw new Error("Body limit"); }
-    const fixture = JSON.parse(text).fixture;
+    const { fixture, faceId } = JSON.parse(text);
     const variant = variants[fixture] ?? variants.friendly;
     if (!variant.pal || !variant.face) throw new Error("Variant not configured");
+    const chosenFace = faceId ? auditionFaces.find((f) => f.id === faceId)?.id : variant.face;
+    if (!chosenFace) throw new Error("Face not in the audition list");
     try {
-      const created = await provider("conversations", "POST", { pal_id: variant.pal, face_id: variant.face, audio_only: false, require_auth: true, max_participants: 2, participant_tags: [], conversational_context: variant.context, custom_greeting: variant.greeting, properties: { max_call_duration: 180, participant_left_timeout: 10, participant_absent_timeout: 120, enable_recording: false, auto_start_recording: false, enable_closed_captions: false, languages: ["en"] } });
+      const created = await provider("conversations", "POST", { pal_id: variant.pal, face_id: chosenFace, audio_only: false, require_auth: true, max_participants: 2, participant_tags: [], conversational_context: variant.context, custom_greeting: variant.greeting, properties: { max_call_duration: 180, participant_left_timeout: 10, participant_absent_timeout: 120, enable_recording: false, auto_start_recording: false, enable_closed_captions: false, languages: ["en"] } });
       const data = await created.json();
       if (typeof data.conversation_id === "string") activeId = data.conversation_id;
       const room = new URL(data.conversation_url);
@@ -72,5 +84,7 @@ const server = http.createServer(async (request, response) => {
     finally { starting = false; }
   } catch { starting = false; send(response, 400, { error: "Preflight request could not be completed." }); }
 });
+await loadFaces().catch(() => console.log("Face list unavailable; variants use their default faces."));
+console.log(`Audition faces loaded: ${auditionFaces.length}`);
 server.listen(port, "127.0.0.1", () => console.log(`Isolated live-provider preflight: ${origin}. Calls start only on explicit button click.`));
 for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, async () => { await cleanup(); server.close(); process.exit(0); });
