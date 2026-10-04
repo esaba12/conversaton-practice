@@ -1,6 +1,7 @@
 # HOST-01: Decide where the app is hosted
 
-Status: blocked
+Status: review
+Coordinator, October 3, 2026, 21:39 EDT: the human chose a deploy. Production is https://conversation-practice-zeta.vercel.app on a new Vercel project named `conversation-practice`. The static preview project was not changed. Framework was set to Next.js after the first deploy failed looking for a `public` output directory. SSO deployment protection was turned off so the URL is public. Signed-out `/` returned the landing (HTTP 200) and signed-out `/practice` returned 307 to `/auth/sign-in`. Email sign-in and a live call on this URL were not run. `OPENAI_REFLECTION_MODEL` is unset locally and on Vercel; reflection falls back to `OPENAI_SETUP_MODEL`.
 Updated: October 3, 2026, 20:00 EDT
 Assigned writer: human builder
 Coordinator: Cursor coordinator session
