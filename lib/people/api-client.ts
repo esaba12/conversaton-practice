@@ -1,7 +1,9 @@
 import {
-  aboutMeFactResponseSchema, aboutMeListResponseSchema, deletedResponseSchema, peopleListResponseSchema, personResponseSchema, privatePrepResponseSchema,
-  type AboutMeFact, type Person, type PersonFields,
+  aboutMeFactResponseSchema, aboutMeListResponseSchema, deletedResponseSchema, peopleListResponseSchema, personResponseSchema, personSituationsResponseSchema,
+  practiceHistoryResponseSchema, privatePrepResponseSchema,
+  type AboutMeFact, type Person, type PersonFields, type PersonSituation,
 } from "@/lib/schemas/people";
+import type { SessionPreset } from "@/lib/schemas/situation";
 import { requestJson } from "@/lib/session/api-client";
 
 export { SessionClientError } from "@/lib/session/api-client";
@@ -29,6 +31,14 @@ export async function updatePerson(personId: string, fields: PersonFields, expec
 export async function deletePerson(personId: string): Promise<void> { await requestJson("DELETE", `/api/people/${id(personId)}`, undefined, deletedResponseSchema); }
 export async function setSharedFacts(personId: string, factIds: string[], expectedVersion: number): Promise<Person> {
   return (await requestJson("PUT", `/api/people/${id(personId)}/shared-facts`, { factIds: [...new Set(factIds)], expectedVersion }, personResponseSchema)).person;
+}
+
+// P2 saved situations (1C routes) and W10 practice history (1G route). Reads only.
+export async function listPersonSituations(personId: string): Promise<PersonSituation[]> {
+  return (await requestJson("GET", `/api/people/${id(personId)}/situations`, undefined, personSituationsResponseSchema)).situations;
+}
+export async function getPracticeHistory(): Promise<SessionPreset[]> {
+  return (await requestJson("GET", "/api/practice-history", undefined, practiceHistoryResponseSchema)).practicedPresets;
 }
 
 // The user's own notes: only ever sent to /api/private-prep.
