@@ -1,5 +1,21 @@
-import Link from "next/link";
-export default function Home() {
-  return <><header className="site-header"><Link className="wordmark" href="/">Conversation practice<span className="mark" aria-hidden="true">↗</span></Link><Link className="text-link" href="/auth/sign-in">Sign in <span aria-hidden="true">→</span></Link></header>
-    <main id="main" className="landing"><div className="eyebrow"><span className="status-dot" /> A little room to practice</div><h1>Find your words.<br /><span>Then take them with you.</span></h1><p className="intro">Some conversations are easier after a first try. Rehearse with a fictional AI counterpart, at your own pace.</p><Link className="button" href="/auth/sign-in">Start with a conversation <span aria-hidden="true">↗</span></Link><p className="fine-print">Private preparation. A fresh start every time.</p><section className="preview-grid" aria-label="How practice works"><article><span className="step">01 / Prepare</span><h2>Make space for the words.</h2><p>Describe an everyday situation and choose what you want to practice.</p></article><article><span className="step">02 / Practice</span><h2>Have a first try.</h2><p>Talk with a fictional counterpart in a live video call. End whenever you need.</p></article><article><span className="step">03 / Close</span><h2>Leave when you’re ready.</h2><p>End the call, skip or take a short reflection, and save a person only if you choose to.</p></article></section><p className="disclosure">Prototype in development. A practice tool, not therapy or a prediction of anyone’s response.</p></main></>;
+import { authConfigured } from "@/lib/auth/config";
+import { createAuthClient } from "@/lib/auth/server";
+import { PublicLanding } from "@/components/site/public-landing";
+import { SignedInHome } from "@/components/site/signed-in-home";
+
+export const dynamic = "force-dynamic";
+
+async function hasSession() {
+  if (!authConfigured()) return false;
+  try {
+    const client = await createAuthClient();
+    const { data: { user }, error } = await client.auth.getUser();
+    return !error && !!user && !user.is_anonymous;
+  } catch {
+    return false;
+  }
+}
+
+export default async function Home() {
+  return (await hasSession()) ? <SignedInHome /> : <PublicLanding />;
 }
