@@ -123,6 +123,13 @@ Typed builders only for `conversation.append_context`, `conversation.interrupt` 
 
 Event parsing additions: `conversation.utterance.streaming` (captions), `conversation.started_speaking` / `stopped_speaking` with role `pal` or legacy `replica` (speaking glow). Any `user_audio_analysis` field is dropped at parse time and never reaches React state.
 
+### 2.9 Starter faces and portraits (owner, 22:41 EDT)
+
+- `lib/media/presets.server.ts` (server-only, imports `server-only`) starts in C1 with the four starters: `sessionPreset → { faceEnv, palEnv, voiceEnv }`. Env names follow `TAVUS_STARTER_<PRESET>_FACE_ID`, `TAVUS_STARTER_<PRESET>_PAL_ID`, `ELEVENLABS_STARTER_<PRESET>_VOICE_ID`. Starters sharing a voice share a PAL. Missing env falls back to `TAVUS_PAL_ID`/`TAVUS_FACE_ID`.
+- Preset starts use the mapped PAL and face; role, person and stand-in starts are unchanged (the stand-in keeps its reserved face).
+- `GET /api/portraits/[presetId]` (signed-in): the server fetches that face's `thumbnail_image_url` and streams the image with `Cache-Control: private, max-age=86400`. Unknown id → 404. No provider id or CDN URL reaches the browser. Committing copies of the stills waits on confirmed Tavus terms (SPIKE-01).
+- Phase 3 (C3, B4) extends the same module to the ~8-face catalog and `people.preset_id`.
+
 ## 3. Phase 2 (C2)
 
 ### 3.1 Reflection (`lib/schemas/reflection.ts`)

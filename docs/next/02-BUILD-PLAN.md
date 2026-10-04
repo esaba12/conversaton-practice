@@ -66,6 +66,8 @@ Three lanes run in parallel; 0D starts after 0C merges.
 
 **Coordinator first:** freeze contracts C1 (03-CONTRACTS §2) and apply migration **M1** with its SQL test. Then dispatch 1A, 1B, 1C in parallel; 1D, 1E, 1F follow as lanes free up.
 
+**Starter faces (owner, 22:41 EDT; the first half of B4).** In C1 the coordinator also: picks a distinct phoenix-4.5 stock face and premade voice for each starter (Jordan, Alex, Ellis, Sam), never the stand-in face; creates one PAL per voice with the quality PAL settings (after the A/B decides those settings); adds the server-only starter map (03-CONTRACTS §2.9). 1C resolves the starter's face and PAL on preset starts; 1B and 1D show the portraits; 1E's voice preview uses the starter's voice. The "Look and voice" picker for saved people and the rest of the ~8-face catalog stay in 3C.
+
 **Hero-path checkpoint (after 1A, 1B, 1C, 1D, 1G):** Jordan from the lobby → briefing → Meet card → green room → **Show me first** → Your turn → ringing → call → End → today's reflection panel. Show me first is built into the main flow (owner, 22:25 EDT), so it is part of the first vertical slice, not a later add-on. Mock browser test `tests/browser/hero-path.spec.ts` (coordinator-owned), plus one human live call. Only after the checkpoint do 1E and 1F integrate.
 
 Dispatch order inside Phase 1, with three lanes: 1A, 1B and 1C first. Then 1D (after 1B) and 1G (after 1C, reusing 1A's call shell). Then 1E and 1F.
