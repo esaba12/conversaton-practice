@@ -82,7 +82,7 @@ export function DataOverview({ inventory, sessions, retrying, deleting, result, 
             </ul>}
           </li>
           <li className={data.storedRow}><strong>Private prep notes: {inventory.privatePrep ? "saved" : "none"}</strong><p>Never shared with anyone you practice with. Edit them on any saved person’s page.</p></li>
-          <li className={data.storedRow}><strong>Session records</strong><p>Each practice keeps only its status, times and provider cleanup state. No audio, video, transcript or reflection is stored by this app.</p></li>
+          <li className={data.storedRow}><strong>Session records</strong><p>Each practice keeps its status, times, provider cleanup state, and which saved person it used. The name is shown when that person still exists. No audio, video, transcript or reflection is stored by this app.</p></li>
         </ul>}
     </section>
 
@@ -101,9 +101,10 @@ export function DataOverview({ inventory, sessions, retrying, deleting, result, 
         : sessions.status === "error" ? <div className={setup.error} role="alert"><p>We couldn’t load your sessions.</p><button type="button" className={setup.secondaryButton} onClick={onReload}>Try again</button></div>
         : sessions.list.length === 0 ? <p className={setup.hint}>No practice sessions yet.</p>
         : <table className={data.sessionTable}>
-          <thead><tr><th scope="col">Started</th><th scope="col">Status</th><th scope="col">Provider cleanup</th><th scope="col"><span className="sr-only">Actions</span></th></tr></thead>
+          <thead><tr><th scope="col">Started</th><th scope="col">Person</th><th scope="col">Status</th><th scope="col">Provider cleanup</th><th scope="col"><span className="sr-only">Actions</span></th></tr></thead>
           <tbody>{sessions.list.map((session) => <tr key={session.id}>
             <td>{when(session.createdAt)}</td>
+            <td className={data.personCell}>{session.personName ?? "—"}</td>
             <td>{statusLabels[session.status]}</td>
             <td><span className={data.cleanup} data-cleanup={session.cleanup}>{inProgress(session) ? "In progress" : cleanupLabels[session.cleanup]}</span></td>
             <td>{canRetryCleanup(session) && <button type="button" className={setup.secondaryButton} data-retry={session.id} disabled={retrying !== null || deleting} aria-busy={retrying === session.id}

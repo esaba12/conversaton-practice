@@ -12,6 +12,7 @@
 .sessionTable { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
 .sessionTable th { padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--muted); font-size: 12px; font-weight: 600; text-align: left; }
 .sessionTable td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.personCell { overflow-wrap: anywhere; max-width: 16rem; }
 .cleanup { display: inline-block; padding: 4px 8px; border-radius: 5px; font-size: 12px; line-height: 1.4; background: #f1f0eb; color: var(--ink); }
 .cleanup[data-cleanup="confirmed"] { background: #edf1e9; color: #284738; }
 .cleanup[data-cleanup="pending"], .cleanup[data-cleanup="unresolved"] { background: #eee8d7; color: #665126; }

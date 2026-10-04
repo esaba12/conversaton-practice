@@ -88,7 +88,7 @@ describe("session routes", () => {
     const body = startResponseSchema.parse(await response.json());
     expect(body.session).toMatchObject({ id, status: "connecting", cleanup: "not_started" });
     expect(calls("practice_bind")[0]).toMatchObject({ p_id: id, p_provider_id: "provider-1" });
-    expect(calls("practice_acquire")[0]).toMatchObject({ p_key: key, p_duration: 180, p_fingerprint: expect.stringMatching(/^[0-9a-f]{64}$/) });
+    expect(calls("practice_acquire")[0]).toMatchObject({ p_key: key, p_duration: 180, p_person_id: null, p_person_version: null, p_fingerprint: expect.stringMatching(/^[0-9a-f]{64}$/) });
     expect(JSON.parse(String(fetchMock.mock.calls[0][1].body)).conversational_context).toContain("Alex");
   });
 
@@ -105,7 +105,7 @@ describe("session routes", () => {
     expect(sent.custom_greeting).toBe(reviewed.opening);
     expect(sent.properties.max_call_duration).toBe(300);
     expect(Object.keys(sent).sort()).toEqual(["audio_only", "conversational_context", "custom_greeting", "face_id", "max_participants", "pal_id", "participant_tags", "properties", "require_auth"]);
-    expect(calls("practice_acquire")[0]).toMatchObject({ p_duration: 300, p_fingerprint: startFingerprint(reviewed, 300, SECRET) });
+    expect(calls("practice_acquire")[0]).toMatchObject({ p_duration: 300, p_person_id: null, p_person_version: null, p_fingerprint: startFingerprint(reviewed, 300, SECRET) });
   });
 
   it("rejects private or unknown fields at the schema boundary before storage or the provider", async () => {
@@ -261,7 +261,9 @@ describe("session routes", () => {
       for (const leak of ["UNSHARED-FACT-MARKER", "PRIVATE-PREP-MARKER", "Alex"]) expect(JSON.stringify(sent)).not.toContain(leak);
       expect(sent.custom_greeting).toBe(stored.opening);
       expect(Object.keys(sent).sort()).toEqual(["audio_only", "conversational_context", "custom_greeting", "face_id", "max_participants", "pal_id", "participant_tags", "properties", "require_auth"]);
-      const fingerprint = calls("practice_acquire")[0].p_fingerprint;
+      const acquired = calls("practice_acquire")[0];
+      const fingerprint = acquired.p_fingerprint;
+      expect(acquired).toMatchObject({ p_person_id: personId, p_person_version: 2 });
       expect(fingerprint).toBe(startFingerprint(role, 180, SECRET, { extras, personId, version: 2 }));
       expect(fingerprint).not.toBe(startFingerprint(role, 180, SECRET));
     });
@@ -270,6 +272,7 @@ describe("session routes", () => {
       live(); const fetchMock = tavus();
       expect((await errorOf(await start(post("/api/sessions", { ...personBody, expectedVersion: 1 })), 409)).code).toBe("VERSION_CONFLICT");
       expect((await errorOf(await start(post("/api/sessions", { ...personBody, personId: other })), 404)).code).toBe("NOT_FOUND");
+      expect(rpc.mock.calls.map(([name]) => name)).toEqual(["person_context", "person_context"]);
       expect(calls("practice_acquire")).toHaveLength(0); expect(fetchMock).not.toHaveBeenCalled();
     });
 
@@ -297,8 +300,10 @@ describe("session routes", () => {
       expect(first.conversational_context).toContain("blunt and direct"); expect(second.conversational_context).toContain("warm and friendly");
       expect(second.conversational_context).not.toContain("blunt");
       expect(Object.keys(second).sort()).toEqual(Object.keys(first).sort());
-      const [a, b] = calls("practice_acquire").map((args) => args.p_fingerprint);
-      expect(a).not.toBe(b);
+      const [a, b] = calls("practice_acquire");
+      expect(a.p_fingerprint).not.toBe(b.p_fingerprint);
+      expect(a).toMatchObject({ p_person_id: personId, p_person_version: 2 });
+      expect(b).toMatchObject({ p_person_id: personId, p_person_version: 3 });
     });
   });
 

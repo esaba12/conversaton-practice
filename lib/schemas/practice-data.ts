@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { cleanupSchema, sessionStatusSchema } from "./session";
 
-// G4 "Your data" (docs/08 deletion truthfulness). Session rows hold status and cleanup metadata only, never content.
+// G4 "Your data" (docs/08 deletion truthfulness). Session rows hold status, cleanup, and optional saved-person attribution, never content.
 const timestamp = z.iso.datetime({ offset: true });
 export const MAX_LISTED_SESSIONS = 50;
 
@@ -11,6 +11,8 @@ export const sessionSummarySchema = z.object({
   cleanup: cleanupSchema,
   createdAt: timestamp,
   endedAt: timestamp.nullable(),
+  // Present from DATA-01 onward. Null when the session had no saved person, or that person was deleted.
+  personName: z.string().min(1).max(60).nullable().optional(),
 }).strict();
 export type SessionSummary = z.infer<typeof sessionSummarySchema>;
 export const sessionListResponseSchema = z.object({ sessions: z.array(sessionSummarySchema).max(MAX_LISTED_SESSIONS) }).strict();
@@ -28,6 +30,8 @@ export type DeletePracticeDataResponse = z.infer<typeof deletePracticeDataRespon
 
 // HTTP contract. Errors use errorSchema with the listed HTTP status. 401 UNAUTHENTICATED precedes body parsing.
 // GET    /api/sessions                    -> 200 sessionListResponseSchema (owner's most recent first, ≤ 50).
+//        Optional personName is the saved person's current name, or null if none was stored or the person was deleted.
+//        The list does not include person id, transcript, role text, or private notes.
 // DELETE /api/practice-data (deletePracticeDataRequestSchema, ≤ 256 chars) -> 200 deletePracticeDataResponseSchema; 400 without the exact phrase.
 //        Deletes the owner's saved people (and their shared-fact links), About-me facts and private prep through the existing owner RPCs.
 //        Not one transaction: a partial failure is reported in `remaining`, never hidden. Does not delete the Auth account.

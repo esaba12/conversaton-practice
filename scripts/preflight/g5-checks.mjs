@@ -39,7 +39,7 @@ export async function runG5({ chromium, credentials, clients, rpc, assert }) {
     const a = await signIn(credentials[0]), b = await signIn(credentials[1]);
 
     // --- G4 routes, two signed-in users over HTTP ---
-    const acquired = await rpc(clients[0], "practice_acquire", { p_key: randomUUID(), p_fingerprint: "g5-fixture", p_duration: 180 });
+    const acquired = await rpc(clients[0], "practice_acquire", { p_key: randomUUID(), p_fingerprint: "g5-fixture", p_duration: 180, p_person_id: null, p_person_version: null });
     assert(!acquired.error && acquired.data.created, "A holds a connecting fixture session (no provider call)");
     const sessionId = acquired.data.session.id;
     const turns = [{ speaker: "counterpart", text: "Hey, what's up?" }];

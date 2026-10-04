@@ -45,6 +45,12 @@ describe("practice data contract", () => {
   it("summarizes a session with metadata only", () => {
     const row = { id: "3f6f2a8e-1b7c-4d7e-9a51-0d7f3e9c2b11", status: "ended", cleanup: "confirmed", createdAt: "2026-10-03T21:00:00.000Z", endedAt: null };
     expect(sessionSummarySchema.safeParse(row).success).toBe(true);
+    expect(sessionSummarySchema.safeParse({ ...row, personName: "Sam" }).success).toBe(true);
+    expect(sessionSummarySchema.safeParse({ ...row, personName: null }).success).toBe(true);
+    expect(sessionSummarySchema.safeParse({ ...row, personName: "" }).success).toBe(false);
     expect(sessionSummarySchema.safeParse({ ...row, providerConversationId: "c123" }).success).toBe(false);
+    expect(sessionSummarySchema.safeParse({ ...row, personId: row.id }).success).toBe(false);
+    expect(sessionSummarySchema.safeParse({ ...row, transcript: "hello" }).success).toBe(false);
+    expect(sessionSummarySchema.safeParse({ ...row, role: "manager" }).success).toBe(false);
   });
 });

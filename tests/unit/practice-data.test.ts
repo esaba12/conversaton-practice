@@ -87,14 +87,37 @@ describe("GET /api/sessions and DELETE /api/practice-data", () => {
     expect(response.headers.get("cache-control")).toBe("no-store");
     const body = sessionListResponseSchema.parse(await response.json());
     expect(body.sessions).toEqual([
-      { id: s2, status: "active", cleanup: "not_started", createdAt: iso, endedAt: null },
-      { id: s1, status: "ended", cleanup: "unresolved", createdAt: "2026-10-03T20:00:00.000Z", endedAt: iso },
+      { id: s2, status: "active", cleanup: "not_started", createdAt: iso, endedAt: null, personName: null },
+      { id: s1, status: "ended", cleanup: "unresolved", createdAt: "2026-10-03T20:00:00.000Z", endedAt: iso, personName: null },
     ]);
     const [query] = queries;
     expect(query.table).toBe("practice_sessions");
-    expect(query.calls).toEqual([["select", ["id, status, cleanup, created_at, ended_at"]], ["order", ["created_at", { ascending: false }]], ["limit", [50]]]);
+    expect(queries.map(q => q.table)).toEqual(["practice_sessions"]);
+    expect(query.calls).toEqual([["select", ["id, status, cleanup, created_at, ended_at, person_id"]], ["order", ["created_at", { ascending: false }]], ["limit", [50]]]);
     expect(JSON.stringify(query.calls)).not.toMatch(/provider_conversation_id|request_fingerprint|idempotency_key/);
     expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("shows the saved name, a null name after deletion, and never the person id or private text", async () => {
+    const unnamed = "88888888-8888-4888-8888-888888888888";
+    tables.practice_sessions = { data: [
+      { id: s2, status: "ended", cleanup: "confirmed", created_at: ts, ended_at: ts, person_id: p1, provider_conversation_id: "c-secret", request_fingerprint: "secret-fp" },
+      { id: s1, status: "ended", cleanup: "pending", created_at: "2026-10-03T20:00:00+00:00", ended_at: null, person_id: p2 },
+      { id: unnamed, status: "interrupted", cleanup: "not_started", created_at: "2026-10-03T19:00:00+00:00", ended_at: ts, person_id: null },
+    ] };
+    tables.people = { data: [{ id: p1, name: "Sam", relationship: "SECRET-ROLE", notes: "PRIVATE-NOTE" }] };
+    const response = await sessions.GET(req("GET", "/api/sessions"));
+    const body = sessionListResponseSchema.parse(await response.json());
+    expect(body.sessions.map(session => session.personName)).toEqual(["Sam", null, null]);
+    const text = JSON.stringify(body);
+    for (const leak of [p1, p2, "c-secret", "secret-fp", "SECRET-ROLE", "PRIVATE-NOTE"]) expect(text).not.toContain(leak);
+    expect(queries.find(q => q.table === "people")?.calls).toEqual([["select", ["id, name"]], ["in", ["id", [p1, p2]]]]);
+  });
+
+  it("returns 503 when the name lookup fails, without leaking the database error", async () => {
+    tables.practice_sessions = { data: [{ id: s1, status: "ended", cleanup: "confirmed", created_at: ts, ended_at: ts, person_id: p1 }] };
+    tables.people = { error: { code: "42501", message: "permission denied for table people" } };
+    expect(JSON.stringify(await errorOf(await sessions.GET(req("GET", "/api/sessions")), 503))).not.toContain("permission");
   });
 
   it("never echoes extra row fields and turns malformed or failed reads into a sanitized 503", async () => {
