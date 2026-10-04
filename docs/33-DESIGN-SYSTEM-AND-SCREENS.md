@@ -2,6 +2,33 @@
 
 Status: **planning, not built.** Derived from [R05](research/R05-DESIGN-DIRECTION.md). Feature behavior is in [docs/32](32-FEATURE-SPECS.md); this file covers how it looks, moves and sounds. Existing visual direction ("warm and minimal, crisp, modern typography") from docs/00 and docs/18 still holds; this extends it with presence, depth and a dark call mode. Token contrast was measured in 0A (October 3); the remaining "verify" marks are Tavus behavior, not contrast. Tokens and primitives are built; screens are not.
 
+## UI rules (read before any UI change)
+
+From [05-UI-UPGRADE §2](next/05-UI-UPGRADE.md). Rules marked *check* are enforced by `tests/unit/ui-rules.test.ts`; its `UI_RULES_ALLOW_LIST` names the legacy files still exempt, each with a reason. Rules marked *review* are checked in the screenshot review (`scripts/ui/screenshots.mjs`).
+
+**Never**
+1. A centered text-only hero. Every page leads with a person, the product, or the action. *(review)*
+2. Equal-weight card rows for unequal things. The main action is visibly bigger. *(review)*
+3. Eyebrow label + dot + two-tone headline as a page template. Use it at most once (the landing). *(review)*
+4. A character shown as a form. Forms live behind "Edit details". *(review)*
+5. Raw hex or `rgb()` in component CSS; only tokens. *(check: grep `#[0-9a-f]{3,8}` in `*.module.css`)*
+6. Disabled by `opacity` alone. Disabled keeps 4.5:1 text contrast and shows a reason line. *(check: grep `opacity` inside `:disabled` rules)*
+7. `outline: none` without a `:focus-visible` replacement. *(check)*
+8. A spinner where a skeleton or real progress fits. Skeletons match final layout and appear after 200 ms. *(review)*
+9. Pure black or pure white. *(check: `#000`, `#fff`, `black`, `white` in CSS)*
+10. Emoji as icons, icons outside Lucide, or icons without labels in primary controls. *(check: icon imports; review for labels)*
+11. Fake activity: animated "thinking" or step lists that don't map to real events (R07 §3). *(review)*
+12. Scores, counts, streaks, confetti (docs/08). *(review)*
+
+**Always**
+1. One radius personality: 10 controls, 16 cards, 28 the call tile, portraits by size (10/16/28/28), pill for chips. One shadow language (sage-tinted). One accent per moment.
+2. Six states per interactive element: default, hover, focus-visible, active (0.5 px press), disabled-with-reason, loading.
+3. Designed empty, loading, error and success states for every view, with a next action.
+4. Names of people in the serif; UI text in the sans.
+5. A person's face wherever that person appears (portrait source per W6).
+6. Motion with purpose and the token curves; reduced-motion fallback.
+7. Copy in plain sentences; the button says what happens ("Call Jordan", not "Continue").
+
 ## 1. Concept
 
 **A warm room, then a call.** Room mode for preparing and reflecting (ivory, serif names, portraits, soft depth). Call mode for the conversation (deep warm charcoal, full-bleed face, floating glass controls). The handoff between them (card → ringing → call, and call → recap) is the product's signature moment.

@@ -67,7 +67,7 @@ Live not verified.
 - External account action: none
 - Next smallest task: 0C or Phase 1B restyle presentation modules and remove allow-list entries; expand gallery with screen fixtures.
 - Ready for review: yes (automated gate only)
-- Coordinator integration: pending
+- Coordinator integration (October 3, ~23:45 EDT): rebased onto `a6c8409` (0C merged; header conflict in this record resolved to the worker's lines). `npm run test:ui` then failed at 390 px: `/design-preview` scrolled sideways because the single-column breakpoint was `max-width: 389px`, and fixed 6- and 3-column grids also let the loading button and 240 px portrait spill their cells at 760, 900 and 1440 px. Coordinator fix: state grid `repeat(auto-fill, minmax(min(100%, 232px), 1fr))` and a wrapping flex portrait row. Measured at 390/600/760/900/1440 px: no page overflow and no state wider than its cell. Some rows may end short; that's accepted over overflow. Then typecheck, npm test (411 pass), build and test:ui (9 pass, 1 production-only skip). Screenshot script: 28 gallery states, 168 PNGs; pressed and disabled states checked by eye. Coordinator part done: the UI rules block is now at the top of docs/33. Allow-list stands; restyling the legacy `components/presentation` CSS belongs to the Phase 1/2 screen work.
 
 ### Proposed shared-file changes (not edited here)
 
