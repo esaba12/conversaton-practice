@@ -2,7 +2,7 @@ import type { z } from "zod";
 import { draftResponseSchema, type DraftRequest, type DraftResponse } from "@/lib/schemas/draft";
 import { errorSchema, type ErrorCode } from "@/lib/schemas/errors";
 import type { RoleContext } from "@/lib/schemas/role-context";
-import { sessionResponseSchema, startResponseSchema, type EndReason, type PracticeSession, type StartResponse } from "@/lib/schemas/session";
+import { sessionResponseSchema, startResponseSchema, type EndReason, type PracticeSession, type SessionPreset, type StartResponse } from "@/lib/schemas/session";
 
 export type SessionClientErrorCode = ErrorCode | "NETWORK" | "MALFORMED_RESPONSE";
 
@@ -45,6 +45,11 @@ export function generateDraft(input: DraftRequest): Promise<DraftResponse> {
 export function startSession({ role, durationSeconds, idempotencyKey = crypto.randomUUID() }: { role: RoleContext; durationSeconds: 180 | 300; idempotencyKey?: string }): Promise<StartResponse> {
   const { name, role: roleText, style, publicContext, opening, constraints, challenge, pace } = role;
   return post("/api/sessions", { idempotencyKey, role: { name, role: roleText, style, publicContext, opening, constraints: [...constraints], challenge, pace }, durationSeconds }, startResponseSchema);
+}
+
+// A preset start sends only the id. Role text, goals, and private notes stay in the browser; the server loads the fixture.
+export function startPresetSession({ preset, durationSeconds, idempotencyKey = crypto.randomUUID() }: { preset: SessionPreset; durationSeconds: 180 | 300; idempotencyKey?: string }): Promise<StartResponse> {
+  return post("/api/sessions", { idempotencyKey, preset, durationSeconds }, startResponseSchema);
 }
 
 // A saved person sends only its ID and version; the server loads its fields and shared facts.

@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { decline } from "@/fixtures/decline";
+import { professor } from "@/fixtures/professor";
 import { roommate } from "@/fixtures/roommate";
 import { buildRoleContext, roleContextSchema, traitPhrases } from "@/lib/schemas/role-context";
 import { aboutMeWriteSchema, personFieldsSchema, personToRole, roleToPersonFields, sharedFactsRequestSchema, updatePersonRequestSchema } from "@/lib/schemas/people";
@@ -9,6 +11,13 @@ import { draftRequestSchema, draftResponseSchema } from "@/lib/schemas/draft";
 describe("context boundary", () => {
   it("rejects private notes, user profiles and previous simulated history", () => {
     for (const field of ["privateNotes", "profile", "history", "userFears"]) expect(roleContextSchema.safeParse({ ...roommate, [field]: "private" }).success).toBe(false);
+    for (const fixture of [roommate, professor, decline]) {
+      expect(roleContextSchema.safeParse(fixture).success).toBe(true);
+      expect(Object.keys(fixture)).not.toContain("privateNotes");
+      expect(fixture.constraints.join(" ")).toContain("do not give communication advice");
+    }
+    expect(professor.constraints.join(" ")).toContain("Respond in character");
+    expect(decline.constraints.join(" ")).toContain("Respond in character");
     expect(buildRoleContext(roommate)).toContain("fictional counterpart");
   });
   it("limits unbounded role content before a provider call", () => {
@@ -35,6 +44,8 @@ describe("session contract", () => {
   it("rejects client owner/provider overrides and unsupported duration", () => {
     const request = { idempotencyKey: crypto.randomUUID(), preset: "roommate", durationSeconds: 180 };
     expect(startRequestSchema.safeParse(request).success).toBe(true);
+    for (const preset of ["professor", "decline"] as const) expect(startRequestSchema.safeParse({ ...request, preset }).success).toBe(true);
+    expect(startRequestSchema.safeParse({ ...request, preset: "manager" }).success).toBe(false);
     for (const addition of [{ ownerId: crypto.randomUUID() }, { providerId: "arbitrary" }, { durationSeconds: 999 }]) expect(startRequestSchema.safeParse({ ...request, ...addition }).success).toBe(false);
   });
   it("accepts a reviewed role but rejects private fields, mixed preset/role and extra fields", () => {

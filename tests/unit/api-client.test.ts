@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { roommate } from "@/fixtures/roommate";
 import type { RoleContext } from "@/lib/schemas/role-context";
 import { startRequestSchema } from "@/lib/schemas/session";
-import { SessionClientError, endSession, generateDraft, markConnected, startSavedPersonSession, startSession } from "@/lib/session/api-client";
+import { SessionClientError, endSession, generateDraft, markConnected, startPresetSession, startSavedPersonSession, startSession } from "@/lib/session/api-client";
 
 afterEach(() => { vi.unstubAllGlobals(); });
 const sessionId = "5b8f1f1e-6d2a-4c1b-9a51-0d4b9b6f2a11";
@@ -62,6 +62,21 @@ describe("session API client", () => {
   it("reports network failure as retryable", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
     await expect(endSession(sessionId, "user")).rejects.toMatchObject({ code: "NETWORK", retryable: true });
+  });
+  it("starts each preset with only the key, preset id, and duration", async () => {
+    for (const preset of ["roommate", "professor", "decline"] as const) {
+      const fetchMock = stubFetch(Response.json({ session, credential }, { status: 201 }));
+      await expect(startPresetSession({ preset, durationSeconds: 180, idempotencyKey: key })).resolves.toEqual({ session, credential });
+      const raw = fetchMock.mock.calls[0][1].body as string;
+      const body = JSON.parse(raw);
+      expect(Object.keys(body).sort()).toEqual(["durationSeconds", "idempotencyKey", "preset"]);
+      expect(body).toEqual({ idempotencyKey: key, preset, durationSeconds: 180 });
+      expect(raw).not.toContain(privateNote);
+      expect(raw).not.toContain("publicContext");
+      expect(raw).not.toContain("role");
+      expect(startRequestSchema.safeParse(body).success).toBe(true);
+    }
+    expect(startRequestSchema.safeParse({ idempotencyKey: key, preset: "manager", durationSeconds: 180 }).success).toBe(false);
   });
   it("starts a saved person with only the key, person ID, version, and duration", async () => {
     const fetchMock = stubFetch(Response.json({ session, credential }, { status: 201 }));

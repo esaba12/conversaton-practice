@@ -9,7 +9,7 @@ import { PracticeCall, type PracticeCallProps } from "@/components/presentation/
 import { ReflectionPanel } from "@/components/presentation/reflection-panel";
 import { SetupDescribe, type SetupDescribeError } from "@/components/presentation/setup-describe";
 import { SetupReview, emptyRole, parseReviewedRole, type SetupMode } from "@/components/presentation/setup-review";
-import { roommate } from "@/fixtures/roommate";
+import { examples } from "@/fixtures/examples";
 import { createBrowserAuthClient } from "@/lib/auth/browser";
 import { selectMediaController } from "@/lib/media/controller-factory";
 import { createPerson, getPerson, listPeople, updatePerson } from "@/lib/people/api-client";
@@ -18,12 +18,11 @@ import type { DraftRequest } from "@/lib/schemas/draft";
 import type { MediaController, MediaEvent } from "@/lib/schemas/media";
 import { roleToPersonFields, type Person } from "@/lib/schemas/people";
 import { appendTurn, type Reflection, type TranscriptTurn } from "@/lib/schemas/reflection";
-import type { RoleContext } from "@/lib/schemas/role-context";
-import type { EndReason, PracticeSession, StartResponse } from "@/lib/schemas/session";
-import { SessionClientError, endSession, generateDraft, markConnected, startSavedPersonSession, startSession } from "@/lib/session/api-client";
+import { roleContextSchema, type RoleContext } from "@/lib/schemas/role-context";
+import type { EndReason, PracticeSession, SessionPreset, StartResponse } from "@/lib/schemas/session";
+import { SessionClientError, endSession, generateDraft, markConnected, startPresetSession, startSavedPersonSession, startSession } from "@/lib/session/api-client";
 
 const DURATION_SECONDS = 180;
-const EXAMPLE_GOAL = "Make a clear request about sharing kitchen chores.";
 const FALLBACK_GOAL = "Say what matters to you.";
 const GENERATION_FAILED = "We couldn’t generate a setup right now.";
 
@@ -110,6 +109,7 @@ export function PracticeWorkspace() {
   const [reviewGoal, setReviewGoal] = useState("");
   const [assumptions, setAssumptions] = useState<string[]>([]);
   const [setupMode, setSetupMode] = useState<SetupMode>("manual");
+  const [examplePreset, setExamplePreset] = useState<SessionPreset | null>(null);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<SetupDescribeError | null>(null);
   const [callInfo, setCallInfo] = useState({ name: "", goal: "" });
@@ -305,7 +305,7 @@ export function PracticeWorkspace() {
     try {
       const draft = await generateDraft(request);
       if (generation !== generationRef.current) return;
-      setReviewRole(draft.role); setReviewGoal(draft.goal); setAssumptions(draft.assumptions); setSetupMode("generated");
+      setReviewRole(draft.role); setReviewGoal(draft.goal); setAssumptions(draft.assumptions); setSetupMode("generated"); setExamplePreset(null);
       showStep("review");
     } catch (error) {
       if (generation !== generationRef.current) return;
@@ -320,13 +320,14 @@ export function PracticeWorkspace() {
 
   function setUpManually() {
     if (generating) return;
-    setReviewRole(emptyRole); setReviewGoal(intent.trim()); setAssumptions([]); setSetupMode("manual"); setGenerateError(null);
+    setReviewRole(emptyRole); setReviewGoal(intent.trim()); setAssumptions([]); setSetupMode("manual"); setExamplePreset(null); setGenerateError(null);
     showStep("review");
   }
 
-  function applyExample() {
+  function applyExample(preset: SessionPreset) {
     if (generating) return;
-    setReviewRole(roommate); setReviewGoal(EXAMPLE_GOAL); setAssumptions([]); setSetupMode("example"); setGenerateError(null);
+    const example = examples[preset];
+    setReviewRole(example.role); setReviewGoal(example.goal); setAssumptions([]); setSetupMode("example"); setExamplePreset(preset); setGenerateError(null);
     showStep("review");
   }
 
@@ -339,7 +340,10 @@ export function PracticeWorkspace() {
   function start() {
     const role = parseReviewedRole(reviewRole);
     if (!role) return;
-    void launch({ kind: "role", role }, reviewGoal.trim() || FALLBACK_GOAL, (idempotencyKey) => startSession({ role, durationSeconds: DURATION_SECONDS, idempotencyKey }));
+    const preset = examplePreset && setupMode === "example" && JSON.stringify(role) === JSON.stringify(roleContextSchema.parse(examples[examplePreset].role)) ? examplePreset : null;
+    void launch({ kind: "role", role }, reviewGoal.trim() || FALLBACK_GOAL, (idempotencyKey) => preset
+      ? startPresetSession({ preset, durationSeconds: DURATION_SECONDS, idempotencyKey })
+      : startSession({ role, durationSeconds: DURATION_SECONDS, idempotencyKey }));
   }
 
   // Sends only the person's ID and version; private notes and goal stay in the browser.

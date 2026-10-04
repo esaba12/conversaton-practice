@@ -50,6 +50,8 @@
 .secondaryButton, .removeButton { justify-self: start; min-height: 44px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--ink); font-size: 13px; }
 .removeButton { flex-shrink: 0; }
 .secondaryButton:hover:not(:disabled), .removeButton:hover:not(:disabled) { border-color: var(--sage); background: #e8ede3; }
+.examples { display: grid; gap: 2px; }
+.exampleActions { display: flex; flex-wrap: wrap; gap: 0 16px; }
 .linkRow { display: flex; flex-wrap: wrap; gap: 4px 20px; justify-content: center; }
 .linkButton { justify-self: start; min-height: 44px; padding: 10px 2px; border: 0; background: none; color: var(--sage); font-size: 13px; font-weight: 500; text-decoration: underline; text-underline-offset: 4px; }
 .linkButton:disabled, .secondaryButton:disabled, .removeButton:disabled { color: #7a8078; cursor: not-allowed; }

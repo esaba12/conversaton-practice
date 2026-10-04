@@ -6,10 +6,13 @@ export const sessionStatusSchema = z.enum(["connecting", "active", "ending", "en
 export type SessionStatus = z.infer<typeof sessionStatusSchema>;
 export const cleanupSchema = z.enum(["not_started", "pending", "confirmed", "unresolved"]);
 const durationSchema = z.union([z.literal(180), z.literal(300)]);
+// Fixture presets only. Any other string is rejected before a provider call.
+export const sessionPresetSchema = z.union([z.literal("roommate"), z.literal("professor"), z.literal("decline")]);
+export type SessionPreset = z.infer<typeof sessionPresetSchema>;
 // The fixture preset, a user-reviewed role, or a saved person. The strict role schema rejects private fields; no other client field is forwarded.
-// A saved person sends only its ID and version; the server loads the person and its shared facts for the signed-in owner.
+// A preset start sends only the id; the server loads that fixture. A saved person sends only its ID and version; the server loads the person and its shared facts for the signed-in owner.
 export const startRequestSchema = z.union([
-  z.object({ idempotencyKey: z.uuid(), preset: z.literal("roommate"), durationSeconds: durationSchema }).strict(),
+  z.object({ idempotencyKey: z.uuid(), preset: sessionPresetSchema, durationSeconds: durationSchema }).strict(),
   z.object({ idempotencyKey: z.uuid(), role: roleContextSchema, durationSeconds: durationSchema }).strict(),
   z.object({ idempotencyKey: z.uuid(), personId: z.uuid(), expectedVersion: versionSchema, durationSeconds: durationSchema }).strict(),
 ]);
