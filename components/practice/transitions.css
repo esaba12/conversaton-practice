@@ -1,0 +1,62 @@
+/* View-transition animations for the practice stages. The class names come from components/practice/transitions.tsx.
+   Durations mirror --t-quick, --t-base and --t-calm; pseudo-elements sit outside the page, so they cannot read the
+   reduced-motion token overrides and carry their own media query. */
+
+@keyframes practice-vt-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes practice-vt-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes practice-vt-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+::view-transition-old(.practice-stage-exit) {
+  animation: 150ms cubic-bezier(.2, 0, 0, 1) both practice-vt-out;
+}
+
+::view-transition-new(.practice-stage-enter) {
+  animation: 280ms cubic-bezier(.2, 0, 0, 1) 150ms both practice-vt-rise;
+}
+
+::view-transition-group(.practice-morph) {
+  animation-duration: 520ms;
+  animation-timing-function: cubic-bezier(.32, .72, 0, 1);
+}
+
+::view-transition-old(.practice-fade) {
+  animation: 150ms linear both practice-vt-out;
+}
+
+::view-transition-new(.practice-fade) {
+  animation: 150ms linear both practice-vt-in;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(.practice-morph),
+  ::view-transition-image-pair(.practice-morph),
+  ::view-transition-old(.practice-morph),
+  ::view-transition-new(.practice-morph) {
+    animation: none;
+  }
+
+  ::view-transition-old(.practice-stage-exit) {
+    animation: 150ms linear both practice-vt-out;
+  }
+
+  ::view-transition-new(.practice-stage-enter) {
+    animation: 150ms linear both practice-vt-in;
+  }
+
+  /* The browser's own page-wide crossfade runs 250 ms by default. */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 150ms;
+  }
+}

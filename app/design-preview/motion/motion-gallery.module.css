@@ -1,0 +1,106 @@
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.status {
+  flex: 1 1 100%;
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-14);
+}
+
+.stageFrame {
+  min-height: 360px;
+}
+
+.screen {
+  min-height: 360px;
+  padding: 32px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.screen[data-surface="night"] {
+  border-color: transparent;
+  background: var(--night);
+  color: var(--night-ink);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.card {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.cardName {
+  margin: 0;
+  font-size: var(--text-18);
+  font-weight: 500;
+}
+
+.note {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-14);
+}
+
+.screen[data-surface="night"] .note {
+  color: var(--night-muted);
+}
+
+.briefing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 32px;
+}
+
+.recap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.callBody {
+  display: grid;
+  place-items: center;
+  min-height: 296px;
+}
+
+.ringing,
+.live {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+}
+
+.live {
+  min-height: 296px;
+  align-content: space-between;
+}
+
+.bar {
+  display: flex;
+  gap: 12px;
+}
+
+.bar span {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r-pill);
+  background: var(--night-raised);
+}
