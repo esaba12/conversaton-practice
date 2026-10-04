@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { FeedbackStyleControl } from "@/components/practice/feedback-style-control";
 import { AboutMeEditor } from "@/components/presentation/people-about-me";
 import { SoundToggle } from "@/components/practice/sound-toggle";
 import { WorkspaceHeader } from "@/components/presentation/workspace-header";
@@ -52,6 +53,7 @@ export function AboutMeWorkspace() {
   return <><WorkspaceHeader page="about-me" />
     <main id="main"><div className={styles.page}>
       <AboutMeEditor facts={facts} loading={loading} busy={busy} onAdd={add} onEdit={edit} onDelete={remove} statusMessage={message.status} errorMessage={message.error} />
+      <FeedbackStyleControl />
       <SoundToggle />
     </div></main></>;
 }

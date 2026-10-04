@@ -1,4 +1,5 @@
 "use client";
+import { HomeCheckin } from "@/components/practice/planned-section";
 import { StageTransition, startStage } from "@/components/practice/transitions";
 import { useSoundCues } from "@/lib/practice/use-sound-cues";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -752,13 +753,13 @@ export function PracticeWorkspace() {
           ? <Briefing subject={subject} draft={briefingDrafts.draftFor(subject)} onDraftChange={(patch) => briefingDrafts.update(subject, patch)}
               situations={subject.kind === "person" ? situations : undefined} onBack={() => { showStage({ type: "back" }); }} onSetUp={setUp}
               generating={generating} error={generateError} disabled={signingOut} disabledReason="Signing you out…" focusHeading={moveFocus} />
-          : <Lobby people={people} status={peopleStatus} practicedPresets={practicedPresets} onRetry={() => void loadPeople()}
+          : <><HomeCheckin people={people} /><Lobby people={people} status={peopleStatus} practicedPresets={practicedPresets} onRetry={() => void loadPeople()}
               onPickPerson={(person) => openBriefing({ kind: "person", person })} onPickStarter={(preset) => openBriefing({ kind: "starter", preset })}
               onSomeoneNew={() => openBriefing({ kind: "new" })}
               onAddStarter={async (preset) => { await createPerson(roleToPersonFields(examples[preset].role)); await loadPeople(); }}
               onEditPerson={(person) => router.push(`/practice/people/${encodeURIComponent(person.id)}`)}
               onDeletePerson={async (person) => { await deletePerson(person.id); await loadPeople(); }}
-              disabled={signingOut || generating} disabledReason="Please wait a moment." focusHeading={moveFocus} notice={setupMessage || undefined} />
+              disabled={signingOut || generating} disabledReason="Please wait a moment." focusHeading={moveFocus} notice={setupMessage || undefined} /></>
       ) : <>
         {standInLive && (phase === "ended" || phase === "interrupted")
           ? <StandInYourTurn counterpartName={callInfo.name} goal={readPrivateState().goal} hardMomentLine={readPrivateState().hardMomentLine}
