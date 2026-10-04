@@ -8,7 +8,6 @@ export async function DELETE(request: Request, { params }: Context) {
   return handle(request, async () => {
     const { client } = await requireIdentity();
     const values = await params;
-    parseId(values.id);
-    return json(await deletePersonSituation(client, parseId(values.situationId)));
+    return json(await deletePersonSituation(client, parseId(values.id), parseId(values.situationId)));
   });
 }

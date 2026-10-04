@@ -289,7 +289,7 @@ try {
     const deleted = await admin.from("practice_sessions").delete().in("owner_id", fixtures);
     cleanupSucceeded = !deleted.error;
     // People, facts, links and private prep cascade with the user; delete explicitly so a failure is visible.
-    for (const table of ["person_shared_facts", "people", "about_me_facts", "private_prep"]) {
+    for (const table of ["person_situations", "person_shared_facts", "people", "about_me_facts", "private_prep"]) {
       const removed = await admin.from(table).delete().in("owner_id", fixtures);
       if (removed.error) cleanupSucceeded = false;
     }

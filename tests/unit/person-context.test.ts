@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { loadDraftPersonIdentity, loadPersonContext } from "@/lib/data/person-context";
 import type { Db } from "@/lib/data/sessions";
-import { buildRoleContext } from "@/lib/schemas/role-context";
+import { BACKGROUND_LINE, buildRoleContext } from "@/lib/schemas/role-context";
 
 const personId = "55555555-5555-4555-8555-555555555555";
 const stored = {
@@ -22,15 +22,17 @@ describe("loadPersonContext", () => {
     expect(loaded).toEqual({
       version: 3,
       role: { name: "Sam", role: "Your fictional coworker", style: "Direct; prefers specifics.", publicContext: "You share a desk on the design team.", opening: "Hey, got a minute?", constraints: ["Stay at work."], challenge: "neutral", pace: "patient" },
-      extras: { traits: { tone: "blunt", familiarity: "close" }, knownAboutUser: ["SHARED-FACT I run on weekends"] },
+      extras: { background: "Sam is a senior designer on your team.", traits: { tone: "blunt", familiarity: "close" }, knownAboutUser: ["SHARED-FACT I run on weekends"] },
     });
     const context = buildRoleContext(loaded.role, loaded.extras);
+    expect(context).toContain(BACKGROUND_LINE); expect(context).toContain("Sam is a senior designer on your team.");
     expect(context).toContain("SHARED-FACT I run on weekends"); expect(context).toContain("blunt and direct"); expect(context).toContain("speaks familiarly with the user");
   });
 
   it("omits the told-you framing when nothing is shared", async () => {
     const loaded = await loadPersonContext(db({ data: { ...stored, traits: {}, known_about_user: [] } }).client, personId, 3);
-    expect(buildRoleContext(loaded.role, loaded.extras)).toBe(buildRoleContext(loaded.role));
+    expect(buildRoleContext(loaded.role, loaded.extras)).toBe(buildRoleContext(loaded.role, { background: stored.background }));
+    expect(buildRoleContext(loaded.role, loaded.extras)).not.toContain("whatTheUserHasToldYou");
   });
 
   it("maps database markers to NOT_FOUND and VERSION_CONFLICT", async () => {

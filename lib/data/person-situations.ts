@@ -8,6 +8,7 @@ import {
   type PersonSituation,
 } from "@/lib/schemas/people";
 import type { Situation } from "@/lib/schemas/situation";
+import { AppError } from "@/lib/schemas/errors";
 
 type Row = Record<string, unknown>;
 const row = (value: unknown): Row => value !== null && typeof value === "object" && !Array.isArray(value) ? value as Row : {};
@@ -43,7 +44,9 @@ export async function createPersonSituation(db: Db, personId: string, label: str
   return parsed.data;
 }
 
-export async function deletePersonSituation(db: Db, id: string) {
+export async function deletePersonSituation(db: Db, personId: string, id: string) {
+  const { situations } = await listPersonSituations(db, personId);
+  if (!situations.some((item) => item.id === id)) throw new AppError("NOT_FOUND", "That situation was not found.", 404);
   const parsed = deletedResponseSchema.safeParse(await rpc(db, "person_situation_delete", { p_id: id }));
   if (!parsed.success) throw storageUnavailable();
   return parsed.data;

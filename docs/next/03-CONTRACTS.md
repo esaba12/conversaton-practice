@@ -26,6 +26,8 @@ Rules carried into every contract: Zod `.strict()` on all bodies and model outpu
 
 ### 2.1 Role context (`lib/schemas/role-context.ts`)
 
+*Amended by 1C (coordinator, October 4):* `roleExtrasSchema` gains `background` (1–600, server-assembled from `person_context` for person starts) and `buildRoleContext` emits `BACKGROUND_LINE` when it is present.
+
 ```ts
 const stanceChip = z.string().trim().min(1).max(40);
 // added to roleContextSchema, all optional so presets and saved roles stay valid

@@ -41,6 +41,11 @@ From 02-BUILD-PLAN 1C:
 - Focused P2/Q2/W11 route, privacy, context, session and saved-situation tests — passed: 5 files, 85 tests before the final full-suite run.
 - Provider behavior is mock-tested only. `--p2` real-Auth/database mode was written but not run, as assigned. Live not verified.
 
+Coordinator integration, October 4, ~00:40 EDT:
+- Real Auth/database against the linked project: `auth-database-check.mjs --g3 --p2` pass, and `--g3-ui` (a separate run: the modes are an `else if` chain, so `--g3 --g3-ui --p2` together skips `--g3-ui`) pass against this branch on port 3000; fixtures cleaned up. `npm run test:ui` 9 passed, 1 skipped. CI pass.
+- Privacy review (claude-opus-5-thinking-high): approve with should-fixes, no blockers. Applied: situation DELETE is scoped to the person in the URL (404 otherwise, with a test); `person_situations` in the explicit preflight cleanup; the streamed `error` event is `errorSchema`-shaped with a `request_id`; and the review's fidelity note, so person starts now give the counterpart the person's `background` (`roleExtrasSchema.background` + `BACKGROUND_LINE`, tests updated). Declined: probing goal and assumptions on the JSON path, because W11 requires JSON requests to stay unchanged and an existing test pins that goal and assumptions are not probed; the streamed path stays the stricter one.
+- After fixes: typecheck pass, 460 unit tests pass.
+
 ## Handoff
 
 - Changed paths and commit(s): `5749860` (person/situation server, contracts, routes, tests and `--p2` preflight); `437f212` (incremental validated Responses streaming).

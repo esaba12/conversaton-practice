@@ -12,7 +12,7 @@ const personContextSchema = z.object({
   opening, constraints, challenge, pace, background: personBackgroundSchema,
   known_about_user: z.array(aboutMeFactTextSchema).max(MAX_ABOUT_ME_FACTS),
 }).strict();
-export type PersonContext = { role: RoleContext; extras: Required<RoleExtras>; version: number };
+export type PersonContext = { role: RoleContext; extras: Required<Pick<RoleExtras, "background" | "traits" | "knownAboutUser">>; version: number };
 const draftIdentityRowSchema = z.object({
   id: z.uuid(), name, relationship, traits: traitChipsSchema, style, background: personBackgroundSchema,
 }).strict();
@@ -22,8 +22,8 @@ export type DraftPersonIdentity = z.infer<typeof draftIdentityRowSchema>;
 export async function loadPersonContext(db: Db, personId: string, expectedVersion: number): Promise<PersonContext> {
   const parsed = personContextSchema.safeParse(await rpc(db, "person_context", { p_id: personId, p_expected_version: expectedVersion }));
   if (!parsed.success || parsed.data.id !== personId || parsed.data.version !== expectedVersion) throw storageUnavailable();
-  const { id: _id, version, traits, background: _background, public_context, known_about_user, ...fields } = parsed.data;
-  return { role: personToRole({ ...fields, publicContext: public_context, traits }), extras: { traits, knownAboutUser: known_about_user }, version };
+  const { id: _id, version, traits, background, public_context, known_about_user, ...fields } = parsed.data;
+  return { role: personToRole({ ...fields, publicContext: public_context, traits }), extras: { background, traits, knownAboutUser: known_about_user }, version };
 }
 
 // Draft generation intentionally reads identity only: no shared facts, private prep, or default situation.

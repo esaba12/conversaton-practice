@@ -241,6 +241,14 @@ describe("people, about-me and private-prep routes", () => {
     expect(calls("person_situation_delete")).toEqual([{ p_id: sid }]);
   });
 
+  it("deletes a situation only through its own person's URL", async () => {
+    handlers.person_situation_list = () => ({ data: [] });
+    handlers.person_situation_delete = () => ({ data: { deleted: true } });
+    const response = await situationItem.DELETE(req("DELETE", `/api/people/${pid}/situations/${sid}`), { params: Promise.resolve({ id: pid, situationId: sid }) });
+    expect((await errorOf(response, 404)).code).toBe("NOT_FOUND");
+    expect(calls("person_situation_delete")).toEqual([]);
+  });
+
   it("maps saved-situation owner isolation and cap markers", async () => {
     handlers.person_situation_list = () => marker("NOT_FOUND");
     expect((await errorOf(await situations.GET(req("GET", `/api/people/${pid}/situations`), ctx(pid)), 404)).code).toBe("NOT_FOUND");

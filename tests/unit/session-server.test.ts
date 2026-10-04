@@ -302,7 +302,7 @@ describe("session routes", () => {
       expect((await start(post("/api/sessions", personBody))).status).toBe(201);
       expect(rpc.mock.calls.map(([name]) => name)).toEqual(["person_context", "practice_acquire", "practice_bind"]);
       const role = personToRole({ name: "Sam", relationship: "Your fictional coworker", style: stored.style, publicContext: stored.public_context, opening: stored.opening, constraints: stored.constraints, challenge: "neutral", pace: "patient", traits: { tone: "blunt" } });
-      const extras = { traits: { tone: "blunt" as const }, knownAboutUser: stored.known_about_user };
+      const extras = { background: stored.background, traits: { tone: "blunt" as const }, knownAboutUser: stored.known_about_user };
       const sent = sentBody(fetchMock);
       expect(sent.conversational_context).toBe(buildRoleContext(role, extras));
       expect(sent.conversational_context).toContain("SHARED-FACT I run on weekends"); expect(sent.conversational_context).toContain("blunt and direct");
