@@ -263,3 +263,11 @@
   .card:hover .face .portrait,
   .hit:focus-visible .face .portrait { transform: none; }
 }
+
+.more:disabled {
+  border: 1px dashed var(--border);
+  background: var(--surface-sunk);
+  color: var(--muted);
+  box-shadow: none;
+  cursor: not-allowed;
+}

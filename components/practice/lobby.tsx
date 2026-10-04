@@ -189,7 +189,7 @@ export function Lobby({
       <header className={styles.header}>
         <h1 id={`${id}-title`} ref={headingRef} tabIndex={-1} className={styles.title}>Who do you want to practice with?</h1>
         <p className={styles.lede}>
-          {status === "ready" && ordered.length === 0 ? "Add the people you want to practice talking to." : "Pick someone, then tell us what’s going on."}
+          Pick someone, then tell us what’s going on.
           {shortcuts ? <>{" "}<span className={styles.keys}>Arrow keys move between cards; N starts someone new.</span></> : null}
         </p>
       </header>
@@ -207,18 +207,24 @@ export function Lobby({
         </div>
       ) : null}
 
-      {status !== "ready" || hasPeople ? (
-        <section className={styles.group} aria-labelledby={`${id}-people`}>
-          <h2 id={`${id}-people`} className={styles.groupTitle}>Your people</h2>
-          {status === "error" ? (
+      <section className={styles.group} aria-labelledby={`${id}-people`}>
+        <h2 id={`${id}-people`} className={styles.groupTitle}>Your people</h2>
+          {status === "error" ? (<>
             <div className={styles.error} role="alert">
               <p>We couldn’t load your people. The starters below still work.</p>
               <button type="button" className={styles.secondary} onClick={onRetry}><RotateCcw size={16} strokeWidth={1.75} aria-hidden="true" />Try again</button>
             </div>
-          ) : status === "loading" ? (
+            <ul className={styles.grid} data-lobby-grid="people">{someoneNew}</ul>
+          </>) : status === "loading" ? (
             <ul className={styles.grid} aria-busy="true" aria-label="Loading your people">
               {showSkeleton ? [0, 1, 2].map((n) => <li key={n}><PersonCardSkeleton /></li>) : null}
+              {someoneNew}
             </ul>
+          ) : !hasPeople ? (
+            <>
+              <p className={styles.groupNote}>Add the people you want to practice talking to.</p>
+              <ul className={styles.grid} data-lobby-grid="people">{someoneNew}</ul>
+            </>
           ) : (
             <ul className={styles.grid} data-lobby-grid="people">
               {ordered.map((person) => {
@@ -236,7 +242,6 @@ export function Lobby({
             </ul>
           )}
         </section>
-      ) : null}
 
       <section className={styles.group} aria-labelledby={`${id}-starters`}>
         <h2 id={`${id}-starters`} className={styles.groupTitle}>Starter characters</h2>
@@ -252,7 +257,6 @@ export function Lobby({
               </li>
             );
           })}
-          {hasPeople ? null : someoneNew}
         </ul>
       </section>
     </section>

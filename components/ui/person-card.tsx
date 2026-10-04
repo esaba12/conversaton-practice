@@ -109,13 +109,15 @@ export function PersonCard({
             type="button"
             className={styles.more}
             aria-label={`More for ${name}`}
-            aria-expanded={menuOpen}
+            aria-expanded={menuOpen && !disabled}
             aria-controls={`${baseId}-menu`}
-            onClick={() => setMenuOpen((open) => !open)}
+            aria-disabled={disabled || undefined}
+            disabled={disabled}
+            onClick={() => { if (!disabled) setMenuOpen((open) => !open); }}
           >
             <Ellipsis size={20} strokeWidth={1.75} aria-hidden="true" />
           </button>
-          {menuOpen ? (
+          {menuOpen && !disabled ? (
             <ul
               ref={menuRef}
               id={`${baseId}-menu`}

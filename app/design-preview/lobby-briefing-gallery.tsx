@@ -17,6 +17,7 @@ function person(n: number, extra: Partial<Person> = {}): Person {
   return {
     id: uuid(n + 1), version: 1, name: names[n], relationship: relationships[n],
     style: "Friendly and direct. Listens, then answers in a sentence or two.",
+    background: "Someone you know well and talk with most weeks.",
     publicContext: n === 0 ? "Dishes keep piling up in the sink and I want us to agree on a schedule." : "We need to talk about something that has been bothering me.",
     opening: "Hey, what's up?", constraints: [], challenge: "neutral", pace: "conversational",
     traits: { tone: tones[n % 3], talkativeness: n % 2 ? "brief" : "chatty", familiarity: "close" },

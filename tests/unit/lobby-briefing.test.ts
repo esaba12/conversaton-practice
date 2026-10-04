@@ -15,7 +15,7 @@ const at = "2026-10-03T21:20:00.000Z";
 const uuid = (n: number) => `00000000-0000-4000-8000-${n.toString(16).padStart(12, "0")}`;
 function person(n: number, extra: Partial<Person> = {}): Person {
   return {
-    id: uuid(n + 1), version: 3, name: `Person ${n}`, relationship: "Friend", style: "Direct.", publicContext: `Default situation ${n}.`, opening: "Hi.",
+    id: uuid(n + 1), version: 3, name: `Person ${n}`, relationship: "Friend", style: "Direct.", background: `Background ${n}.`, publicContext: `Default situation ${n}.`, opening: "Hi.",
     constraints: [], challenge: "neutral", pace: "conversational", traits: { tone: "warm", formality: "casual", talkativeness: "brief", familiarity: "close" },
     sharedFactIds: [], createdAt: at, updatedAt: at, ...extra,
   };
@@ -79,6 +79,10 @@ describe("P3 briefing", () => {
     expect(html).toContain("Leave it blank and we’ll pick a name.");
     for (const option of ["Roommate", "Manager", "Professor", "Other"]) expect(html).toContain(`>${option}<`);
     expect(html).toContain("Say what’s going on first.");
+    const formId = html.match(/<form id="([^"]+)"/)?.[1];
+    expect(formId).toBeTruthy();
+    expect(html.match(/<input[^>]*id="[^"]*-name"[^>]*>/)?.[0]).toContain(`form="${formId}"`);
+    expect(html.match(/<button[^>]*form="[^"]*"[^>]*>(?:<[^>]+>)*Roommate/)?.[0]).toContain(`form="${formId}"`);
   });
 
   it("plans a preset start when a starter's situation is untouched, and a draft when edited", () => {
@@ -170,6 +174,23 @@ describe("P1 lobby", () => {
     const fallback = lobby({ starterPortraitSrc: () => null });
     expect(fallback).not.toContain("/api/portraits/");
     expect(fallback).toContain('aria-label="Jordan, fictional AI character"');
+  });
+
+  it("puts Someone new under Your people on the first run, not under the starters", () => {
+    const html = lobby({});
+    const people = html.indexOf(">Your people<");
+    const starters = html.indexOf(">Starter characters<");
+    const someoneNew = html.indexOf("Practice with someone new");
+    expect(people).toBeGreaterThan(0);
+    expect(someoneNew).toBeGreaterThan(people);
+    expect(someoneNew).toBeLessThan(starters);
+  });
+
+  it("disables the More button with the card", () => {
+    const html = lobby({ people: [person(0)], onEditPerson: noop, disabled: true, disabledReason: "Signing you out…" });
+    const more = html.match(/<button[^>]*aria-label="More for Person 0"[^>]*>/)?.[0] ?? "";
+    expect(more).toContain("disabled");
+    expect(more).toContain('aria-disabled="true"');
   });
 
   it("shows an inline retry on error and keeps the starters", () => {

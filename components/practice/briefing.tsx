@@ -198,7 +198,7 @@ export function Briefing({
             <div className={styles.newFields}>
               <div className={styles.field}>
                 <label htmlFor={`${id}-name`}>Name <span className={styles.optional}>Optional</span></label>
-                <input id={`${id}-name`} type="text" maxLength={NAME_MAX} autoComplete="off" value={draft.name} disabled={inert} aria-describedby={`${id}-name-hint`}
+                <input id={`${id}-name`} form={`${id}-form`} type="text" maxLength={NAME_MAX} autoComplete="off" value={draft.name} disabled={inert} aria-describedby={`${id}-name-hint`}
                   onChange={(event) => onDraftChange({ name: event.target.value })} />
                 <p id={`${id}-name-hint`} className={styles.hint}>Leave it blank and we’ll pick a name.</p>
               </div>
@@ -206,7 +206,7 @@ export function Briefing({
                 <span className={styles.groupLabel} aria-hidden="true">Relationship</span>
                 <div className={styles.chips}>
                   {relationshipOptions.map((option) => (
-                    <Chip key={option} label={option} selected={draft.relationship === option}
+                    <Chip key={option} form={`${id}-form`} label={option} selected={draft.relationship === option}
                       onSelectedChange={(on) => { if (!inert) onDraftChange({ relationship: on ? option : "" }); }} />
                   ))}
                 </div>
@@ -233,7 +233,7 @@ export function Briefing({
           )}
         </aside>
 
-        <form className={styles.form} onSubmit={submit} noValidate>
+        <form id={`${id}-form`} className={styles.form} onSubmit={submit} noValidate>
           <h1 id={`${id}-title`} ref={headingRef} tabIndex={-1} className={styles.title}>
             {name ? <>What’s going on with <span className={styles.serifName}>{name}</span>?</> : "What’s going on?"}
           </h1>
@@ -252,7 +252,7 @@ export function Briefing({
             <p id={`${id}-chips-hint`} className={styles.hint}>Quick starts fill the box. Nothing starts until you press Set up the scene.</p>
             <div className={styles.chips}>
               {fallbackDefault ? (
-                <Chip label={subject.kind === "person" ? `Same as last time: ${shortLabel(fallbackDefault, 28)}` : "The starter situation"}
+                <Chip label={subject.kind === "person" ? `Same as last time: ${shortLabel(fallbackDefault, 14)}` : "The starter situation"}
                   selected={draft.situation === fallbackDefault && !draft.savedSituationId} onSelectedChange={() => fill(fallbackDefault)} />
               ) : null}
               {savedItems.map((item) => (
