@@ -42,18 +42,21 @@ export async function startSession(db: Db, input: z.output<typeof startRequestSc
   const secret = capability();
   assertTavusConfigured();
   let role: RoleContext, extras: RoleExtras | undefined, fingerprint: string;
+  // Preset and reviewed-role starts store no person. A saved person is copied only after person_context succeeds.
+  let person: { id: string; version: number } | null = null;
   if ("personId" in input) {
     // Loaded and version-checked for the caller before any lease or provider call; the client sends only ID and version.
-    const person = await loadPersonContext(db, input.personId, input.expectedVersion);
-    ({ role, extras } = person);
-    fingerprint = startFingerprint(role, input.durationSeconds, secret, { extras, personId: input.personId, version: person.version });
+    const loaded = await loadPersonContext(db, input.personId, input.expectedVersion);
+    ({ role, extras } = loaded);
+    person = { id: input.personId, version: loaded.version };
+    fingerprint = startFingerprint(role, input.durationSeconds, secret, { extras, personId: input.personId, version: loaded.version });
   } else {
     // Only the allowlisted role reaches the provider; no other client field is forwarded.
     role = roleContextSchema.parse("role" in input ? input.role : roommate);
     fingerprint = startFingerprint(role, input.durationSeconds, secret);
   }
   let acquired: Awaited<ReturnType<typeof sessions.acquire>>;
-  try { acquired = await sessions.acquire(db, secret, input.idempotencyKey, fingerprint, input.durationSeconds); }
+  try { acquired = await sessions.acquire(db, secret, input.idempotencyKey, fingerprint, input.durationSeconds, person); }
   catch (error) {
     if (error instanceof AppError && error.code === "SESSION_ACTIVE") error.sessionId = await sessions.activeSessionId(db);
     throw error;

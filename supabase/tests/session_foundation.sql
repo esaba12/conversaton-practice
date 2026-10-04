@@ -29,7 +29,7 @@ set local role authenticated;
 select pg_catalog.set_config('request.jwt.claims',
   '{"sub":"00000000-0000-4000-8000-00000000a001","role":"authenticated","is_anonymous":false}', true);
 select practice_private.test_expect_error(
-  $$select public.practice_acquire(repeat('fictional-test-capability-', 3), '10000000-0000-4000-8000-000000000001', 'fixture-a-180', 180)$$,
+  $$select public.practice_acquire(repeat('fictional-test-capability-', 3), '10000000-0000-4000-8000-000000000001', 'fixture-a-180', 180, null, null)$$,
   'P0001', 'FORBIDDEN');
 reset role;
 insert into practice_private.server_capability(singleton, secret_hash)
@@ -37,24 +37,24 @@ insert into practice_private.server_capability(singleton, secret_hash)
 
 set local role anon;
 select practice_private.test_expect_error(
-  $$select public.practice_acquire(repeat('fictional-test-capability-', 3), '10000000-0000-4000-8000-000000000001', 'fixture-a-180', 180)$$,
+  $$select public.practice_acquire(repeat('fictional-test-capability-', 3), '10000000-0000-4000-8000-000000000001', 'fixture-a-180', 180, null, null)$$,
   '42501');
 reset role;
 set local role authenticated;
 select practice_private.test_expect_error(
-  $$select public.practice_acquire(null, '10000000-0000-4000-8000-000000000001', 'fixture-a-180', 180)$$,
+  $$select public.practice_acquire(null, '10000000-0000-4000-8000-000000000001', 'fixture-a-180', 180, null, null)$$,
   'P0001', 'FORBIDDEN');
 select practice_private.test_expect_error(
-  $$select public.practice_acquire(repeat('wrong-fictional-secret-', 3), '10000000-0000-4000-8000-000000000001', 'fixture-a-180', 180)$$,
+  $$select public.practice_acquire(repeat('wrong-fictional-secret-', 3), '10000000-0000-4000-8000-000000000001', 'fixture-a-180', 180, null, null)$$,
   'P0001', 'FORBIDDEN');
 select pg_catalog.set_config('request.jwt.claims',
   '{"sub":"00000000-0000-4000-8000-00000000a001","role":"authenticated","is_anonymous":true}', true);
 select practice_private.test_expect_error(
-  $$select public.practice_acquire(repeat('fictional-test-capability-', 3), '10000000-0000-4000-8000-000000000001', 'fixture-a-180', 180)$$,
+  $$select public.practice_acquire(repeat('fictional-test-capability-', 3), '10000000-0000-4000-8000-000000000001', 'fixture-a-180', 180, null, null)$$,
   'P0001', 'FORBIDDEN');
 select pg_catalog.set_config('request.jwt.claims', '{}', true);
 select practice_private.test_expect_error(
-  $$select public.practice_acquire(repeat('fictional-test-capability-', 3), '10000000-0000-4000-8000-000000000001', 'fixture-a-180', 180)$$,
+  $$select public.practice_acquire(repeat('fictional-test-capability-', 3), '10000000-0000-4000-8000-000000000001', 'fixture-a-180', 180, null, null)$$,
   'P0001', 'FORBIDDEN');
 select pg_catalog.set_config('request.jwt.claims',
   '{"sub":"00000000-0000-4000-8000-00000000a001","role":"authenticated","is_anonymous":false}', true);
@@ -63,12 +63,12 @@ do $$
 declare v_first jsonb; v_replay jsonb; v_id uuid; v_connected jsonb;
 begin
   v_first := public.practice_acquire(repeat('fictional-test-capability-', 3),
-    '10000000-0000-4000-8000-000000000001', 'fixture-a-180', 180);
+    '10000000-0000-4000-8000-000000000001', 'fixture-a-180', 180, null, null);
   if v_first ->> 'created' <> 'true' then raise exception 'First acquisition was not created'; end if;
   v_id := (v_first #>> '{session,id}')::uuid;
   perform pg_catalog.set_config('test.session_a', v_id::text, true);
   v_replay := public.practice_acquire(repeat('fictional-test-capability-', 3),
-    '10000000-0000-4000-8000-000000000001', 'fixture-a-180', 180);
+    '10000000-0000-4000-8000-000000000001', 'fixture-a-180', 180, null, null);
   if v_replay ->> 'created' <> 'false' or v_replay -> 'session' <> v_first -> 'session' then
     raise exception 'Idempotent replay changed session';
   end if;
@@ -82,13 +82,13 @@ begin
 end;
 $$;
 select practice_private.test_expect_error(
-  $$select public.practice_acquire(repeat('fictional-test-capability-', 3), '10000000-0000-4000-8000-000000000001', 'changed', 180)$$,
+  $$select public.practice_acquire(repeat('fictional-test-capability-', 3), '10000000-0000-4000-8000-000000000001', 'changed', 180, null, null)$$,
   'P0001', 'IDEMPOTENCY_CONFLICT');
 select practice_private.test_expect_error(
-  $$select public.practice_acquire(repeat('fictional-test-capability-', 3), '10000000-0000-4000-8000-000000000002', 'fixture-new', 180)$$,
+  $$select public.practice_acquire(repeat('fictional-test-capability-', 3), '10000000-0000-4000-8000-000000000002', 'fixture-new', 180, null, null)$$,
   'P0001', 'SESSION_ACTIVE');
 select practice_private.test_expect_error(
-  $$select public.practice_acquire(repeat('fictional-test-capability-', 3), '10000000-0000-4000-8000-000000000002', 'fixture-new', 999)$$,
+  $$select public.practice_acquire(repeat('fictional-test-capability-', 3), '10000000-0000-4000-8000-000000000002', 'fixture-new', 999, null, null)$$,
   'P0001', 'INVALID_INPUT');
 select practice_private.test_expect_error(
   $$update public.practice_sessions set provider_conversation_id = 'forged'$$, '42501');
@@ -119,7 +119,7 @@ declare v_acquired jsonb;
 begin
   if exists(select 1 from public.practice_sessions) then raise exception 'Cross-owner SELECT leaked rows'; end if;
   v_acquired := public.practice_acquire(repeat('fictional-test-capability-', 3),
-    '20000000-0000-4000-8000-000000000001', 'fixture-b-300', 300);
+    '20000000-0000-4000-8000-000000000001', 'fixture-b-300', 300, null, null);
   perform pg_catalog.set_config('test.session_b', v_acquired #>> '{session,id}', true);
 end;
 $$;
@@ -170,7 +170,7 @@ begin
   end if;
   perform public.practice_cleanup(repeat('fictional-test-capability-', 3), v_id, 'confirmed');
   v_expiry := public.practice_acquire(repeat('fictional-test-capability-', 3),
-    '10000000-0000-4000-8000-000000000002', 'fixture-expiry', 180);
+    '10000000-0000-4000-8000-000000000002', 'fixture-expiry', 180, null, null);
   perform pg_catalog.set_config('test.session_expiry', v_expiry #>> '{session,id}', true);
 end;
 $$;
@@ -195,13 +195,13 @@ do $$
 declare v_new jsonb; v_old jsonb; v_replay jsonb;
 begin
   v_new := public.practice_acquire(repeat('fictional-test-capability-', 3),
-    '10000000-0000-4000-8000-000000000003', 'fixture-after-expiry', 180);
+    '10000000-0000-4000-8000-000000000003', 'fixture-after-expiry', 180, null, null);
   select to_jsonb(s) into v_old from public.practice_sessions s
     where id = current_setting('test.session_expiry')::uuid;
   if v_new ->> 'created' <> 'true' or v_old ->> 'status' <> 'interrupted'
     or v_old ->> 'cleanup' <> 'pending' then raise exception 'Expired lease was not reconciled'; end if;
   v_replay := public.practice_acquire(repeat('fictional-test-capability-', 3),
-    '10000000-0000-4000-8000-000000000002', 'fixture-expiry', 180);
+    '10000000-0000-4000-8000-000000000002', 'fixture-expiry', 180, null, null);
   if v_replay ->> 'created' <> 'false' or v_replay #>> '{session,status}' <> 'interrupted' then
     raise exception 'Expired request replay created another session';
   end if;

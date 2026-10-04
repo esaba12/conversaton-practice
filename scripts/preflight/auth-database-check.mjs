@@ -227,11 +227,11 @@ try {
   } else {
   const [first, second] = clients;
   const publicClient = createClient(url, publishable, options);
-  const deniedPublic = await publicClient.rpc("practice_acquire", { p_secret: capability, p_key: randomUUID(), p_fingerprint: "public", p_duration: 180 });
+  const deniedPublic = await publicClient.rpc("practice_acquire", { p_secret: capability, p_key: randomUUID(), p_fingerprint: "public", p_duration: 180, p_person_id: null, p_person_version: null });
   assert(deniedPublic.error, "unauthenticated RPC rejection");
-  const deniedCapability = await first.rpc("practice_acquire", { p_secret: "incorrect-test-capability-value-32", p_key: randomUUID(), p_fingerprint: "wrong-secret", p_duration: 180 });
+  const deniedCapability = await first.rpc("practice_acquire", { p_secret: "incorrect-test-capability-value-32", p_key: randomUUID(), p_fingerprint: "wrong-secret", p_duration: 180, p_person_id: null, p_person_version: null });
   assert(deniedCapability.error?.message === "FORBIDDEN", "browser alone cannot mutate trusted metadata");
-  const attempts = [{ p_key: randomUUID(), p_fingerprint: "concurrent-a", p_duration: 180 }, { p_key: randomUUID(), p_fingerprint: "concurrent-b", p_duration: 180 }];
+  const attempts = [{ p_key: randomUUID(), p_fingerprint: "concurrent-a", p_duration: 180, p_person_id: null, p_person_version: null }, { p_key: randomUUID(), p_fingerprint: "concurrent-b", p_duration: 180, p_person_id: null, p_person_version: null }];
   const raced = await Promise.all(attempts.map(args => rpc(first, "practice_acquire", args)));
   assert(raced.filter(result => !result.error && result.data.created).length === 1, "one concurrent acquisition wins");
   assert(raced.filter(result => result.error?.message === "SESSION_ACTIVE").length === 1, "second concurrent acquisition conflicts");

@@ -5,8 +5,17 @@ import type { Db } from "@/lib/data/sessions";
 import { AppError } from "@/lib/schemas/errors";
 import { deletePracticeDataResponseSchema, MAX_LISTED_SESSIONS, sessionListResponseSchema } from "@/lib/schemas/practice-data";
 
-// Owner RLS scopes every read. Provider ids, fingerprints and idempotency keys are never selected.
-const SESSION_COLUMNS = "id, status, cleanup, created_at, ended_at";
+// Owner RLS scopes every read. Provider ids, fingerprints, idempotency keys, and role text are never selected.
+const SESSION_COLUMNS = "id, status, cleanup, created_at, ended_at, person_id";
+const PERSON_COLUMNS = "id, name";
+const personNameSchema = z.string().min(1).max(60);
+
+function personIdOf(value: unknown): string | null {
+  if (value == null) return null;
+  const parsed = z.uuid().safeParse(value);
+  if (!parsed.success) throw storageUnavailable();
+  return parsed.data;
+}
 
 type Row = Record<string, unknown>;
 const iso = (value: unknown) => {
@@ -27,8 +36,26 @@ async function rows(query: PromiseLike<{ data: unknown; error: unknown }>): Prom
 
 export async function listSessions(db: Db) {
   const data = await rows(db.from("practice_sessions").select(SESSION_COLUMNS).order("created_at", { ascending: false }).limit(MAX_LISTED_SESSIONS));
+  const personIds = [...new Set(data.map(r => personIdOf(r.person_id)).filter((id): id is string => id !== null))];
+  const names = new Map<string, string>();
+  if (personIds.length > 0) {
+    // A missing people row is a deleted person: null name, not an error. Owner RLS hides anyone else's rows.
+    for (const person of await rows(db.from("people").select(PERSON_COLUMNS).in("id", personIds))) {
+      const id = personIdOf(person.id);
+      const name = personNameSchema.safeParse(person.name);
+      if (!id || !name.success) throw storageUnavailable();
+      names.set(id, name.data);
+    }
+  }
   return valid(sessionListResponseSchema, {
-    sessions: data.map(r => ({ id: r.id, status: r.status, cleanup: r.cleanup, createdAt: iso(r.created_at), endedAt: r.ended_at === null ? null : iso(r.ended_at) })),
+    sessions: data.map(r => {
+      const personId = personIdOf(r.person_id);
+      return {
+        id: r.id, status: r.status, cleanup: r.cleanup, createdAt: iso(r.created_at),
+        endedAt: r.ended_at === null ? null : iso(r.ended_at),
+        personName: personId === null ? null : names.get(personId) ?? null,
+      };
+    }),
   });
 }
 
