@@ -4,7 +4,6 @@ import { LobbyBriefingGallery } from "./lobby-briefing-gallery";
 import { MeetGreenRoomGallery } from "./meet-green-room-gallery";
 import { PrimitivesGallery } from "./primitives-gallery";
 import { SerifCandidates } from "./serif-candidates";
-import { StandInGallery } from "./stand-in-gallery";
 import styles from "./gallery.module.css";
 
 export default function DesignPreviewPage() {
@@ -18,7 +17,6 @@ export default function DesignPreviewPage() {
         <PrimitivesGallery />
         <LobbyBriefingGallery />
         <MeetGreenRoomGallery />
-        <StandInGallery />
       </section>
     </>
   );
