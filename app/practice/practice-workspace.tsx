@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Briefing, briefingKey, useBriefingDrafts, type BriefingPlan, type BriefingSubject } from "@/components/practice/briefing";
 import { GreenRoom } from "@/components/practice/green-room";
+import { GoalLightToggle } from "@/components/practice/goal-pill";
+import { HearButton, useHearHighlight } from "@/components/practice/hear-button";
 import { Lobby, starterPortraitPath } from "@/components/practice/lobby";
 import { CallStage } from "@/components/practice/call-stage";
 import { MeetCard, meetStateFromProgress, useStreamedDraft, type MeetState } from "@/components/practice/meet-card";
@@ -18,6 +20,7 @@ import type { PracticeDuration } from "@/components/presentation/duration-choice
 import { emptyRole, parseReviewedRole, type SetupMode } from "@/components/presentation/setup-review";
 import { examples } from "@/fixtures/examples";
 import { createBrowserAuthClient } from "@/lib/auth/browser";
+import { useGoalLight } from "@/lib/goal-check/use-goal-light";
 import { selectMediaController } from "@/lib/media/controller-factory";
 import { initialLiveCallState, reduceLiveCall, type Interaction, type LiveCallState } from "@/lib/media/interactions";
 import { createPerson, deletePerson, getPerson, getPracticeHistory, listFacts, listPeople, listPersonSituations, updatePerson } from "@/lib/people/api-client";
@@ -98,6 +101,9 @@ export function PracticeWorkspace() {
   const [saveOffer, setSaveOffer] = useState<SaveOffer>(closedOffer);
   // The provider transcript for the current attempt only; never logged or persisted.
   const [turns, setTurns] = useState<TranscriptTurn[]>([]);
+  // G1 goal light: off by default; browser memory only.
+  const [goalLightOn, setGoalLightOn] = useState(false);
+  const hearHighlight = useHearHighlight();
   // Captions, speaking glow and network quality for the call screen only; never stored.
   const [liveCall, setLiveCall] = useState<LiveCallState>(initialLiveCallState);
   const [reflect, setReflect] = useState<ReflectState>(closedReflect);
@@ -621,6 +627,8 @@ export function PracticeWorkspace() {
   }
 
   const phase = callPhase(flow);
+  // Only the user's own call; reflect.sessionId is set for practice starts and never for the stand-in.
+  const goalLight = useGoalLight({ enabled: goalLightOn && !standInLive, sessionId: phase === "live" ? reflect.sessionId : null, goal: callInfo.goal, turns });
   const live = flow.stage === "call" || flow.stage === "retry-call";
   useEffect(() => {
     if (!live) return;
@@ -718,6 +726,10 @@ export function PracticeWorkspace() {
       <StageTransition stage={flow.stage}>
       {phase === null ? (flow.stage === "meet"
         ? <MeetCard identity={{ name: meetName, relationship: meetRelationship, portraitSrc }} state={meetState} onRoleChange={setReviewRole}
+            hear={meetState.status === "ready" && meetState.role.opening.trim()
+              ? <HearButton name={meetName} text={meetState.role.opening} presetId={meetStart.kind === "preset" ? meetStart.preset : undefined} onPlayingChange={hearHighlight.onPlayingChange} />
+              : undefined}
+            bubbleClassName={hearHighlight.bubbleClassName}
             editable={meetPerson ? "situation" : "all"} start={meetStart} privateNotes={lastDraftRef.current?.privateNotes ?? ""}
             durationSeconds={durationSeconds} onDurationChange={setDurationSeconds}
             onBack={() => { draftStream.cancel(); if (savedPerson) leavePerson(); else backToDescribe(); }}
@@ -733,6 +745,7 @@ export function PracticeWorkspace() {
               starting={starting} startError={setupMessage || null} disabled={signingOut || endingPrevious} disabledReason={signingOut ? "Signing you out…" : "Ending the previous practice…"} focusHeading={moveFocus}
               extras={<>
                 {standInChosen && <p className="notice">First, a stand-in plays you. You play {meetName}.</p>}
+                <GoalLightToggle checked={goalLightOn} onChange={setGoalLightOn} />
                 {previousSessionId && <button type="button" className="button secondary" onClick={() => void endPrevious()} disabled={endingPrevious}>{endingPrevious ? "Ending the previous practice…" : "End the previous practice"}</button>}
               </>} />
         : flow.stage === "briefing" && subject
@@ -753,7 +766,7 @@ export function PracticeWorkspace() {
               onHardMomentLineChange={(hardMomentLine) => updatePrivateState({ hardMomentLine })} onNoteChange={setNoteToSelf}
               onCall={callAfterStandIn} starting={starting} />
           : <>
-            <CallStage counterpartName={callInfo.name} goal={callInfo.goal} phase={phase} muted={muted} cameraEnabled={cameraEnabled} elapsedSeconds={elapsedSeconds} durationSeconds={plannedDurationRef.current}
+            <CallStage counterpartName={callInfo.name} goal={callInfo.goal} goalLight={goalLight} phase={phase} muted={muted} cameraEnabled={cameraEnabled} elapsedSeconds={elapsedSeconds} durationSeconds={plannedDurationRef.current}
               remoteStream={remoteStream} localStream={localStream}
               onMuteToggle={toggleMute} onCameraToggle={() => void toggleCamera()} onEnd={() => finish("user")} statusMessage={statusMessage} testMedia={testMedia} turns={turns}
               live={liveCall} onInteraction={standInLive ? undefined : sendInteraction} onCancel={backToSetup}

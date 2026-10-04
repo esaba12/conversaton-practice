@@ -13,7 +13,9 @@ import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const bundle = join(root, ".next", "static");
-const names = ["TAVUS_STANDIN_PAL_ID", "TAVUS_STANDIN_FACE_ID", "ELEVENLABS_STANDIN_VOICE_ID"];
+const starters = ["ROOMMATE", "PROFESSOR", "DECLINE", "MANAGER"];
+const names = ["TAVUS_STANDIN_PAL_ID", "TAVUS_STANDIN_FACE_ID", "ELEVENLABS_STANDIN_VOICE_ID", "TAVUS_PAL_ID", "TAVUS_FACE_ID", "ELEVENLABS_VOICE_ID",
+  ...starters.flatMap((p) => [`TAVUS_STARTER_${p}_FACE_ID`, `TAVUS_STARTER_${p}_PAL_ID`, `ELEVENLABS_STARTER_${p}_VOICE_ID`])];
 
 function walk(dir, acc = []) {
   for (const entry of readdirSync(dir)) {
@@ -48,10 +50,10 @@ for (const file of files) {
   }
 }
 
-console.log(`Scanned ${files.length} files in .next/static for ${names.length} stand-in env names` +
+console.log(`Scanned ${files.length} files in .next/static for ${names.length} provider env names` +
   (checkedValues.length ? ` and ${checkedValues.length} configured value(s)` : " (no values set in this shell)"));
 if (failures.length) {
   for (const failure of failures) console.error(`FAIL ${failure}`);
   process.exit(1);
 }
-console.log("PASS no stand-in media id reached the client bundle");
+console.log("PASS no provider media id reached the client bundle");
