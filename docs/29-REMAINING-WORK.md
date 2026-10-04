@@ -8,6 +8,8 @@ On `main` since the 20:00 draft of this plan: three example presets, a 3- or 5-m
 
 ## Still open
 
+Agent-ready briefs for every open item, including the three REV-01 should-fix items, a post-merge regression run, and the Google sign-in decision, are in [docs/issues](issues/README.md).
+
 | When | Task | State |
 | --- | --- | --- |
 | Human | [LIVE-01](tasks/LIVE-01-human-checks.md), [SUB-01](tasks/SUB-01-submission-execution.md) | Not run. Pitch copy is [DEMO-01](tasks/DEMO-01-submission-prep.md) |
@@ -65,4 +67,4 @@ Keep generation, live video, editable personas, explicit save and sharing, End, 
 - Click and keyboard paths stay on every drag surface.
 - Private notes and unshared About-me facts stay out of counterpart context.
 - Record only checks that ran, with mode `static`, `unit`, `mock`, or `live`.
-- Open a GitHub issue when a task moves to `ready`. None of these issues exist yet.
+- GitHub issues #27–#37 track the open items; the mapping is in [docs/issues](issues/README.md).
