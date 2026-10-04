@@ -38,7 +38,16 @@ export async function starterPortrait(presetId: string): Promise<Response> {
     portraitCache.set(media.faceId, cached);
   }
   const image = await fetch(cached.url, { signal: AbortSignal.timeout(8_000) }).catch(() => null);
-  const type = image?.headers.get("content-type") ?? "";
-  if (!image?.ok || !image.body || !type.startsWith("image/")) throw new AppError("PROVIDER_UNAVAILABLE", "The portrait is unavailable right now.", 503);
-  return new Response(image.body, { headers: { "Content-Type": type, "Cache-Control": "private, max-age=86400" } });
+  const type = imageType(image?.headers.get("content-type") ?? "", cached.url);
+  if (!image?.ok || !image.body || !type) throw new AppError("PROVIDER_UNAVAILABLE", "The portrait is unavailable right now.", 503);
+  return new Response(image.body, { headers: { "Content-Type": type, "Cache-Control": "private, max-age=86400", "X-Content-Type-Options": "nosniff" } });
+}
+
+// The CDN labels some stills binary/octet-stream; fall back to a known image extension only.
+const extensionTypes: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
+function imageType(header: string, url: string): string | null {
+  const declared = header.split(";")[0].trim().toLowerCase();
+  if (/^image\/(jpeg|png|webp)$/.test(declared)) return declared;
+  const extension = new URL(url).pathname.split(".").pop()?.toLowerCase() ?? "";
+  return extensionTypes[extension] ?? null;
 }

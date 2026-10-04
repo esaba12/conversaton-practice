@@ -15,8 +15,9 @@ export type FlowStage =
   | "retry-recap";
 
 export type FlowEvent =
-  | { type: "pickPerson" }
-  | { type: "pickSomeoneNew" }
+  // `resume`: re-entering the same subject in this sitting keeps the goal and hard-moment line.
+  | { type: "pickPerson"; resume?: boolean }
+  | { type: "pickSomeoneNew"; resume?: boolean }
   | { type: "draftReady" }
   | { type: "toGreenRoom" }
   | { type: "ready" }
@@ -124,7 +125,7 @@ export function reduceFlow(state: FlowState, event: FlowEvent): FlowTransition {
     case "pickPerson":
     case "pickSomeoneNew":
       if (state.stage !== "lobby" && state.stage !== "briefing") return ignore(state);
-      return settle(state, { ...createFlowState("briefing") }, noTeardown, true);
+      return settle(state, { ...createFlowState("briefing") }, noTeardown, !event.resume);
 
     case "draftReady":
       if (state.stage !== "briefing") return ignore(state);
