@@ -1,6 +1,6 @@
 # Project status
 
-Updated October 3, 2026, 20:32 EDT. **G1 and G2 passed** (human live calls). **G3–G5 accepted on automated evidence (live not verified)**. Merged to local `main` (not pushed): privacy review, session person attribution, three example presets, 3/5-minute choice, and collapsed captions. Typecheck passed. Unit tests: 157 passed. Migrations `20261003220000_session_person.sql` and `20261003220100_revoke_session_executor.sql` are **applied**. `session_person.sql` and `session_foundation.sql` passed (both roll back). Not merged, because those branches had no commits: polish verification, appearance presets. Live checks, Devpost, the project name, and hosting stay with the human. `main` is ahead of origin and not pushed.
+Updated October 3, 2026, 20:33 EDT. **G1 and G2 passed** (human live calls). **G3–G5 accepted on automated evidence (live not verified)**. Local `main` (not pushed) includes the privacy review, session person attribution, three example presets, 3/5-minute choice, collapsed captions, and the public landing with a signed-in home and Google sign-in button. Typecheck passed. Unit tests: 157 passed. Migrations `20261003220000_session_person.sql` and `20261003220100_revoke_session_executor.sql` are **applied**. Google sign-in is not live-checked; the provider still has to be enabled in the Supabase dashboard. Branches with no commits were not a second merge: polish verification and appearance presets. Live checks, Devpost, the project name, and hosting stay with the human.
 
 ## Integrated October 3, 20:32 EDT
 
