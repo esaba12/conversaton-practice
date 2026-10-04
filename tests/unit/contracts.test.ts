@@ -33,7 +33,15 @@ describe("draft contract", () => {
     expect(draftRequestSchema.safeParse({ situation: "ok", history: "previous session" }).success).toBe(false);
   });
   it("returns a strict role without private fields", () => {
-    const draft = { role: roommate, goal: "Make one clear request.", assumptions: ["Talking at home."] };
+    const role = { ...roommate, wants: "Keep things easy", holdsBackBecause: "Feels singled out", softensWhen: "You suggest a plan" };
+    const draft = {
+      role, goal: "Make one clear request.", assumptions: ["Talking at home."],
+      stanceOptions: {
+        wants: ["Keep things easy", "Avoid blame", "Share chores"],
+        holdsBackBecause: ["Feels singled out", "Has an early class", "Thinks it is even"],
+        softensWhen: ["You suggest a plan", "You admit your part", "You stay brief"],
+      },
+    };
     expect(draftResponseSchema.safeParse(draft).success).toBe(true);
     expect(draftResponseSchema.safeParse({ ...draft, privateNotes: "secret" }).success).toBe(false);
     expect(draftResponseSchema.safeParse({ ...draft, role: { ...roommate, privateNotes: "secret" } }).success).toBe(false);

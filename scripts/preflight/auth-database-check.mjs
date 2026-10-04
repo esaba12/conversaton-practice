@@ -39,7 +39,7 @@ try {
     credentials.push({ email, password });
   }
   console.log("PASS: two real Auth password sign-ins and verified nonanonymous identities (fictional fixtures; no email sent).");
-  if (process.argv.includes("--g3")) {
+  if (process.argv.includes("--g3") || process.argv.includes("--p2")) {
     const [first, second] = clients;
     const marker = { shared: "g3 shared fixture fact", unshared: "g3 unshared fixture fact", prep: "g3 private prep fixture" };
     const person = { p_name: "Dana", p_relationship: "Your fictional manager", p_traits: { formality: "formal" }, p_style: "Calm.", p_public_context: "You manage a small team.", p_opening: "Hi, you wanted to talk?", p_constraints: [], p_challenge: "neutral", p_pace: "patient" };
@@ -71,6 +71,35 @@ try {
     const direct = await first.from("person_shared_facts").insert({ owner_id: fixtures[0], person_id: dana.data.id, fact_id: unshared.data.id });
     assert(direct.error, "direct sharing writes denied");
     console.log("PASS: G3 real-JWT owner isolation, cross-owner sharing denied, stale version conflict, private prep and unshared facts absent from context.");
+    if (process.argv.includes("--p2")) {
+      const situation = {
+        publicContext: "A launch task needs to move to next sprint.",
+        opening: "Which task do you want to move?",
+        constraints: ["Keep this about the launch."],
+        challenge: "mild_pushback",
+        pace: "conversational",
+        wants: "Keep the launch on track",
+        holdsBackBecause: "The team is short staffed",
+        softensWhen: "You name what to drop",
+      };
+      const made = [];
+      for (let index = 1; index <= 5; index++) {
+        const created = await first.rpc("person_situation_create", { p_person_id: dana.data.id, p_label: `Launch option ${index}`, p_situation: situation });
+        assert(!created.error && created.data.person_id === dana.data.id, `owner A creates saved situation ${index}`);
+        made.push(created.data.id);
+      }
+      const capped = await first.rpc("person_situation_create", { p_person_id: dana.data.id, p_label: "Over cap", p_situation: situation });
+      assert(capped.error?.message === "LIMIT_REACHED", "saved-situation cap is five");
+      const listed = await first.rpc("person_situation_list", { p_person_id: dana.data.id });
+      assert(!listed.error && listed.data.length === 5, "owner A lists five saved situations");
+      const foreignList = await second.rpc("person_situation_list", { p_person_id: dana.data.id });
+      const foreignCreate = await second.rpc("person_situation_create", { p_person_id: dana.data.id, p_label: "Foreign", p_situation: situation });
+      const foreignDelete = await second.rpc("person_situation_delete", { p_id: made[0] });
+      assert([foreignList, foreignCreate, foreignDelete].every(result => result.error?.message === "NOT_FOUND"), "owner B gets NOT_FOUND for A's saved situations");
+      const removed = await first.rpc("person_situation_delete", { p_id: made[0] });
+      assert(!removed.error && removed.data.deleted === true, "owner A deletes a saved situation");
+      console.log("PASS: P2 real-JWT saved-situation isolation, cap, cross-owner 404 markers and owner delete.");
+    }
   } else if (process.argv.includes("--g3-ui")) {
     // Two signed-in browser sessions against the running app's routes. Only starts that fail before any provider call are attempted.
     const { chromium } = await import("@playwright/test");

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppError, errorSchema } from "@/lib/schemas/errors";
 import { draftResponseSchema } from "@/lib/schemas/draft";
+import type { RoleContext } from "@/lib/schemas/role-context";
 
 const identity = vi.hoisted(() => ({ requireIdentity: vi.fn() }));
 vi.mock("@/lib/auth/server", () => identity);
@@ -9,10 +10,29 @@ import { DRAFT_FORMAT_NAME, draftJsonSchema, generateDraft, leaksPrivateNotes } 
 import { SETUP_SYSTEM_PROMPT } from "@/lib/setup/prompt";
 import { resetDraftLimitsForTests } from "@/lib/setup/rate-limit";
 
-const role = { name: "Jordan", role: "Your manager", style: "Brief and direct.", publicContext: "You manage the user's team and have a busy week.", opening: "Hey, you wanted to talk?", constraints: ["Has ten minutes before a meeting"], challenge: "neutral", pace: "conversational" };
-const output = (patch: Record<string, unknown> = {}) => ({ outOfScope: false, role, goal: "Ask for Friday off and offer coverage", assumptions: ["The meeting is in person"], ...patch });
+const role: RoleContext = {
+  name: "Jordan", role: "Your manager", style: "Brief and direct.", publicContext: "You manage the user's team and have a busy week.",
+  opening: "Hey, you wanted to talk?", constraints: ["Has ten minutes before a meeting"], challenge: "neutral", pace: "conversational",
+  wants: "Keep coverage steady", holdsBackBecause: "The week is busy", softensWhen: "You offer coverage",
+};
+const stanceOptions = {
+  wants: ["Keep coverage steady", "Finish the schedule", "Avoid a gap"],
+  holdsBackBecause: ["The week is busy", "Two people are out", "Plans are already set"],
+  softensWhen: ["You offer coverage", "You give notice", "You suggest a swap"],
+};
+const output = (patch: Record<string, unknown> = {}) => ({ outOfScope: false, role, goal: "Ask for Friday off and offer coverage", assumptions: ["The meeting is in person"], stanceOptions, ...patch });
 const raw = (content: unknown[], status = "completed") => Response.json({ status, output: [{ type: "reasoning", summary: [] }, { type: "message", role: "assistant", content }] });
 const ok = (value: unknown) => raw([{ type: "output_text", text: typeof value === "string" ? value : JSON.stringify(value) }]);
+const sse = (value: unknown) => {
+  const text = typeof value === "string" ? value : JSON.stringify(value);
+  const split = Math.floor(text.length / 2);
+  return new Response([
+    `data: ${JSON.stringify({ type: "response.output_text.delta", delta: text.slice(0, split) })}\n\n`,
+    `data: ${JSON.stringify({ type: "response.output_text.delta", delta: text.slice(split) })}\n\n`,
+    `data: ${JSON.stringify({ type: "response.completed" })}\n\n`,
+    "data: [DONE]\n\n",
+  ].join(""), { headers: { "Content-Type": "text/event-stream" } });
+};
 const body = { situation: "I need to ask my manager for Friday off.", privateNotes: "I always freeze when my voice starts shaking badly" };
 const post = (value: unknown) => new Request("http://127.0.0.1:3000/api/scenarios/draft", { method: "POST", body: JSON.stringify(value) });
 function provider(...responses: Array<() => Promise<Response> | Response>) {
@@ -37,7 +57,7 @@ describe("strict draft schema", () => {
     const schema = draftJsonSchema();
     const text = JSON.stringify(schema);
     expect(text).not.toMatch(/"(minLength|maxLength|\$schema)"/);
-    expect(schema).toMatchObject({ type: "object", additionalProperties: false, required: ["outOfScope", "role", "goal", "assumptions"] });
+    expect(schema).toMatchObject({ type: "object", additionalProperties: false, required: ["outOfScope", "role", "goal", "assumptions", "stanceOptions"] });
     const props = schema.properties as Record<string, Record<string, unknown>>;
     const roleSchema = props.role as { required: string[]; additionalProperties: boolean; properties: Record<string, Record<string, unknown>> };
     expect(roleSchema.additionalProperties).toBe(false);
@@ -56,7 +76,7 @@ describe("POST /api/scenarios/draft", () => {
     expect(response.status).toBe(200);
     const json = await response.json();
     expect(json).not.toHaveProperty("outOfScope");
-    expect(draftResponseSchema.parse(json)).toEqual({ role, goal: "Ask for Friday off and offer coverage", assumptions: ["The meeting is in person"] });
+    expect(draftResponseSchema.parse(json)).toEqual({ role, goal: "Ask for Friday off and offer coverage", assumptions: ["The meeting is in person"], stanceOptions });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -79,6 +99,52 @@ describe("POST /api/scenarios/draft", () => {
     provider(() => ok(output({ goal: "Something the model rewrote" })));
     const json = await (await POST(post({ ...body, goal: "Ask clearly for Friday off" }))).json();
     expect(json.goal).toBe("Ask clearly for Friday off");
+  });
+
+  it("loads a saved person's identity only and overwrites model identity fields", async () => {
+    const personId = "55555555-5555-4555-8555-555555555555";
+    const query = {
+      select: vi.fn(() => query), eq: vi.fn(() => query),
+      maybeSingle: vi.fn(async () => ({ data: {
+        id: personId, name: "Dana", relationship: "Your manager", style: "Calm and practical.",
+        background: "Dana manages the launch team.", traits: { tone: "warm" },
+      }, error: null })),
+    };
+    identity.requireIdentity.mockResolvedValue({ client: { from: vi.fn(() => query) }, identity: { id: "11111111-1111-4111-8111-111111111111", isAnonymous: false } });
+    const fetchMock = provider(() => ok(output({ role: { ...role, name: "Wrong", role: "Wrong role", style: "Wrong style" } })));
+    const json = await (await POST(post({ ...body, personId }))).json();
+    expect(json.role).toMatchObject({ name: "Dana", role: "Your manager", style: "Calm and practical." });
+    expect(query.select).toHaveBeenCalledWith("id, name, relationship, traits, style, background");
+    const sent = JSON.parse(String((fetchMock.mock.calls as unknown as Array<[string, RequestInit]>)[0][1].body));
+    expect(sent.input[1].content).toContain("Dana manages the launch team.");
+    expect(sent.input[1].content).not.toMatch(/shared|private prep fixture/i);
+  });
+
+  it("streams fields followed by one validated done event without echoing notes", async () => {
+    const marker = "PRIVATE-STREAM-MARKER";
+    const fetchMock = provider(() => sse(output()));
+    const request = post({ ...body, privateNotes: marker });
+    request.headers.set("Accept", "text/event-stream");
+    const response = await POST(request);
+    expect(response.headers.get("content-type")).toContain("text/event-stream");
+    const text = await response.text();
+    expect((text.match(/event: field/g) ?? [])).toHaveLength(4);
+    expect((text.match(/event: done/g) ?? [])).toHaveLength(1);
+    expect(text).not.toContain(marker);
+    const sent = JSON.parse(String((fetchMock.mock.calls as unknown as Array<[string, RequestInit]>)[0][1].body));
+    expect(sent).toMatchObject({ model: "unit-model", store: false, stream: true });
+  });
+
+  it("streams an error and no done event when the private-note probe fails", async () => {
+    const marker = "CedarVault7731";
+    const leaked = output({ role: { ...role, wants: marker }, stanceOptions: { ...stanceOptions, wants: [marker, "Keep coverage", "Avoid a gap"] } });
+    provider(() => sse(leaked), () => sse(leaked));
+    const request = post({ ...body, privateNotes: `Do not reveal ${marker} during the call` });
+    request.headers.set("Accept", "text/event-stream");
+    const text = await (await POST(request)).text();
+    expect(text).toContain("event: error");
+    expect(text).not.toContain("event: done");
+    expect(text).not.toContain(marker);
   });
 
   it("rejects unauthenticated callers before reading the body or calling the model", async () => {
@@ -210,6 +276,13 @@ describe("private-note leak check", () => {
 
   it("does not flag a stopword-only window", () => {
     expect(leaksPrivateNotes({ ...role, style: "I don't want to drag this out." } as never, "I don't want to", situation)).toBe(false);
+  });
+
+  it("probes selected stance and every alternative", () => {
+    expect(leaksPrivateNotes({ ...role, wants: "cedar closet key" }, "Do not reveal the cedar closet key", situation, stanceOptions)).toBe(true);
+    expect(leaksPrivateNotes(role, "Do not reveal the amber locker code", situation, {
+      ...stanceOptions, softensWhen: [...stanceOptions.softensWhen, "amber locker code"],
+    })).toBe(true);
   });
 
   it("never flags when there are no notes", () => {

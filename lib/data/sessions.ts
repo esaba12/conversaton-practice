@@ -43,10 +43,19 @@ async function call(db: Db, name: string, args: Record<string, unknown>): Promis
   throw known ? new AppError(...known) : unavailable();
 }
 
-export async function acquire(db: Db, secret: string, key: string, fingerprint: string, duration: 180 | 300, person: { id: string; version: number } | null) {
+export async function acquire(
+  db: Db,
+  secret: string,
+  key: string,
+  fingerprint: string,
+  duration: 180 | 300,
+  person: { id: string; version: number } | null,
+  metadata: { kind: "practice" | "stand_in"; preset: string | null } = { kind: "practice", preset: null },
+) {
   const parsed = z.object({ created: z.boolean(), session: z.unknown() }).safeParse(await call(db, "practice_acquire", {
     p_secret: secret, p_key: key, p_fingerprint: fingerprint, p_duration: duration,
     p_person_id: person?.id ?? null, p_person_version: person?.version ?? null,
+    p_kind: metadata.kind, p_preset: metadata.preset,
   }));
   if (!parsed.success) throw unavailable();
   return { created: parsed.data.created, row: toRow(parsed.data.session) };

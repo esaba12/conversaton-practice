@@ -11,7 +11,15 @@ const key = "9d1c2b3a-4e5f-4a6b-8c7d-0e1f2a3b4c5d";
 const session = { id: sessionId, status: "connecting", expiresAt: "2026-10-03T19:10:00.000Z", cleanup: "not_started" };
 const credential = { provider: "tavus", roomUrl: "https://tavus.daily.co/room", meetingToken: "unit-token", expiresAt: "2026-10-03T19:10:00.000Z" };
 const privateNote = "PRIVATE-NOTE-I-am-scared-they-will-be-angry";
-const draft = { role: roommate, goal: "Make a clear request about sharing kitchen chores.", assumptions: ["You live together."] };
+const draftedRole = { ...roommate, wants: "Keep the kitchen easy", holdsBackBecause: "Feels singled out", softensWhen: "You suggest a fair plan" };
+const draft = {
+  role: draftedRole, goal: "Make a clear request about sharing kitchen chores.", assumptions: ["You live together."],
+  stanceOptions: {
+    wants: ["Keep the kitchen easy", "Avoid an argument", "Share chores fairly"],
+    holdsBackBecause: ["Feels singled out", "Has an early class", "Thinks chores are even"],
+    softensWhen: ["You suggest a fair plan", "You admit your part", "You keep it short"],
+  },
+};
 function stubFetch(response: Response) { const fetchMock = vi.fn().mockResolvedValue(response); vi.stubGlobal("fetch", fetchMock); return fetchMock; }
 
 describe("session API client", () => {

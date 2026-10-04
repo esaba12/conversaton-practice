@@ -13,7 +13,7 @@ const requestId = "1e2d3c4b-5a69-4788-9a0b-c1d2e3f4a5b6";
 const at = "2026-10-03T21:20:00.000Z";
 const privateNote = "PRIVATE-NOTE-I-am-scared-they-will-be-angry";
 const fields: PersonFields = roleToPersonFields(roommate, { tone: "warm", formality: "casual" });
-const person = { ...fields, id: personId, version: 2, sharedFactIds: [factId], createdAt: at, updatedAt: at };
+const person = { ...fields, background: roommate.publicContext, id: personId, version: 2, sharedFactIds: [factId], createdAt: at, updatedAt: at };
 const fact = { id: factId, text: "I joined in June", createdAt: at, updatedAt: at };
 function stubFetch(response: Response) { const fetchMock = vi.fn().mockResolvedValue(response); vi.stubGlobal("fetch", fetchMock); return fetchMock; }
 function call(fetchMock: ReturnType<typeof vi.fn>) {

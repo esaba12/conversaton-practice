@@ -167,16 +167,31 @@ describe("session routes", () => {
     const providerCalls = fetchMock.mock.calls.length;
     const storageCalls = rpc.mock.calls.length;
     await errorOf(await start(post("/api/sessions", { idempotencyKey: key, preset: "boss", durationSeconds: 180 })), 400);
-    // C1 staging: frozen branches that 1C and 1G build are rejected before any storage or provider call.
-    const situation = { publicContext: "x", opening: "Hi.", constraints: [], challenge: "neutral", pace: "patient" };
-    for (const body of [
-      { idempotencyKey: key, preset: "manager", durationSeconds: 180, openingOverride: "Hey." },
-      { idempotencyKey: key, personId: crypto.randomUUID(), expectedVersion: 1, situation, durationSeconds: 180 },
-      { idempotencyKey: key, standIn: true, goal: "Ask for one thing.", preset: "manager", durationSeconds: 180 },
-    ]) await errorOf(await start(post("/api/sessions", body)), 400);
+    // 1G still owns the stand-in branch.
+    await errorOf(await start(post("/api/sessions", {
+      idempotencyKey: key, standIn: true, goal: "Ask for one thing.", preset: "manager", durationSeconds: 180,
+    })), 400);
     await errorOf(await start(post("/api/sessions", { idempotencyKey: key, preset: "professor", privateNotes: "PRIVATE-NOTE", durationSeconds: 180 })), 400);
     expect(fetchMock.mock.calls.length).toBe(providerCalls);
     expect(rpc.mock.calls.length).toBe(storageCalls);
+  });
+
+  it("uses starter media, records preset metadata, and applies only an opening override", async () => {
+    vi.stubEnv("TAVUS_STARTER_MANAGER_PAL_ID", "manager-pal");
+    vi.stubEnv("TAVUS_STARTER_MANAGER_FACE_ID", "manager-face");
+    vi.stubEnv("ELEVENLABS_STARTER_MANAGER_VOICE_ID", "manager-voice");
+    handlers.practice_acquire = () => ({ data: { created: true, session: row() } });
+    handlers.practice_bind = (args) => ({ data: row({ provider_conversation_id: args.p_provider_id }) });
+    const fetchMock = tavus();
+    const response = await start(post("/api/sessions", {
+      idempotencyKey: key, preset: "manager", durationSeconds: 180, openingOverride: "Let's pick up at the hard part.",
+    }));
+    expect(response.status).toBe(201);
+    const sent = JSON.parse(String(fetchMock.mock.calls[0][1].body));
+    expect(sent).toMatchObject({ pal_id: "manager-pal", face_id: "manager-face", custom_greeting: "Let's pick up at the hard part." });
+    expect(sent.conversational_context).toContain("Let's pick up at the hard part.");
+    expect(sent.conversational_context).toContain(manager.publicContext);
+    expect(calls("practice_acquire")[0]).toMatchObject({ p_kind: "practice", p_preset: "manager" });
   });
 
   it("surfaces the database's fingerprint conflict when a key is replayed with a different role", async () => {
@@ -268,7 +283,7 @@ describe("session routes", () => {
     const personId = "55555555-5555-4555-8555-555555555555", key2 = "44444444-4444-4444-8444-444444444444";
     const stored = {
       id: personId, version: 2, name: "Sam", relationship: "Your fictional coworker", traits: { tone: "blunt" }, style: "Direct; prefers specifics.",
-      public_context: "You share a desk on the design team.", opening: "Hey, got a minute?", constraints: ["Stay at work."], challenge: "neutral", pace: "patient",
+      background: "Sam is a senior designer on your team.", public_context: "You share a desk on the design team.", opening: "Hey, got a minute?", constraints: ["Stay at work."], challenge: "neutral", pace: "patient",
       known_about_user: ["SHARED-FACT I run on weekends"],
     };
     const personBody = { idempotencyKey: key, personId, expectedVersion: 2, durationSeconds: 180 };
@@ -315,6 +330,28 @@ describe("session routes", () => {
         expect((await errorOf(await start(post("/api/sessions", { ...personBody, ...extra })), 400)).code).toBe("VALIDATION_ERROR");
       }
       expect(rpc).not.toHaveBeenCalled(); expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("merges a validated fresh situation with server-loaded identity and shared facts", async () => {
+      live(); const fetchMock = tavus();
+      const situation = {
+        publicContext: "A new launch task needs to move to next sprint.",
+        opening: "Which task do you want to move?",
+        constraints: ["Keep it about this launch."],
+        challenge: "mild_pushback",
+        pace: "conversational",
+        wants: "Keep the launch on track",
+        holdsBackBecause: "The team is short staffed",
+        softensWhen: "You name what to drop",
+      } as const;
+      const response = await start(post("/api/sessions", { ...personBody, situation }));
+      expect(response.status).toBe(201);
+      const sent = sentBody(fetchMock);
+      for (const value of ["Sam", situation.publicContext, situation.wants, "SHARED-FACT I run on weekends"]) {
+        expect(sent.conversational_context).toContain(value);
+      }
+      expect(sent.conversational_context).not.toContain(stored.public_context);
+      expect(calls("practice_acquire")[0]).toMatchObject({ p_kind: "practice", p_preset: null, p_person_id: personId, p_person_version: 2 });
     });
 
     it("fails closed with 503 on malformed person_context output", async () => {
