@@ -49,6 +49,12 @@ Research behind the one-moment retry, reviewed October 3. It informs the design.
 - Watching a recording of yourself helps only after a prepared, single viewing (Harvey, Clark, Ehlers, & Rapee, 2000). This product does not record the user. The retry goes forward from the planned line.
 - A third take in the same sitting crosses the over-rehearsal line already in docs/08 and in R03 section 4.
 
+## Text practice, October 4, 00:13 EDT
+
+Decided, not built. The buildable shape is [docs/17](17-PHOTON-TEXT-PRACTICE.md).
+
+Text is a later channel on the same practices. The user adds a mobile number on the website once. After that number is verified by texting a code to the Photon line, text practice unlocks. They can start from the review screen with Text, or text the line and pick a saved person or an example from a Photon app card in the thread. Both paths take the same session lease as a video call and do not open Tavus. In-person practice stays the video call. A phone-call practice, if it is built later, uses ElevenLabs and is not part of this decision.
+
 ## Post-submission plan, owner answers October 3, ~21:50 EDT
 
 Decided, not built. The roadmap is [docs/31](31-PRODUCT-VISION.md), the feature specs are [docs/32](32-FEATURE-SPECS.md), and the screens are [docs/33](33-DESIGN-SYSTEM-AND-SCREENS.md). The running app keeps today's prompts and privacy behavior until those specs are implemented. docs/07 and docs/08 record the amendments below so a later build does not follow the older lines.

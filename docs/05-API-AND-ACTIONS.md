@@ -68,11 +68,6 @@ A deleted session cannot accept a late reflection or recreate memory.
 ## Optional provider webhook
 Deferred unless needed. Verify provider signature, correlate conversation ID to an authorized session, deduplicate events, reject unknown IDs, and respect deletion tombstones. Never accept an owner ID from webhook metadata without lookup.
 
-## Optional text-channel application contracts
-These are proposed internal routes, not claims about Photon SDK endpoint names.
-- POST /api/text/link: authenticated request creates expiring single-use pairing challenge.
-- POST /api/text/sessions: owner, confirmed scenario/persona, verified linked identity, and explicit consent; acquire the global session lease.
-- POST /api/integrations/photon/events: authenticate by the actual provider-supported mechanism, resolve linked owner/session server-side, deduplicate, enforce limits, then queue a reply. Unauthenticated events cannot invoke models or send messages.
-- POST /api/text/sessions/:id/end: owner-only, idempotent, cancels pending replies and releases lease.
-- DELETE /api/text/link: owner-only unlink, ends active text session and blocks further deliveries.
-Reuse reflection/proposal routes with channel-specific transcript handling. No inbound text can bypass memory approval. Confirm real Spectrum authentication, retries, message IDs, and delivery semantics before implementing the adapter.
+## Text-channel routes
+
+Specified in [docs/17](17-PHOTON-TEXT-PRACTICE.md), not built. These are application routes, not Photon endpoints. `POST /api/text/link`, `GET /api/text/link`, and `DELETE /api/text/link` manage the one verified number. `POST /api/text/sessions` starts from the website and returns a session with no media credential. `POST /api/text/pick` starts from the card token. `POST /api/integrations/photon/events` accepts a Spectrum-signed webhook, dedupes on `message.id`, and never runs a model when the signature fails. End reuses `POST /api/sessions/:id/end`. Text reflection reuses `POST /api/sessions/:id/reflect` and reads stored turns instead of the client body. No inbound text writes memory.

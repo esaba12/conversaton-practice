@@ -25,6 +25,8 @@ The user can set supportive/neutral/mild-pushback difficulty. Mild pushback neve
 ## Immediate support exit
 If explicit imminent self-harm, violence, or immediate danger emerges, stop the scene and clearly leave character. Provide brief supportive wording and encourage appropriate human/emergency help for the person's location. Do not invent local numbers or promise monitoring. This requires test cases, not a claim of perfect detection. A static Help/End control remains available even if the model misses a cue.
 
+Text practice (docs/17, specified, not built) uses the same exit inside the thread, then ends the session. The website End control remains. A missed cue is not evidence the check worked.
+
 ## Threat model
 1. Private notes leak into the character prompt.
 2. One user's memory appears in another's session.
