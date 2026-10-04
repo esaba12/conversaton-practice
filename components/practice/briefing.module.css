@@ -1,5 +1,6 @@
 .briefing {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
   max-width: 1184px;
   margin: 0 auto;
@@ -145,6 +146,7 @@
 
 .field {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 6px;
 }
 
@@ -215,6 +217,7 @@
 
 .chipGroup {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
 }
 
