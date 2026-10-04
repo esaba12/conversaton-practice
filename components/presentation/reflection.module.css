@@ -18,6 +18,19 @@
 .panel .support p { color: var(--ink); }
 .error { display: grid; gap: 8px; padding: 12px; border-left: 2px solid #92372e; background: #f6ebe7; }
 .panel .error p { color: var(--ink); font-size: 13px; }
+.panel .status { color: var(--muted); font-size: var(--text-14); }
+/* W7: the quoted line is the user's own words, so it is text, serif and selectable — never an image. */
+.quote { margin: 0; }
+.quoteText { position: relative; display: inline; font-family: var(--font-serif); font-size: var(--text-28); line-height: var(--leading-display); letter-spacing: var(--tracking-display); color: var(--ink); }
+.word { animation: wordIn 220ms ease-out both; animation-delay: calc(var(--word-index) * 40ms); }
+.quoteRule { display: block; height: 2px; margin-top: 6px; background: var(--clay); transform-origin: left center; animation: ruleIn var(--t-calm) both; animation-delay: calc(var(--word-count) * 40ms); }
+@keyframes wordIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ruleIn { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .word { animation: none; opacity: 1; }
+  .quoteRule { animation: none; transform: none; }
+}
+.alternative { display: grid; gap: 8px; justify-items: start; }
 .primary { min-height: 44px; padding: 10px 14px; border: 1px solid var(--sage); border-radius: 8px; background: var(--sage); color: var(--surface); font-size: 13px; font-weight: 500; }
 .primary:hover:not(:disabled) { background: #284738; }
 .primary:disabled { background: #e2e5de; color: #515a51; border-color: #d3d7ce; cursor: wait; }

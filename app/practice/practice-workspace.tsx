@@ -1,9 +1,9 @@
 "use client";
-import { HomeCheckin } from "@/components/practice/planned-section";
+import { HomeCheckin, PlannedSection } from "@/components/practice/planned-section";
 import { StageTransition, startStage } from "@/components/practice/transitions";
 import { useSoundCues } from "@/lib/practice/use-sound-cues";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Briefing, briefingKey, useBriefingDrafts, type BriefingPlan, type BriefingSubject } from "@/components/practice/briefing";
 import { GreenRoom } from "@/components/practice/green-room";
 import { GoalLightToggle } from "@/components/practice/goal-pill";
@@ -13,6 +13,9 @@ import { CallStage } from "@/components/practice/call-stage";
 import { MeetCard, meetStateFromProgress, useStreamedDraft, type MeetState } from "@/components/practice/meet-card";
 import { personRole, personStartSituation, situationFromRole, type MeetStart } from "@/components/practice/meet-knowledge";
 import { RecapStage } from "@/components/practice/recap-stage";
+import { RETRY_DURATION_SECONDS } from "@/components/practice/recap-retry";
+import { PocketCard } from "@/components/practice/pocket-card";
+import { closedAlternative, type AlternativeState } from "@/components/presentation/reflection-panel";
 import { STAND_IN_PILL, pushbackPrompt, standInCallTitle } from "@/components/practice/stand-in-call";
 import { StandInOfferButtons } from "@/components/practice/stand-in-offer";
 import { StandInYourTurn } from "@/components/practice/stand-in-your-turn";
@@ -27,12 +30,13 @@ import { initialLiveCallState, reduceLiveCall, type Interaction, type LiveCallSt
 import { createPerson, deletePerson, getPerson, getPracticeHistory, listFacts, listPeople, listPersonSituations, updatePerson } from "@/lib/people/api-client";
 import { callPhase, createFlowState, reduceFlow, type FlowEvent, type FlowState, type Teardown } from "@/lib/practice/flow";
 import { cleanupMessage, failureMessages, reflectionError, FALLBACK_GOAL, GENERATION_FAILED } from "@/lib/practice/messages";
-import { clearPrivateState, readPrivateState, updatePrivateState } from "@/lib/practice/private-state";
+import { clearPrivateState, readPrivateState, subscribePrivateState, updatePrivateState } from "@/lib/practice/private-state";
 import type { MediaHandoff } from "@/lib/practice/devices";
 import { startStandInSession, type StandInTarget } from "@/lib/practice/stand-in-client";
-import { beginCall, beginStandIn, canStartCall, endStandIn, initialStandInSitting, standInOffer, type StandInSitting } from "@/lib/practice/stand-in-sitting";
+import { beginCall, beginRetry, beginStandIn, canRetry, canStartCall, endStandIn, initialStandInSitting, standInOffer, type StandInSitting } from "@/lib/practice/stand-in-sitting";
 import { closedOffer, closedReflect, sameName, type CallOrigin, type Cleanup, type CleanupTarget, type ReflectState, type SaveOffer } from "@/lib/practice/types";
-import { requestReflection } from "@/lib/reflection/api-client";
+import { requestAlternative, requestReflection } from "@/lib/reflection/api-client";
+import { getFeedbackStyle } from "@/lib/practice/feedback-style";
 import type { DraftRequest, StanceOptions } from "@/lib/schemas/draft";
 import type { MediaController, MediaEvent } from "@/lib/schemas/media";
 import { roleToPersonFields, type Person, type PersonSituation } from "@/lib/schemas/people";
@@ -108,6 +112,8 @@ export function PracticeWorkspace() {
   // Captions, speaking glow and network quality for the call screen only; never stored.
   const [liveCall, setLiveCall] = useState<LiveCallState>(initialLiveCallState);
   const [reflect, setReflect] = useState<ReflectState>(closedReflect);
+  const [alternative, setAlternative] = useState<AlternativeState>(closedAlternative);
+  const privateState = useSyncExternalStore(subscribePrivateState, readPrivateState, readPrivateState);
   const reflectGenerationRef = useRef(0);
   const reflectingRef = useRef(false);
   const generationRef = useRef(0);
@@ -259,6 +265,7 @@ export function PracticeWorkspace() {
   }
 
   function clearReflection() {
+    setAlternative(closedAlternative);
     reflectGenerationRef.current++;
     reflectingRef.current = false;
     setTurns([]); setReflect(closedReflect);
@@ -440,10 +447,10 @@ export function PracticeWorkspace() {
     setStandInChosen(value);
   }
 
-  async function launch(origin: CallOrigin, goal: string, request: (idempotencyKey: string) => Promise<StartResponse>, options: { standIn?: boolean } = {}) {
+  async function launch(origin: CallOrigin, goal: string, request: (idempotencyKey: string) => Promise<StartResponse>, options: { standIn?: boolean; retry?: boolean } = {}) {
     if (startingRef.current || controllerRef.current || sessionIdRef.current || authLostRef.current || generating) return;
     startingRef.current = true;
-    plannedDurationRef.current = durationSeconds;
+    plannedDurationRef.current = options.retry ? RETRY_DURATION_SECONDS : durationSeconds;
     const attempt = ++attemptRef.current;
     const reflectGoal = readPrivateState().goal.trim();
     clearReflection();
@@ -458,12 +465,12 @@ export function PracticeWorkspace() {
       sessionIdRef.current = session.id;
       setCallInfo({ name: origin.kind === "role" ? origin.role.name : origin.person.name, goal });
       setCallOrigin(origin);
-      setSitting((current) => options.standIn ? beginStandIn(current) : beginCall(current));
+      setSitting((current) => options.standIn ? beginStandIn(current) : options.retry ? beginRetry(current) : beginCall(current));
       if (!options.standIn) { setSaveOffer({ ...closedOffer, open: true }); setReflect({ ...closedReflect, sessionId: session.id, goal: reflectGoal }); }
       setMutedState(false); setCameraEnabled(false); setCameraNote(""); setElapsedSeconds(0); setCallMessage(""); setCleanup(null); setCleanupTarget(null);
-      // Ringing starts on acceptance, so a failed start stays in the green room with its message.
-      apply({ type: "ready" });
-      apply({ type: "sessionAccepted" });
+      // Ringing starts on acceptance, so a failed start stays in the green room (or the recap, for a retry) with its message.
+      if (options.retry) apply({ type: "retryAccepted" });
+      else { apply({ type: "ready" }); apply({ type: "sessionAccepted" }); }
       sound.ring();
       const media = mediaRef.current ??= selectMediaController();
       setTestMedia(media.testMode);
@@ -478,19 +485,20 @@ export function PracticeWorkspace() {
       if (attempt !== attemptRef.current) return;
       if (joined) { interrupt(failureMessages.join); return; }
       if (options.standIn) { standInRef.current = false; setStandInLive(false); }
+      const fail = options.retry ? setHeaderMessage : setSetupMessage;
       if (error instanceof SessionClientError) {
         if (error.code === "UNAUTHENTICATED") { handleAuthLoss(); return; }
         if (error.code === "SESSION_ACTIVE" && error.sessionId) {
           setPreviousSessionId(error.sessionId);
-          setSetupMessage("A previous practice is still open. End it before starting a new one.");
+          fail("A previous practice is still open. End it before starting a new one.");
           return;
         }
         if (origin.kind === "person" && error.code === "VERSION_CONFLICT") { void openPerson(origin.person.id, `${origin.person.name} changed since you opened this page. This is the latest version; start again when you’re ready.`); return; }
         if (origin.kind === "person" && error.code === "NOT_FOUND") { void openPerson(origin.person.id); return; }
-        setSetupMessage(error.code === "NETWORK" || error.code === "MALFORMED_RESPONSE" ? "Practice couldn’t start. Please try again." : error.message);
+        fail(error.code === "NETWORK" || error.code === "MALFORMED_RESPONSE" ? "Practice couldn’t start. Please try again." : error.message);
         return;
       }
-      setSetupMessage("Practice couldn’t start. Please try again.");
+      fail("Practice couldn’t start. Please try again.");
     } finally {
       startingRef.current = false;
       setStarting(false);
@@ -552,6 +560,34 @@ export function PracticeWorkspace() {
   }
 
   // One request at a time; a newer attempt or a clear drops a late result.
+  // docs/30: one retry per sitting. Same reviewed role and resolution path; only the opening changes. Nothing private is sent.
+  function startRetry(opening: string) {
+    const role = parseReviewedRole({ ...reviewRole, opening });
+    if (!role || !canRetry(sitting) || flow.retryUsed || flowRef.current.stage !== "recap") return;
+    const goal = readPrivateState().goal.trim() || FALLBACK_GOAL;
+    const person = savedPerson ?? draftPerson;
+    if (person) {
+      const situation: Situation = { ...situationFromRole(role), opening };
+      void launch({ kind: "person", person }, goal, (idempotencyKey) => startSavedPersonSession({ personId: person.id, expectedVersion: person.version, situation, durationSeconds: RETRY_DURATION_SECONDS, idempotencyKey }), { retry: true });
+      return;
+    }
+    void launch({ kind: "role", role }, goal, (idempotencyKey) => startSession({ role, durationSeconds: RETRY_DURATION_SECONDS, idempotencyKey }), { retry: true });
+  }
+
+  // A1, on request only. The goal line is the only content sent.
+  async function requestAlternativeNow() {
+    const goal = readPrivateState().goal.trim() || reflect.goal.trim();
+    if (!reflect.sessionId || !goal || alternative.pending || alternative.requested) return;
+    setAlternative((state) => ({ ...state, pending: true, error: null }));
+    try {
+      const text = await requestAlternative(reflect.sessionId, goal);
+      setAlternative({ text, pending: false, error: null, requested: true });
+    } catch (error) {
+      if (isAuthError(error)) { handleAuthLoss(); return; }
+      setAlternative({ text: null, pending: false, error: "We couldn’t find another way to say it. Your own words are fine.", requested: false });
+    }
+  }
+
   async function requestReflectionNow() {
     const { sessionId, goal, selfReflection, reflection } = reflect;
     if (!sessionId || reflection || reflectingRef.current || authLostRef.current) return;
@@ -559,7 +595,7 @@ export function PracticeWorkspace() {
     const generation = reflectGenerationRef.current;
     setReflect((state) => ({ ...state, pending: true, error: null }));
     try {
-      const result = await requestReflection(sessionId, { turns, goal: goal || undefined, selfReflection: selfReflection.trim() || undefined });
+      const result = await requestReflection(sessionId, { turns, goal: goal || undefined, selfReflection: selfReflection.trim() || undefined, feedbackStyle: getFeedbackStyle() });
       if (generation !== reflectGenerationRef.current) return;
       setReflect((state) => ({ ...state, pending: false, reflection: result }));
     } catch (error) {
@@ -773,6 +809,19 @@ export function PracticeWorkspace() {
               live={liveCall} onInteraction={standInLive ? undefined : sendInteraction} onCancel={backToSetup}
               standIn={standInLive ? { title: standInCallTitle(callInfo.name), pill: STAND_IN_PILL, prompt: readPrivateState().prediction.trim() ? pushbackPrompt(callInfo.name) : undefined } : undefined} />
             {(phase === "ended" || phase === "interrupted") && <RecapStage ended={phase === "ended"} origin={callOrigin} saveOffer={saveOffer} people={people} peopleStatus={peopleStatus}
+          counterpartName={callInfo.name} portraitSrc={portraitSrc} role={reviewRole}
+          isRetry={flow.stage === "retry-recap"} hardMomentLine={privateState.hardMomentLine}
+          retryAvailable={canRetry(sitting) && !flow.retryUsed} onRetry={startRetry} retryStarting={starting}
+          prediction={privateState.prediction} likelihoodBefore={privateState.likelihoodBefore}
+          likelihoodAfter={privateState.likelihoodAfter} onLikelihoodAfterChange={(likelihoodAfter) => updatePrivateState({ likelihoodAfter })}
+          alternative={alternative} onAlternative={() => void requestAlternativeNow()}
+          keep={<>
+            <details><summary className="button secondary">Make a pocket card</summary>
+              <PocketCard name={callInfo.name} goal={privateState.goal} hardMomentLine={privateState.hardMomentLine} practicedOn={new Date().toLocaleDateString("en-CA")} />
+            </details>
+            {callOrigin?.kind === "person" && people.some((p) => p.id === callOrigin.person.id) && <PlannedSection personId={callOrigin.person.id} personName={callOrigin.person.name}
+              guess={privateState.prediction.trim() || privateState.likelihoodBefore !== null ? { fear: privateState.prediction, likelihoodBefore: privateState.likelihoodBefore } : null} />}
+          </>}
           onSave={() => void saveFromCall()} onDismissSave={dismissSave} reflect={reflect} turns={turns}
           onSelfReflectionChange={(selfReflection) => setReflect((state) => ({ ...state, selfReflection }))} onReflect={() => void requestReflectionNow()} onReflectionDone={clearReflection}
           canRetryCleanup={canRetryCleanup} onRetryCleanup={() => cleanupTarget && closeRemote(cleanupTarget.id, cleanupTarget.reason)} onBackToSetup={backToSetup} backToSetupRef={backToSetupRef} />}

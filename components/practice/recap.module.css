@@ -1,0 +1,226 @@
+/* Recap (L1, W7, W4 after, Q2 dropdown). Room mode, tokens only (docs/33 §2–3). The closing
+   line is the end of the page: space above it and nothing below except the one action. */
+
+.recap {
+  display: grid;
+  gap: 20px;
+  max-width: 640px;
+  margin: 24px auto 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--text-40);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display);
+  font-weight: 500;
+}
+
+.title:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 6px;
+}
+
+.card {
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: var(--text-18);
+  font-weight: 600;
+}
+
+.quiet {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-14);
+  line-height: var(--leading-body);
+}
+
+.expected {
+  margin: 0;
+  font-size: var(--text-18);
+  line-height: var(--leading-body);
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.choice {
+  min-height: var(--hit-min);
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--text-14);
+  transition: background var(--t-quick), border-color var(--t-quick);
+}
+
+.choice:hover {
+  border-color: var(--sage);
+  background: var(--sage-soft);
+}
+
+.choice[aria-pressed="true"] {
+  border-color: var(--sage);
+  background: var(--sage-soft);
+  font-weight: 600;
+}
+
+.actionsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.secondary {
+  min-height: var(--hit-min);
+  padding: 10px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--text-14);
+  font-weight: 500;
+  transition: background var(--t-quick), border-color var(--t-quick);
+}
+
+.secondary:hover {
+  border-color: var(--sage);
+  background: var(--sage-soft);
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+.field label {
+  font-size: var(--text-14);
+  font-weight: 600;
+}
+
+.field textarea {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-16);
+  line-height: var(--leading-body);
+  resize: vertical;
+}
+
+.field input[type="range"] {
+  width: 100%;
+  min-height: var(--hit-min);
+  accent-color: var(--sage);
+}
+
+/* W4: the two numbers the user gave, side by side, with a thin clay arc between them. No delta. */
+.arc {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.arcNumber {
+  font-family: var(--font-serif);
+  font-size: var(--text-28);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.arcLine {
+  flex: 1;
+  min-width: 48px;
+  height: 20px;
+  border-top: 2px solid var(--clay);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  transform-origin: left center;
+  animation: arcIn var(--t-calm) both;
+}
+
+@keyframes arcIn {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arcLine { animation: none; transform: none; }
+}
+
+.stance {
+  padding: 14px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-sunk);
+}
+
+.stanceSummary {
+  min-height: var(--hit-min);
+  display: flex;
+  align-items: center;
+  font-size: var(--text-14);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chipList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  font-size: var(--text-14);
+}
+
+.chipLabel {
+  color: var(--muted);
+  font-size: var(--text-12);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.close {
+  margin: 20px 0 0;
+  font-family: var(--font-serif);
+  font-size: var(--text-22);
+  line-height: var(--leading-display);
+}
+
+@media (max-width: 700px) {
+  .title { font-size: var(--text-28); }
+  .recap { gap: 16px; }
+}
