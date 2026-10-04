@@ -161,3 +161,9 @@ Exactly one element may carry `practice-portrait` at a time, which holds because
 - Safari and Firefox support for view-transition classes is newer; without it the app works with no animation.
 - `::view-transition-old(root)` is set to 150 ms under reduced motion for any page that has loaded `transitions.css`.
 - Gain is gentle by calculation (peak 0.18 × 0.6), not by ear. A human should listen once at normal volume.
+
+### Coordinator integration (October 4, ~02:10 EDT)
+
+- Rebased onto `945ac92`. Wired in `app/practice/practice-workspace.tsx`: stage output wrapped in `<StageTransition>`; user-driven stage changes (`showStage`) and End (`finish`) commit inside `startStage`; other flow changes (start acceptance, video playing, sign-out, auth loss, page hide) stay immediate. Sound: `unlock` on I'm ready, `ring` after acceptance, `stopRing` + `connect` when video plays, `stopRing` in `releaseMedia` (every teardown path), `hangup` after End.
+- Not wired (time): per-portrait morphs (`PortraitTransition` in seven components) and the call-screen `FadeTransition`s; screens crossfade by stage group instead.
+- Evidence: typecheck clean; 639 unit tests; build; Playwright 10 passed / 1 skipped including `hero-path.spec.ts` (real Auth/database, test media) with the transitions in place. UI screenshot review skipped: the change is motion, which stills don't show. Nobody has listened to the cues. Live not verified.
