@@ -1,12 +1,23 @@
 # Project status
 
-## Submission morning (October 4, ~10:05 AM EDT, main `75f9c7d`)
+## Submission morning (October 4, ~10:05 AM EDT, main `91ba25e`)
 
-Nothing broken has been reported from a live call. Devpost paste and a two-minute demo script are in [DEMO-01](docs/tasks/DEMO-01-submission-prep.md). The demo URL is https://conversation-practice-zeta.vercel.app (the app). The static preview host is not the demo. Sign-in is email and password. The project is still unnamed (#34). Every feature is still **live not verified** until the owner reports a live call.
+Nothing broken has been reported from a live call. Every feature is still **live not verified** until the owner reports one.
 
-Owner, before noon: reset the demo account with `node --env-file=.env.local scripts/demo/seed.mjs --checkin`, record from the DEMO-01 script, and submit Devpost. One useful live check, if you have a few minutes: Jordan, briefing, Show me first once, your call, End, recap, "Try that moment once." Fill "When it gets hard, I'll say" or that button will not appear.
+Merged this morning, docs only, CI `verify` success on each:
 
-Docs for the four-starter picker (#37) and the auth/database regression (#30) are the next coordinator tasks. This cloud checkout has no `.env.local` and no Supabase CLI login, so those scripts cannot be run here until credentials are present. Do not start new features.
+- [PR #94](https://github.com/esaba12/conversaton-practice/pull/94) (`d1e0c21`): Devpost paste and a two-minute demo script in [DEMO-01](docs/tasks/DEMO-01-submission-prep.md). The demo URL is https://conversation-practice-zeta.vercel.app. The static preview host is not the demo. CI: typecheck, 786 unit tests, build, client-bundle check, Playwright 11 passed / 3 skipped (the hero path skips without the service-role key). [Run](https://github.com/esaba12/conversaton-practice/actions/runs/37207371897).
+- [PR #95](https://github.com/esaba12/conversaton-practice/pull/95) (`91ba25e`): docs/00, 02, 06, and 26 now describe the four-starter look-and-voice picker. Same CI shape. [Run](https://github.com/esaba12/conversaton-practice/actions/runs/37207440488).
+
+Sign-in is email and password. The project is still unnamed (#34). Do not invent a name.
+
+**Owner, before noon:** reset the demo account with `node --env-file=.env.local scripts/demo/seed.mjs --checkin`, record from the DEMO-01 script, and submit Devpost (#36). One useful live check (#35): Jordan, briefing, Show me first once, your call, End, recap, "Try that moment once." Fill "When it gets hard, I'll say" or that button will not appear. For #37, one extra call with a saved person set to Alex, Ellis, or Sam (not Default).
+
+**#30** auth/database scripts (`auth-database-check.mjs --g3-ui` and `--g5-ui`, plus the three SQL files) were **not** re-run. This checkout has no `.env.local` and no Supabase CLI login. The issue stays open. Evidence: [VERIFY-01](docs/tasks/VERIFY-01-regression-on-main.md).
+
+**#31** is written for the pre-redesign screens. Proposal: close it as superseded by the hero-path Playwright test and the owner's live call. Not closed. Waiting on the owner.
+
+No new features. No deploy in this pass.
 
 ## Compressed finish done (October 4, ~03:00 EDT, main `9689b15`)
 
