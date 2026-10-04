@@ -111,7 +111,7 @@ describe("the Your-turn card", () => {
     expect(html).not.toContain("<video");
     expect(html).toContain("Your microphone and camera are released until you start the call.");
     expect(html).toContain("Only you see this");
-    expect(html).toContain("Jordan never does.");
+    expect(html).toContain("Jordan never sees this.");
   });
 });
 

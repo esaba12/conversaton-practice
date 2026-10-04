@@ -49,6 +49,8 @@ export type CallScreenProps = {
   onInteraction?: (interaction: Interaction) => boolean;
   layout?: "fullscreen" | "contained";
   preview?: CallPreview;
+  // W10 stand-in call: the AI plays the user and the user plays the counterpart. Replaces the heading, the AI pill and the line pill.
+  standIn?: { title: string; pill: string; prompt?: string };
 };
 
 function formatTime(seconds: number) {
@@ -89,7 +91,7 @@ function useIdle(enabled: boolean, root: React.RefObject<HTMLElement | null>) {
 
 export function CallScreen(props: CallScreenProps) {
   const { counterpartName: name, portraitSrc, goal, phase, muted, cameraEnabled, cameraPending, elapsedSeconds, durationSeconds, remoteMedia, localPreview, live,
-    turns, statusMessage, testMedia, onMuteToggle, onCameraToggle, onEnd, onCancel, onInteraction, layout = "fullscreen", preview } = props;
+    turns, statusMessage, testMedia, onMuteToggle, onCameraToggle, onEnd, onCancel, onInteraction, layout = "fullscreen", preview, standIn } = props;
   const reduced = useReducedMotion();
   const rootRef = useRef<HTMLElement>(null);
   const typeInputRef = useRef<HTMLInputElement>(null);
@@ -209,10 +211,10 @@ export function CallScreen(props: CallScreenProps) {
         <div className={styles.identity}>
           {!ringing && <span className={styles.arc} data-wrapping={wrapping || undefined} style={{ "--progress": progress } as React.CSSProperties} aria-hidden="true"><Portrait name={name} size={40} src={portraitSrc} /></span>}
           <div className={styles.identityText}>
-            <h1 id={headingId} className={styles.callName} tabIndex={-1}><span className="sr-only">Call with </span><span className={styles.serifName}>{name}</span></h1>
+            <h1 id={headingId} className={styles.callName} tabIndex={-1}>{standIn ? <span className={styles.serifName}>{standIn.title}</span> : <><span className="sr-only">Call with </span><span className={styles.serifName}>{name}</span></>}</h1>
             {!ringing && <span className={styles.time} role="timer" aria-label={`${formatTime(elapsedSeconds)} elapsed of ${formatTime(durationSeconds)}`}>{formatTime(elapsedSeconds)}<span aria-hidden="true"> / {formatTime(durationSeconds)}</span></span>}
           </div>
-          <span className={styles.aiPill}>Fictional AI</span>
+          <span className={styles.aiPill}>{standIn?.pill ?? "Fictional AI"}</span>
           {testMedia && <span className={styles.testPill}>Test media — no live call</span>}
         </div>
         <div className={styles.chips}>
@@ -235,7 +237,7 @@ export function CallScreen(props: CallScreenProps) {
       {isLive && (
         <div className={styles.bottom}>
           {statusMessage && <p className={styles.statusLine} role="status">{statusMessage}</p>}
-          <CaptionOverlay caption={caption} counterpartName={name} />
+          <CaptionOverlay caption={caption} counterpartName={standIn ? "Stand-in" : name} />
           <div className={styles.fadeable}>
             <AnimatePresence initial={false}>
               {typeOpen && (
@@ -255,7 +257,8 @@ export function CallScreen(props: CallScreenProps) {
               onCaptionsToggle={() => setCaptionsOn((on) => !on)} onTypeToggle={toggleType} onAskToWait={askToWait} onHelp={() => setSheet("help")} onEnd={onEnd} />
             <button type="button" className={styles.shortcutsLink} onClick={() => setSheet("shortcuts")}>Keyboard shortcuts <kbd className={styles.kbd}>?</kbd></button>
           </div>
-          {goal?.trim() && <p className={`${styles.goalPill} ${styles.fadeable}`}><span className={styles.goalLabel}>Your line</span>{goal}</p>}
+          {standIn ? standIn.prompt && <p className={`${styles.goalPill} ${styles.fadeable}`}><span className={styles.goalLabel}>Your part</span>{standIn.prompt}</p>
+            : goal?.trim() && <p className={`${styles.goalPill} ${styles.fadeable}`}><span className={styles.goalLabel}>Your line</span>{goal}</p>}
         </div>
       )}
 

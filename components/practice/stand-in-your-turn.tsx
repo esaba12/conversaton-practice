@@ -3,7 +3,7 @@
 import { useId } from "react";
 import { Phone } from "lucide-react";
 import { PrimaryButton, PrivateCard } from "@/components/ui";
-import { STAND_IN_NOTE_MAX, standInPrivacyNote, yourTurnTitle } from "@/lib/practice/stand-in-sitting";
+import { STAND_IN_NOTE_MAX, yourTurnTitle } from "@/lib/practice/stand-in-sitting";
 import styles from "./stand-in.module.css";
 
 // W10, after the stand-in call ends: the seats swap back. The line and the hard-moment line are
@@ -34,7 +34,7 @@ export function StandInYourTurn({
     <section className={styles.yourTurn} aria-labelledby={`${id}-title`}>
       <h2 id={`${id}-title`} className={styles.yourTurnTitle}>{yourTurnTitle(counterpartName)}</h2>
 
-      <PrivateCard note={standInPrivacyNote(counterpartName)}>
+      <PrivateCard note={`${counterpartName} never sees this.`}>
         <div className={styles.field}>
           <label htmlFor={`${id}-goal`}>Want to change your line?</label>
           <textarea id={`${id}-goal`} value={goal} rows={2} maxLength={200} onChange={(event) => onGoalChange(event.target.value)} />

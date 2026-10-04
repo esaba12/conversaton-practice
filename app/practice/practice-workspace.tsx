@@ -8,8 +8,7 @@ import { CallStage } from "@/components/practice/call-stage";
 import { MeetCard, meetStateFromProgress, useStreamedDraft, type MeetState } from "@/components/practice/meet-card";
 import { personRole, personStartSituation, situationFromRole, type MeetStart } from "@/components/practice/meet-knowledge";
 import { RecapStage } from "@/components/practice/recap-stage";
-import { RemoteStreamVideo, StreamVideo } from "@/components/practice/remote-media";
-import { StandInCall } from "@/components/practice/stand-in-call";
+import { STAND_IN_PILL, pushbackPrompt, standInCallTitle } from "@/components/practice/stand-in-call";
 import { StandInOfferButtons } from "@/components/practice/stand-in-offer";
 import { StandInYourTurn } from "@/components/practice/stand-in-your-turn";
 import { WorkspaceHeader } from "@/components/presentation/workspace-header";
@@ -738,27 +737,22 @@ export function PracticeWorkspace() {
               onDeletePerson={async (person) => { await deletePerson(person.id); await loadPeople(); }}
               disabled={signingOut || generating} disabledReason="Please wait a moment." focusHeading={moveFocus} notice={setupMessage || undefined} />
       ) : <>
-        {standInLive
-          ? <StandInCall counterpartName={callInfo.name} phase={phase} muted={muted} cameraEnabled={cameraEnabled}
-              elapsedSeconds={elapsedSeconds} durationSeconds={plannedDurationRef.current}
-              remoteMedia={remoteStream ? <RemoteStreamVideo stream={remoteStream} /> : null}
-              localPreview={localStream ? <StreamVideo stream={localStream} muted /> : undefined}
-              fear={readPrivateState().prediction}
-              onMuteToggle={toggleMute} onCameraToggle={() => void toggleCamera()} onEnd={() => finish("user")}
-              statusMessage={statusMessage} testMedia={testMedia} turns={turns} />
-          : <CallStage counterpartName={callInfo.name} goal={callInfo.goal} phase={phase} muted={muted} cameraEnabled={cameraEnabled} elapsedSeconds={elapsedSeconds} durationSeconds={plannedDurationRef.current}
-              remoteStream={remoteStream} localStream={localStream}
-              onMuteToggle={toggleMute} onCameraToggle={() => void toggleCamera()} onEnd={() => finish("user")} statusMessage={statusMessage} testMedia={testMedia} turns={turns}
-              live={liveCall} onInteraction={sendInteraction} onCancel={backToSetup} />}
         {standInLive && (phase === "ended" || phase === "interrupted")
           ? <StandInYourTurn counterpartName={callInfo.name} goal={readPrivateState().goal} hardMomentLine={readPrivateState().hardMomentLine}
               note={noteToSelf} onGoalChange={(goal) => updatePrivateState({ goal })}
               onHardMomentLineChange={(hardMomentLine) => updatePrivateState({ hardMomentLine })} onNoteChange={setNoteToSelf}
               onCall={callAfterStandIn} starting={starting} />
-          : (phase === "ended" || phase === "interrupted") && <RecapStage ended={phase === "ended"} origin={callOrigin} saveOffer={saveOffer} people={people} peopleStatus={peopleStatus}
+          : <>
+            <CallStage counterpartName={callInfo.name} goal={callInfo.goal} phase={phase} muted={muted} cameraEnabled={cameraEnabled} elapsedSeconds={elapsedSeconds} durationSeconds={plannedDurationRef.current}
+              remoteStream={remoteStream} localStream={localStream}
+              onMuteToggle={toggleMute} onCameraToggle={() => void toggleCamera()} onEnd={() => finish("user")} statusMessage={statusMessage} testMedia={testMedia} turns={turns}
+              live={liveCall} onInteraction={standInLive ? undefined : sendInteraction} onCancel={backToSetup}
+              standIn={standInLive ? { title: standInCallTitle(callInfo.name), pill: STAND_IN_PILL, prompt: readPrivateState().prediction.trim() ? pushbackPrompt(callInfo.name) : undefined } : undefined} />
+            {(phase === "ended" || phase === "interrupted") && <RecapStage ended={phase === "ended"} origin={callOrigin} saveOffer={saveOffer} people={people} peopleStatus={peopleStatus}
           onSave={() => void saveFromCall()} onDismissSave={dismissSave} reflect={reflect} turns={turns}
           onSelfReflectionChange={(selfReflection) => setReflect((state) => ({ ...state, selfReflection }))} onReflect={() => void requestReflectionNow()} onReflectionDone={clearReflection}
           canRetryCleanup={canRetryCleanup} onRetryCleanup={() => cleanupTarget && closeRemote(cleanupTarget.id, cleanupTarget.reason)} onBackToSetup={backToSetup} backToSetupRef={backToSetupRef} />}
+          </>}
       </>}
     </main></>;
 }

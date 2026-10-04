@@ -31,6 +31,7 @@ export type CallStageProps = {
   cameraPending?: boolean;
   live?: LiveCallState;
   onInteraction?: (interaction: Interaction) => boolean;
+  standIn?: { title: string; pill: string; prompt?: string };
 };
 
 export function CallStage({ remoteStream, localStream, statusMessage, live = initialLiveCallState, ...rest }: CallStageProps) {

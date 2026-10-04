@@ -216,7 +216,15 @@ Still needed from their owners:
 
 - External account action: none (0B's stand-in PAL and face are an existing, separately-tracked task).
 - Ready for review: yes — draft PR #74.
-- Coordinator integration: pending
+- Coordinator integration: see below.
+
+### Coordinator integration (October 3)
+
+- Wiring: the workspace renders the offer through MeetCard `actions`, the green-room line, the sitting rules (three calls, offer once) and the Your-turn handoff. Stand-in turns are dropped at End; no save offer or reflection for a stand-in.
+- UI review (Gemini 3.8 Flash, a different model from the writer): pass with fixes. Applied: the stand-in call now uses the shipped call screen with a `standIn` variant (title "You’re playing {name}", pill, "Your part" prompt, captions labelled "Stand-in", typing and wait disabled), and the Your-turn card replaces the ended call instead of stacking under it. Also: pill contrast (night fill, clay outline), 44px targets on the gallery dismiss and caption toggle, centered Your-turn card, and "{name} never sees this." on its private card.
+- Privacy review (Opus 5.5 medium, swapped from Fable for a data-policy prompt): reflection rejects stand-in sessions (404), the stand-in face cannot equal the default or a starter face, and CI scans the client bundle for stand-in ids.
+- Evidence: typecheck clean; 612 unit tests; build; `check:standin-bundle` with the configured values loaded (3 values, pass); `test:ui` 9 passed, 1 skipped; signed-in stand-in walk on real Auth/database with test media and a faked provider start, 16/16 (start bodies, turns dropped, no reflection, server end, microphone released, failed own start stays in the green room, offer not repeated).
+- Live not verified: no stand-in PAL/face is provisioned, so a real start returns 503 by design.
 
 The writer owns this handoff; the coordinator records integration and updates STATUS.
 Follow [documentation rules](../20-DOCUMENTATION-STANDARD.md) and
