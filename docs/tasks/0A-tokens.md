@@ -7,7 +7,7 @@ Coordinator: wow-pass coordinator (main checkout)
 Gate: Wow pass Phase 0
 Requirements/tests: docs/next/02-BUILD-PLAN.md §2 0A; docs/33 §2–3; docs/next/05-UI-UPGRADE.md §2, §8
 GitHub issue: https://github.com/esaba12/conversaton-practice/issues/42
-Pull request: not opened
+Pull request: https://github.com/esaba12/conversaton-practice/pull/52 (draft)
 CI run: see PR checks
 
 ## Assignment and isolation
@@ -109,7 +109,7 @@ Text needs 4.5:1; focus rings (non-text) and large text need 3:1. Every row is a
 
 ## Handoff
 
-- Changed paths and commit(s): `app/globals.css`, `app/layout.tsx`, `app/design-preview/page.tsx`, `app/design-preview/serif-candidates.tsx`, `app/design-preview/primitives-gallery.tsx`, `app/design-preview/gallery.module.css`, `components/ui/{index.ts,labels.ts,portrait.tsx,portrait.module.css,chip.tsx,chip.module.css,primary-button.tsx,primary-button.module.css,private-card.tsx,private-card.module.css}`, `lib/ui/motion.ts`, `tests/unit/{ui-contrast,ui-primitives,ui-tokens}.test.ts`, this record. Commits on `agent/0a-tokens` (see PR).
+- Changed paths and commit(s): `app/globals.css`, `app/layout.tsx`, `app/design-preview/page.tsx`, `app/design-preview/serif-candidates.tsx`, `app/design-preview/primitives-gallery.tsx`, `app/design-preview/gallery.module.css`, `components/ui/{index.ts,labels.ts,portrait.tsx,portrait.module.css,chip.tsx,chip.module.css,primary-button.tsx,primary-button.module.css,private-card.tsx,private-card.module.css}`, `lib/ui/motion.ts`, `tests/unit/{ui-contrast,ui-primitives,ui-tokens}.test.ts`, this record. Implementation commit `3fc727666f1287d50f54921603f2a0862302cf5a` on `agent/0a-tokens`, followed by a record-only commit adding the PR link.
 - Remaining failures/risks:
   - The existing `.button:disabled{opacity:.65}` rule in `globals.css` still breaks UI rule §2 #6. Left alone because restyling existing screens is out of scope; 0E's rule test should list or fix it.
   - The 40 px Portrait monogram is 16 px text at 3.37:1 on the clay end. It is decorative (`aria-hidden`; the name is in `aria-label`), but a sighted reader may find tiny initials faint. Phase 1 could darken the gradient start if that matters.
