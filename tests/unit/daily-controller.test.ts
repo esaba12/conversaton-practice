@@ -40,7 +40,7 @@ vi.mock("@daily-co/daily-js", () => ({
   default: { createCallObject: vi.fn((options: unknown) => { const call = makeCall(options); daily.calls.push(call); return call; }) },
 }));
 
-const { createDailyController } = await import("@/lib/media/daily-controller");
+const { createDailyController, reportRemoteVideoPlaying, VIDEO_FIRST_TIMEOUT_MS } = await import("@/lib/media/daily-controller");
 
 const credential: MediaCredential = { provider: "tavus", roomUrl: "https://example.daily.co/room", meetingToken: "unit-token", expiresAt: new Date(Date.now() + 600_000).toISOString() };
 
@@ -50,9 +50,16 @@ function remote(videoState: string, audioState: string) {
   return { participant: { local: false, session_id: "replica", tracks: { video: { state: videoState, persistentTrack: video }, audio: { state: audioState, persistentTrack: audio } } }, video, audio };
 }
 
+function lastStream(events: MediaEvent[]) {
+  const stream = [...events].reverse().find((event) => event.type === "remote-stream" && event.stream);
+  return (stream as { stream: MediaStream }).stream;
+}
+
+const controllers: Array<{ end(): Promise<void> }> = [];
 function setup() {
   const events: MediaEvent[] = [];
   const controller = createDailyController((event) => events.push(event));
+  controllers.push(controller);
   return { events, controller };
 }
 
@@ -64,7 +71,11 @@ beforeEach(() => {
   getUserMedia = vi.fn(async () => new FakeMediaStream([fakeTrack("video")]));
   vi.stubGlobal("navigator", { mediaDevices: { getUserMedia } });
 });
-afterEach(() => { vi.unstubAllGlobals(); });
+afterEach(async () => {
+  await Promise.all(controllers.splice(0).map((controller) => controller.end()));
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 
 describe("Daily media controller", () => {
   it("joins with microphone on, camera never published, and video off", async () => {
@@ -86,6 +97,10 @@ describe("Daily media controller", () => {
     expect(events.at(-1)).toMatchObject({ type: "remote-stream" });
     (loading.participant.tracks.audio as { state: string }).state = "playable";
     call.emit("participant-updated");
+    call.emit("participant-updated");
+    call.emit("track-started");
+    expect(events.filter((event) => event.type === "ready")).toHaveLength(0);
+    reportRemoteVideoPlaying(lastStream(events));
     call.emit("participant-updated");
     call.emit("track-started");
     expect(events.filter((event) => event.type === "ready")).toHaveLength(1);
@@ -260,5 +275,161 @@ describe("Daily media controller", () => {
     message("replica", "Third line, legacy only.");
     expect(events.filter((event) => event.type === "utterance").map((event) => (event as { speaker: string; text: string }).speaker + ":" + (event as { text: string }).text))
       .toEqual(["counterpart:First line.", "user:Okay.", "counterpart:Second line."]);
+  });
+
+  describe("video-first gating", () => {
+    const readyCount = (events: MediaEvent[]) => events.filter((event) => event.type === "ready").length;
+    const streamEvents = (events: MediaEvent[]) => events.filter((event) => event.type === "remote-stream" && event.stream);
+
+    async function connected() {
+      const harness = setup();
+      await harness.controller.connect(credential);
+      return { ...harness, call: daily.calls.at(-1)! };
+    }
+
+    it("does not go live before the remote video plays, even when both tracks are playable", async () => {
+      const { events, call } = await connected();
+      call.setRemote(remote("playable", "playable").participant);
+      call.emit("track-started");
+      call.emit("participant-updated");
+      expect(streamEvents(events)).toHaveLength(1);
+      expect(readyCount(events)).toBe(0);
+    });
+
+    it("goes live once, only after the video playing signal, and ignores repeats", async () => {
+      const { events, call } = await connected();
+      call.setRemote(remote("playable", "playable").participant);
+      call.emit("track-started");
+      const stream = lastStream(events);
+      reportRemoteVideoPlaying(stream);
+      expect(readyCount(events)).toBe(1);
+      reportRemoteVideoPlaying(stream);
+      call.emit("participant-updated");
+      expect(readyCount(events)).toBe(1);
+      expect(events.some((event) => event.type === "failed")).toBe(false);
+    });
+
+    it("waits for the audio track to be playable even after video plays", async () => {
+      const { events, call } = await connected();
+      const pair = remote("playable", "loading");
+      call.setRemote(pair.participant);
+      call.emit("track-started");
+      reportRemoteVideoPlaying(lastStream(events));
+      expect(readyCount(events)).toBe(0);
+      (pair.participant.tracks.audio as { state: string }).state = "playable";
+      call.emit("participant-updated");
+      expect(readyCount(events)).toBe(1);
+    });
+
+    it("fails with video_lost and never goes live when video never plays within the timeout", async () => {
+      vi.useFakeTimers();
+      const { events, call } = await connected();
+      call.setRemote(remote("playable", "playable").participant);
+      call.emit("track-started");
+      vi.advanceTimersByTime(VIDEO_FIRST_TIMEOUT_MS - 1);
+      expect(events.some((event) => event.type === "failed")).toBe(false);
+      vi.advanceTimersByTime(1);
+      expect(events.filter((event) => event.type === "failed")).toEqual([{ type: "failed", reason: "video_lost" }]);
+      expect(readyCount(events)).toBe(0);
+      expect(call.destroy).toHaveBeenCalledTimes(1);
+      expect(call.localMic.stop).toHaveBeenCalled();
+      expect(events.at(-1)).toEqual({ type: "failed", reason: "video_lost" });
+      const stream = streamEvents(events)[0] as { stream: MediaStream };
+      reportRemoteVideoPlaying(stream.stream);
+      expect(readyCount(events)).toBe(0);
+    });
+
+    it("fails the same way when no remote video ever arrives after joining", async () => {
+      vi.useFakeTimers();
+      const { events, call } = await connected();
+      vi.advanceTimersByTime(VIDEO_FIRST_TIMEOUT_MS);
+      expect(events.at(-1)).toEqual({ type: "failed", reason: "video_lost" });
+      expect(readyCount(events)).toBe(0);
+      expect(call.destroy).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not time out once video is playing and the call is live", async () => {
+      vi.useFakeTimers();
+      const { events, call } = await connected();
+      call.setRemote(remote("playable", "playable").participant);
+      call.emit("track-started");
+      vi.advanceTimersByTime(VIDEO_FIRST_TIMEOUT_MS - 1000);
+      reportRemoteVideoPlaying(lastStream(events));
+      vi.advanceTimersByTime(VIDEO_FIRST_TIMEOUT_MS * 3);
+      expect(readyCount(events)).toBe(1);
+      expect(events.some((event) => event.type === "failed")).toBe(false);
+    });
+
+    it("re-gates a replaced stream: the old stream's signal is ignored and the new one must play", async () => {
+      vi.useFakeTimers();
+      const { events, call } = await connected();
+      const first = remote("playable", "playable");
+      call.setRemote(first.participant);
+      call.emit("track-started");
+      const firstStream = lastStream(events);
+      reportRemoteVideoPlaying(firstStream);
+      expect(readyCount(events)).toBe(1);
+      // Re-subscribe: Daily hands over fresh tracks.
+      const second = remote("playable", "playable");
+      call.setRemote(second.participant);
+      call.emit("track-started");
+      expect(streamEvents(events)).toHaveLength(2);
+      const secondStream = lastStream(events);
+      expect(secondStream).not.toBe(firstStream);
+      // A late signal from the replaced stream must not release the new one: the new watchdog is still armed.
+      reportRemoteVideoPlaying(firstStream);
+      vi.advanceTimersByTime(VIDEO_FIRST_TIMEOUT_MS);
+      expect(events.at(-1)).toEqual({ type: "failed", reason: "video_lost" });
+      expect(readyCount(events)).toBe(1);
+    });
+
+    it("lets a replaced stream that does play keep the call live without a second ready", async () => {
+      vi.useFakeTimers();
+      const { events, call } = await connected();
+      call.setRemote(remote("playable", "playable").participant);
+      call.emit("track-started");
+      reportRemoteVideoPlaying(lastStream(events));
+      call.setRemote(remote("playable", "playable").participant);
+      call.emit("track-started");
+      reportRemoteVideoPlaying(lastStream(events));
+      vi.advanceTimersByTime(VIDEO_FIRST_TIMEOUT_MS * 2);
+      expect(readyCount(events)).toBe(1);
+      expect(events.some((event) => event.type === "failed")).toBe(false);
+    });
+
+    it("end after gating stops local tracks, detaches the remote stream, cancels the timeout and ignores late signals", async () => {
+      vi.useFakeTimers();
+      const { events, controller, call } = await connected();
+      expect(await controller.setCamera(true)).toBe(true);
+      const preview = (events.find((event) => event.type === "local-preview" && event.stream) as unknown as { stream: FakeMediaStream }).stream;
+      const previewTrack = preview.getTracks()[0] as FakeTrack;
+      call.setRemote(remote("playable", "playable").participant);
+      call.emit("track-started");
+      const stream = lastStream(events);
+      reportRemoteVideoPlaying(stream);
+      await controller.end();
+      expect(call.setLocalAudio).toHaveBeenCalledWith(false);
+      expect(call.localMic.stop).toHaveBeenCalled();
+      expect(previewTrack.stop).toHaveBeenCalled();
+      expect(call.destroy).toHaveBeenCalledTimes(1);
+      expect(events.slice(-2)).toEqual([{ type: "remote-stream", stream: null }, { type: "local-preview", stream: null }]);
+      const count = events.length;
+      reportRemoteVideoPlaying(stream);
+      call.emit("track-started");
+      vi.advanceTimersByTime(VIDEO_FIRST_TIMEOUT_MS * 3);
+      expect(events).toHaveLength(count);
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it("end while still gated cancels the timeout so no failure fires afterwards", async () => {
+      vi.useFakeTimers();
+      const { events, controller, call } = await connected();
+      call.setRemote(remote("playable", "playable").participant);
+      call.emit("track-started");
+      await controller.end();
+      vi.advanceTimersByTime(VIDEO_FIRST_TIMEOUT_MS * 2);
+      expect(events.some((event) => event.type === "failed" || event.type === "ready")).toBe(false);
+      expect(vi.getTimerCount()).toBe(0);
+    });
   });
 });
