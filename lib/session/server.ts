@@ -42,8 +42,8 @@ function canonical(value: unknown): string {
 }
 // Keyed so a stored fingerprint cannot confirm a guessed role. Preset/role starts omit `person`, keeping their hashes unchanged.
 // A stand-in start adds its kind, so replaying one key across the two kinds is a conflict rather than a match.
-export function startFingerprint(role: RoleContext, durationSeconds: 180 | 300, secret: string, person?: { extras: RoleExtras; personId: string; version: number }, kind: "practice" | "stand_in" = "practice") {
-  return createHmac("sha256", secret).update(canonical({ durationSeconds, role, ...person, ...(kind === "stand_in" ? { kind } : {}) })).digest("hex");
+export function startFingerprint(role: RoleContext, durationSeconds: 180 | 300, secret: string, person?: { extras: RoleExtras; personId: string; version: number }, kind: "practice" | "stand_in" = "practice", look?: SessionPreset) {
+  return createHmac("sha256", secret).update(canonical({ durationSeconds, role, ...person, ...(kind === "stand_in" ? { kind } : {}), ...(look ? { look } : {}) })).digest("hex");
 }
 
 export async function startSession(db: Db, input: z.output<typeof startRequestSchema>): Promise<StartResponse> {
@@ -79,15 +79,20 @@ export async function startSession(db: Db, input: z.output<typeof startRequestSc
     }
     fingerprint = startFingerprint(role, input.durationSeconds, secret, { extras, personId: input.personId, version: loaded.version });
   } else {
-    // Only the allowlisted role reaches the provider; a preset id is resolved here and no other client field is forwarded.
+    // Only the allowlisted role reaches the provider. A preset id, or a catalogue look on a reviewed role, is resolved here.
     role = roleContextSchema.parse("preset" in input ? presetRoles[input.preset] : input.role);
+    let look: SessionPreset | undefined;
     if ("preset" in input) {
       preset = input.preset;
       if (input.openingOverride) role = roleContextSchema.parse({ ...role, opening: input.openingOverride });
       const starter = starterMedia(input.preset);
       if (starter) media = { palId: starter.palId, faceId: starter.faceId };
+    } else if (input.look) {
+      look = input.look;
+      const starter = starterMedia(input.look);
+      if (starter) media = { palId: starter.palId, faceId: starter.faceId };
     }
-    fingerprint = startFingerprint(role, input.durationSeconds, secret);
+    fingerprint = startFingerprint(role, input.durationSeconds, secret, undefined, "practice", look);
   }
   return runStart(db, secret, input.idempotencyKey, { role, durationSeconds: input.durationSeconds, extras, fingerprint, person, kind: "practice", preset, media });
 }

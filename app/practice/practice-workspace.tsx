@@ -9,6 +9,7 @@ import { GreenRoom } from "@/components/practice/green-room";
 import { GoalLightToggle } from "@/components/practice/goal-pill";
 import { HearButton, useHearHighlight } from "@/components/practice/hear-button";
 import { Lobby, starterPortraitPath } from "@/components/practice/lobby";
+import { LookCatalogue } from "@/components/practice/look-catalogue";
 import { CallStage } from "@/components/practice/call-stage";
 import { MeetCard, meetStateFromProgress, useStreamedDraft, type MeetState } from "@/components/practice/meet-card";
 import { personRole, personStartSituation, situationFromRole, type MeetStart } from "@/components/practice/meet-knowledge";
@@ -97,6 +98,9 @@ export function PracticeWorkspace() {
   const [assumptions, setAssumptions] = useState<string[]>([]);
   const [setupMode, setSetupMode] = useState<SetupMode>("manual");
   const [examplePreset, setExamplePreset] = useState<SessionPreset | null>(null);
+  const [practiceLook, setPracticeLook] = useState<SessionPreset | null>(null);
+  const practiceLookRef = useRef<SessionPreset | null>(null);
+  practiceLookRef.current = practiceLook;
   const [generateError, setGenerateError] = useState<{ message: string; outOfScope: boolean } | null>(null);
   const [callInfo, setCallInfo] = useState({ name: "", goal: "" });
   const [people, setPeople] = useState<Person[]>([]);
@@ -359,6 +363,7 @@ export function PracticeWorkspace() {
     const person = subject?.kind === "person" && request.personId === subject.person.id ? subject.person : null;
     setGenerateError(null); setSetupMessage("");
     setReviewRole(emptyRole); setStanceOptions(undefined); setAssumptions([]); setSetupMode("generated"); setExamplePreset(null);
+    setPracticeLook(subject && subject.kind !== "person" ? briefingDrafts.draftFor(subject).look : null);
     setDraftPerson(person);
     draftStream.start(request);
     showStage({ type: "draftReady" });
@@ -373,6 +378,7 @@ export function PracticeWorkspace() {
       case "person-situation":
         if (subject?.kind !== "person") return;
         setSavedPerson(subject.person); setDraftPerson(null); draftStream.cancel(); setStanceOptions(undefined);
+        setPracticeLook(null);
        
         setReviewRole(personRole(subject.person, plan.kind === "person-situation" ? plan.situation : undefined));
         showStage({ type: "draftReady" });
@@ -387,6 +393,7 @@ export function PracticeWorkspace() {
     draftStream.cancel(); setStanceOptions(undefined);
     if (!readPrivateState().goal.trim()) updatePrivateState({ goal: example.goal });
     setReviewRole(example.role); setAssumptions([]); setSetupMode("example"); setExamplePreset(preset); setGenerateError(null);
+    setPracticeLook(subject && subject.kind !== "person" ? briefingDrafts.draftFor(subject).look : preset);
     showStage({ type: "draftReady" });
   }
 
@@ -410,10 +417,10 @@ export function PracticeWorkspace() {
       void launch({ kind: "person", person }, goal, (idempotencyKey) => startSavedPersonSession({ personId: person.id, expectedVersion: person.version, situation, durationSeconds, idempotencyKey }));
       return;
     }
-    const preset = examplePreset && setupMode === "example" && JSON.stringify(role) === JSON.stringify(roleContextSchema.parse(examples[examplePreset].role)) ? examplePreset : null;
+    const preset = examplePreset && setupMode === "example" && JSON.stringify(role) === JSON.stringify(roleContextSchema.parse(examples[examplePreset].role)) && practiceLookRef.current === examplePreset ? examplePreset : null;
     void launch({ kind: "role", role }, goal, (idempotencyKey) => preset
       ? startPresetSession({ preset, durationSeconds, idempotencyKey })
-      : startSession({ role, durationSeconds, idempotencyKey }));
+      : startSession({ role, durationSeconds, idempotencyKey, ...(practiceLookRef.current ? { look: practiceLookRef.current } : {}) }));
   }
 
   // W10: a stand-in plays the user's side once. Only the goal and hard-moment line go with it, to the stand-in alone.
@@ -572,7 +579,7 @@ export function PracticeWorkspace() {
       void launch({ kind: "person", person }, goal, (idempotencyKey) => startSavedPersonSession({ personId: person.id, expectedVersion: person.version, situation, durationSeconds: RETRY_DURATION_SECONDS, idempotencyKey }), { retry: true });
       return;
     }
-    void launch({ kind: "role", role }, goal, (idempotencyKey) => startSession({ role, durationSeconds: RETRY_DURATION_SECONDS, idempotencyKey }), { retry: true });
+    void launch({ kind: "role", role }, goal, (idempotencyKey) => startSession({ role, durationSeconds: RETRY_DURATION_SECONDS, idempotencyKey, ...(practiceLookRef.current ? { look: practiceLookRef.current } : {}) }), { retry: true });
   }
 
   // A1, on request only. The goal line is the only content sent.
@@ -750,7 +757,8 @@ export function PracticeWorkspace() {
   const meetState: MeetState = setupMode === "generated" && draftStream.progress.step !== "idle"
     ? meetStateFromProgress(draftStream.progress, draftStream.progress.step === "ready" ? reviewRole : null)
     : { status: "ready", role: reviewRole, stanceOptions };
-  const portraitSrc = examplePreset && !meetPerson ? starterPortraitPath(examplePreset) : null;
+  const portraitLook = meetPerson ? null : practiceLook;
+  const portraitSrc = portraitLook ? starterPortraitPath(portraitLook) : null;
   const meetName = meetPerson?.name ?? (meetState.status === "ready" ? meetState.role.name : meetState.status === "streaming" ? meetState.partialRole?.name ?? "" : reviewRole.name);
   const meetRelationship = meetPerson?.relationship ?? reviewRole.role;
   const offer = standInOffer({
@@ -768,7 +776,7 @@ export function PracticeWorkspace() {
       {phase === null ? (flow.stage === "meet"
         ? <MeetCard identity={{ name: meetName, relationship: meetRelationship, portraitSrc }} state={meetState} onRoleChange={setReviewRole}
             hear={meetState.status === "ready" && meetState.role.opening.trim()
-              ? <HearButton name={meetName} text={meetState.role.opening} presetId={meetStart.kind === "preset" ? meetStart.preset : undefined} onPlayingChange={hearHighlight.onPlayingChange} />
+              ? <HearButton name={meetName} text={meetState.role.opening} presetId={portraitLook ?? undefined} onPlayingChange={hearHighlight.onPlayingChange} />
               : undefined}
             bubbleClassName={hearHighlight.bubbleClassName}
             editable={meetPerson ? "situation" : "all"} start={meetStart} privateNotes={lastDraftRef.current?.privateNotes ?? ""}
@@ -779,6 +787,7 @@ export function PracticeWorkspace() {
               <StandInOfferButtons counterpartName={meetName} offer={offer} onShowMeFirst={() => toGreenRoom(true)} onSkip={() => toGreenRoom(false)}
                 callDisabledReason={enabled ? undefined : reason} />) : undefined}
             onRetry={lastDraftRef.current ? () => { const request = lastDraftRef.current; if (request) draftStream.start(request); } : undefined}
+            catalogue={meetPerson ? undefined : <LookCatalogue value={practiceLook} disabled={signingOut} onChange={(look) => { setPracticeLook(look); if (subject && subject.kind !== "person") briefingDrafts.update(subject, { look }); }} />}
             disabled={signingOut} disabledReason="Signing you out…" focusHeading={moveFocus} />
         : flow.stage === "green"
           ? <GreenRoom name={meetName} relationship={meetRelationship} portraitSrc={portraitSrc}

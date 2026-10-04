@@ -47,6 +47,16 @@ describe("session API client", () => {
     expect(Object.keys(body.role).sort()).toEqual(["challenge", "constraints", "name", "opening", "pace", "publicContext", "role", "style"]);
     expect(startRequestSchema.safeParse(body).success).toBe(true);
   });
+  it("sends a catalogue look with a reviewed role and no provider id", async () => {
+    const fetchMock = stubFetch(Response.json({ session, credential }, { status: 201 }));
+    await startSession({ role: roommate, durationSeconds: 180, idempotencyKey: key, look: "professor" });
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(Object.keys(body).sort()).toEqual(["durationSeconds", "idempotencyKey", "look", "role"]);
+    expect(body.look).toBe("professor");
+    expect(startRequestSchema.safeParse(body).success).toBe(true);
+    expect(startRequestSchema.safeParse({ ...body, look: "boss" }).success).toBe(false);
+    expect(startRequestSchema.safeParse({ ...body, faceId: "f123" }).success).toBe(false);
+  });
   it("uses a fresh idempotency key for each start when none is supplied", async () => {
     const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(Response.json({ session, credential }, { status: 201 })));
     vi.stubGlobal("fetch", fetchMock);

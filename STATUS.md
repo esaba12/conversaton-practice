@@ -1,5 +1,9 @@
 # Project status
 
+## Look while setting up a new practice (October 4)
+
+On the briefing and the Meet card, a practice that is not a saved person can use Default or Alex, Ellis, Sam, or Jordan. A reviewed-role start may send `look`. The server maps that name to the starter's face and PAL and does not store it as the session preset. An untouched starter left on its own look still starts as that preset. Saved people still use the look on their page. The owner's morning calls were a saved person on Alex and the redesign path; this new-practice picker has not had its own live call.
+
 ## Final submission (October 4, ~11:15 AM EDT)
 
 **Owner action now:** submit Devpost between 11:30 and 12:00 from the paste in [DEMO-01](docs/tasks/DEMO-01-submission-prep.md). The rules say noon. The Devpost banner says 12:15; do not rely on it. Judging is 1:00–3:00 PM in the Duderstadt Basement, science-fair style, and you must stay at your table. The event rules and live schedule were re-read at ~11:10 and are recorded in [docs/16](docs/16-MHACKS-STRATEGY.md).

@@ -43,11 +43,11 @@ export function generateDraft(input: DraftRequest): Promise<DraftResponse> {
 }
 
 // Only the reviewed role leaves the browser; goal and private notes never enter the start request.
-export function startSession({ role, durationSeconds, idempotencyKey = crypto.randomUUID() }: { role: RoleContext; durationSeconds: 180 | 300; idempotencyKey?: string }): Promise<StartResponse> {
+export function startSession({ role, durationSeconds, idempotencyKey = crypto.randomUUID(), look }: { role: RoleContext; durationSeconds: 180 | 300; idempotencyKey?: string; look?: SessionPreset }): Promise<StartResponse> {
   const { name, role: roleText, style, publicContext, opening, constraints, challenge, pace, wants, holdsBackBecause, softensWhen } = role;
   // Stance chips are counterpart context the user saw and edited on the Meet card (Q2, U2).
   const stance = { ...(wants ? { wants } : {}), ...(holdsBackBecause ? { holdsBackBecause } : {}), ...(softensWhen ? { softensWhen } : {}) };
-  return post("/api/sessions", { idempotencyKey, role: { name, role: roleText, style, publicContext, opening, constraints: [...constraints], challenge, pace, ...stance }, durationSeconds }, startResponseSchema);
+  return post("/api/sessions", { idempotencyKey, role: { name, role: roleText, style, publicContext, opening, constraints: [...constraints], challenge, pace, ...stance }, durationSeconds, ...(look ? { look } : {}) }, startResponseSchema);
 }
 
 // A preset start sends only the id. Role text, goals, and private notes stay in the browser; the server loads the fixture.
