@@ -84,6 +84,8 @@ export type LobbyProps = {
   onRetry: () => void;
   onPickPerson: (person: Person) => void;
   onPickStarter: (preset: SessionPreset) => void;
+  /** Person id or starter preset whose card morphs into the briefing. */
+  morphSource?: string | null;
   onSomeoneNew: () => void;
   /** Copies a starter into the user's people. Resolves when saved. */
   onAddStarter?: (preset: SessionPreset) => Promise<void>;
@@ -101,7 +103,7 @@ export type LobbyProps = {
 };
 
 export function Lobby({
-  people, status, practicedPresets = [], onRetry, onPickPerson, onPickStarter, onSomeoneNew, onAddStarter, onEditPerson, onDeletePerson,
+  people, status, practicedPresets = [], onRetry, onPickPerson, onPickStarter, morphSource = null, onSomeoneNew, onAddStarter, onEditPerson, onDeletePerson,
   starterPortraitSrc = starterPortraitPath, disabled = false, disabledReason = "Please wait a moment.", focusHeading = false, notice, shortcuts = true,
 }: LobbyProps) {
   const id = useId();
@@ -234,7 +236,7 @@ export function Lobby({
                 return (
                   <li key={person.id}>
                     <PersonCard variant="saved" name={person.name} relationship={person.relationship} traits={personTraits(person)} meta={knowsLine(person.sharedFactIds.length)}
-                      onOpen={() => onPickPerson(person)} actions={actions} {...common} />
+                      morphing={morphSource === person.id} onOpen={() => onPickPerson(person)} actions={actions} {...common} />
                   </li>
                 );
               })}
@@ -253,7 +255,7 @@ export function Lobby({
             return (
               <li key={preset} data-preset={preset}>
                 <PersonCard variant="starter" name={role.name} relationship={starterRelationship[preset]} meta={label} portraitSrc={starterPortraitSrc(preset)}
-                  highlight={preset === "manager" && highlight} onOpen={() => onPickStarter(preset)} actions={actions} {...common} />
+                  highlight={preset === "manager" && highlight} morphing={morphSource === preset} onOpen={() => onPickStarter(preset)} actions={actions} {...common} />
               </li>
             );
           })}

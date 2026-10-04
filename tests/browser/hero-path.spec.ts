@@ -52,6 +52,16 @@ test.describe("hero path", () => {
       const opened: MediaStreamTrack[] = [];
       w.__tracks = opened;
       w.__holdReady = false;
+      const morphs: string[] = [];
+      w.__morphs = morphs;
+      const startViewTransition = document.startViewTransition?.bind(document);
+      if (startViewTransition) {
+        document.startViewTransition = ((update: never) => {
+          const transition = startViewTransition(update);
+          transition.ready.then(() => morphs.push(...document.getAnimations().map((a) => (a.effect as KeyframeEffect | null)?.pseudoElement ?? "").filter(Boolean))).catch(() => {});
+          return transition;
+        }) as typeof document.startViewTransition;
+      }
       const original = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
       navigator.mediaDevices.getUserMedia = async (constraints) => { const stream = await original(constraints); opened.push(...stream.getTracks()); return stream; };
       w.__practiceTestMediaController = (onEvent: (event: unknown) => void) => {
@@ -111,6 +121,7 @@ test.describe("hero path", () => {
     // Lobby and briefing: no media.
     await signIn();
     await page.getByRole("button", { name: "Practice with Jordan" }).click();
+    await expect.poll(() => page.evaluate(() => (window as unknown as { __morphs: string[] }).__morphs)).toContain("::view-transition-group(practice-portrait)");
     await expect(page.getByRole("heading", { name: /What.s going on with/ })).toBeVisible();
     await page.getByLabel(/What do you want to do/).fill(GOAL);
     expect(await opened()).toBe(0);

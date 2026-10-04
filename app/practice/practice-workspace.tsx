@@ -1,6 +1,6 @@
 "use client";
 import { HomeCheckin, PlannedSection } from "@/components/practice/planned-section";
-import { StageTransition, startStage } from "@/components/practice/transitions";
+import { StageTransition, startMorph, startStage } from "@/components/practice/transitions";
 import { useSoundCues } from "@/lib/practice/use-sound-cues";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -113,6 +113,7 @@ export function PracticeWorkspace() {
   const [liveCall, setLiveCall] = useState<LiveCallState>(initialLiveCallState);
   const [reflect, setReflect] = useState<ReflectState>(closedReflect);
   const [alternative, setAlternative] = useState<AlternativeState>(closedAlternative);
+  const [morphSource, setMorphSource] = useState<string | null>(null);
   const privateState = useSyncExternalStore(subscribePrivateState, readPrivateState, readPrivateState);
   const reflectGenerationRef = useRef(0);
   const reflectingRef = useRef(false);
@@ -790,7 +791,9 @@ export function PracticeWorkspace() {
               situations={subject.kind === "person" ? situations : undefined} onBack={() => { showStage({ type: "back" }); }} onSetUp={setUp}
               generating={generating} error={generateError} disabled={signingOut} disabledReason="Signing you out…" focusHeading={moveFocus} />
           : <><HomeCheckin people={people} /><Lobby people={people} status={peopleStatus} practicedPresets={practicedPresets} onRetry={() => void loadPeople()}
-              onPickPerson={(person) => openBriefing({ kind: "person", person })} onPickStarter={(preset) => openBriefing({ kind: "starter", preset })}
+              morphSource={morphSource}
+              onPickPerson={(person) => startMorph(() => setMorphSource(person.id), () => openBriefing({ kind: "person", person }))}
+              onPickStarter={(preset) => startMorph(() => setMorphSource(preset), () => openBriefing({ kind: "starter", preset }))}
               onSomeoneNew={() => openBriefing({ kind: "new" })}
               onAddStarter={async (preset) => { await createPerson(roleToPersonFields(examples[preset].role)); await loadPeople(); }}
               onEditPerson={(person) => router.push(`/practice/people/${encodeURIComponent(person.id)}`)}

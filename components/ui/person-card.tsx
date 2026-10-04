@@ -6,6 +6,7 @@ import { Ellipsis, Plus } from "lucide-react";
 import { motionTransition } from "@/lib/ui/motion";
 import { Portrait } from "./portrait";
 import styles from "./person-card.module.css";
+import { PortraitTransition } from "@/components/practice/transitions";
 
 export type PersonCardAction = { label: string; onSelect: () => void; tone?: "danger" };
 
@@ -21,6 +22,8 @@ export type PersonCardProps = {
   portraitSrc?: string | null;
   /** "Start here" highlight for the first run. */
   highlight?: boolean;
+  /** True only for the one card whose portrait carries the morph into the briefing. */
+  morphing?: boolean;
   onOpen: () => void;
   /** Edit, delete, "Add to my people". Rendered behind a separate "More" button. */
   actions?: readonly PersonCardAction[];
@@ -37,7 +40,7 @@ export function personCardLabel(variant: PersonCardProps["variant"], name: strin
 }
 
 export function PersonCard({
-  variant, name, relationship, traits = [], meta, portraitSrc, highlight = false, onOpen, actions = [], disabled = false, disabledReason, onCardKeyDown, children,
+  variant, name, relationship, traits = [], meta, portraitSrc, highlight = false, morphing = false, onOpen, actions = [], disabled = false, disabledReason, onCardKeyDown, children,
 }: PersonCardProps) {
   const reduced = useReducedMotion();
   const baseId = useId();
@@ -85,7 +88,7 @@ export function PersonCard({
         <span className={styles.face} aria-hidden="true">
           {isNew
             ? <span className={styles.plus}><Plus size={40} strokeWidth={1.75} /></span>
-            : <Portrait name={name} size={240} src={portraitSrc} className={styles.portrait} />}
+            : <PortraitTransition active={morphing}><Portrait name={name} size={240} src={portraitSrc} className={styles.portrait} /></PortraitTransition>}
         </span>
         <span className={styles.body}>
           {highlight ? <span className={styles.badge} data-tone="accent">Start here</span>

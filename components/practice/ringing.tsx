@@ -5,6 +5,7 @@ import { PhoneOff } from "lucide-react";
 import { Portrait } from "@/components/ui";
 import { reducedFade, springs } from "@/lib/ui/motion";
 import styles from "./call.module.css";
+import { PortraitTransition } from "@/components/practice/transitions";
 
 export type RingingProps = {
   name: string;
@@ -24,7 +25,7 @@ export function Ringing({ name, portraitSrc, onCancel }: RingingProps) {
         transition={reduced ? reducedFade : springs.settle} data-reduced-fade>
         <span className={styles.pulse} aria-hidden="true" />
         <span className={styles.pulse} data-delay aria-hidden="true" />
-        <Portrait name={name} size={240} src={portraitSrc} />
+        <PortraitTransition><Portrait name={name} size={240} src={portraitSrc} /></PortraitTransition>
       </motion.div>
       <p className={styles.ringingName}>{name}</p>
       <p className={styles.ringingStatus}>Calling {name}…</p>

@@ -12,6 +12,7 @@ import type { Person, PersonSituation } from "@/lib/schemas/people";
 import type { SessionPreset, Situation } from "@/lib/schemas/situation";
 import { personTraits, starterPortraitPath, starterRelationship } from "./lobby";
 import styles from "./briefing.module.css";
+import { PortraitTransition } from "@/components/practice/transitions";
 
 // P3 briefing (docs/32, docs/33 §4.3). The situation text is the only thing here that can reach the
 // setup model, with the goal as today. The hard-moment line lives in private state and is never sent.
@@ -193,7 +194,7 @@ export function Briefing({
 
       <div className={styles.columns}>
         <aside className={styles.identity} aria-label={subject.kind === "new" ? "Who this is" : `About ${displayName}`}>
-          <Portrait name={displayName} size={240} src={portraitSrc} className={styles.portrait} />
+          <PortraitTransition><Portrait name={displayName} size={240} src={portraitSrc} className={styles.portrait} /></PortraitTransition>
           {subject.kind === "new" ? (
             <div className={styles.newFields}>
               <div className={styles.field}>
