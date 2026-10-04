@@ -1,0 +1,39 @@
+.portrait {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  overflow: hidden;
+  background: var(--surface-sunk);
+  box-shadow: var(--shadow-1);
+}
+
+.size40 { width: 40px; height: 40px; border-radius: var(--r-sm); }
+.size64 { width: 64px; height: 64px; border-radius: var(--r-md); }
+.size120 { width: 120px; height: 120px; border-radius: var(--r-lg); }
+.size240 { width: 240px; height: 240px; border-radius: var(--r-lg); box-shadow: var(--shadow-2); }
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.fallback {
+  background: linear-gradient(145deg, var(--clay) 0%, var(--sage) 100%);
+  color: var(--night-ink);
+}
+
+.monogram {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: var(--tracking-display);
+  font-variation-settings: "opsz" 72;
+}
+
+.size40 .monogram { font-size: var(--text-16); }
+.size64 .monogram { font-size: var(--text-28); }
+.size120 .monogram { font-size: var(--text-56); }
+.size240 .monogram { font-size: calc(var(--text-56) * 2); }

@@ -1,0 +1,94 @@
+.chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-14);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  transition: background-color var(--t-quick), border-color var(--t-quick), box-shadow var(--t-quick);
+}
+
+/* 36 px visual chip, 44 px hit target. */
+.chip::before {
+  content: "";
+  position: absolute;
+  inset: calc((var(--hit-min) - 36px) / -2) 0;
+}
+
+.chip:hover,
+.chip[data-preview-state="hover"] {
+  border-color: var(--sage);
+  box-shadow: var(--shadow-1);
+}
+
+.chip:focus-visible,
+.chip[data-preview-state="focus"] {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.chip:active,
+.chip[data-preview-state="active"] {
+  transform: translateY(.5px);
+  box-shadow: none;
+}
+
+.chip[data-selected] {
+  background: var(--sage-soft);
+  border-color: var(--sage);
+  color: var(--sage);
+  padding-left: 10px;
+}
+
+.chip[aria-disabled="true"],
+.chip[aria-disabled="true"]:hover {
+  background: var(--surface-sunk);
+  border-style: dashed;
+  border-color: var(--muted);
+  color: var(--muted);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.chip[aria-busy="true"] {
+  cursor: progress;
+  padding-left: 10px;
+}
+
+.icon {
+  display: inline-flex;
+}
+
+.spin {
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin { animation: none; }
+}
+
+.withReason {
+  display: inline-grid;
+  justify-items: start;
+  gap: 6px;
+}
+
+.reason {
+  color: var(--muted);
+  font-size: var(--text-12);
+  line-height: var(--leading-body);
+  max-width: 28ch;
+}

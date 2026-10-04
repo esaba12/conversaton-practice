@@ -1,0 +1,76 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 22px;
+  border: 1px solid var(--sage);
+  border-radius: var(--r-sm);
+  background: var(--sage);
+  color: var(--surface);
+  font-family: var(--font-sans);
+  font-size: var(--text-16);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: var(--shadow-1);
+  transition: background-color var(--t-quick), box-shadow var(--t-quick), border-color var(--t-quick);
+}
+
+.button:hover,
+.button[data-preview-state="hover"] {
+  background: color-mix(in srgb, var(--sage) 82%, var(--ink));
+  box-shadow: var(--shadow-2);
+}
+
+.button:focus-visible,
+.button[data-preview-state="focus"] {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.button:active,
+.button[data-preview-state="active"] {
+  transform: translateY(.5px);
+  box-shadow: none;
+}
+
+.button[aria-disabled="true"],
+.button[aria-disabled="true"]:hover {
+  background: var(--surface-sunk);
+  border-style: dashed;
+  border-color: var(--muted);
+  color: var(--muted);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.button[aria-busy="true"] {
+  cursor: progress;
+}
+
+.spin {
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin { animation: none; }
+}
+
+.withReason {
+  display: inline-grid;
+  justify-items: start;
+  gap: 8px;
+}
+
+.reason {
+  color: var(--muted);
+  font-size: var(--text-14);
+  line-height: var(--leading-body);
+  max-width: 40ch;
+}

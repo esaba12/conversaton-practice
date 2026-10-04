@@ -1,6 +1,6 @@
 # Design system and screens (post-submission plan)
 
-Status: **planning, not built.** Derived from [R05](research/R05-DESIGN-DIRECTION.md). Feature behavior is in [docs/32](32-FEATURE-SPECS.md); this file covers how it looks, moves and sounds. Existing visual direction ("warm and minimal, crisp, modern typography") from docs/00 and docs/18 still holds; this extends it with presence, depth and a dark call mode. Contrast values marked "verify" must be measured before merge.
+Status: **planning, not built.** Derived from [R05](research/R05-DESIGN-DIRECTION.md). Feature behavior is in [docs/32](32-FEATURE-SPECS.md); this file covers how it looks, moves and sounds. Existing visual direction ("warm and minimal, crisp, modern typography") from docs/00 and docs/18 still holds; this extends it with presence, depth and a dark call mode. Token contrast was measured in 0A (October 3); the remaining "verify" marks are Tavus behavior, not contrast. Tokens and primitives are built; screens are not.
 
 ## 1. Concept
 
@@ -18,31 +18,31 @@ Extend `app/globals.css` `:root`; keep the existing names so current components 
 | `--surface` | `#FFFEFB` | existing | Cards |
 | `--surface-sunk` | `#EFEDE6` | new | Wells, locked private cards |
 | `--ink` | `#232A28` | existing | Text |
-| `--muted` | `#626963` | existing | Secondary text (verify ≥ 4.5:1 on background) |
+| `--muted` | `#626963` | existing | Secondary text (5.18:1 on background, 5.60:1 on surface, 4.82:1 on surface-sunk) |
 | `--border` | `#DDDDD5` | existing | Hairlines |
 | `--sage` | `#345A49` | existing | Primary action |
 | `--sage-soft` | `#E6EDE6` | new | Selected chips, quiet fills |
 | `--clay` | `#C46A4A` | new | Warm accent, portraits' backdrop, "you said it" moments |
 | `--honey` | `#E2AE4F` | new | Wrapping-up cue |
-| `--danger` | `#B8433A` | new | End call, destructive (verify white text contrast) |
-| `--focus` | `#245B91` | existing | Focus ring in room mode |
+| `--danger` | `#B8433A` | new | End call, destructive (`--surface` text 5.34:1; `--night-ink` 4.76:1) |
+| `--focus` | `#245B91` | existing | Focus ring in room mode (6.47:1 on background, 6.99:1 on surface) |
 | `--night` | `#141715` | new | Call surround |
 | `--night-raised` | `rgb(38 44 40 / 0.72)` | new | Glass controls (with `backdrop-filter: blur(16px)`) |
 | `--night-ink` | `#F3F1EA` | new | Text on night |
-| `--night-muted` | `#A9B0A8` | new | Secondary on night (verify) |
-| `--focus-night` | `#9FC7B1` | new | Focus ring on night |
+| `--night-muted` | `#A9B0A8` | new | Secondary on night (8.14:1) |
+| `--focus-night` | `#9FC7B1` | new | Focus ring on night (9.70:1) |
 
 Shadows are sage-tinted, never grey: `--shadow-1: 0 1px 2px rgb(52 90 73 / .08)`, `--shadow-2: 0 12px 32px -12px rgb(52 90 73 / .22)`, `--shadow-3: 0 24px 60px -20px rgb(20 23 21 / .45)` (call tile).
 
 ### Type
 
 - **UI sans:** existing stack (`"Avenir Next","Segoe UI",system-ui`).
-- **Display serif (new):** one variable serif via `next/font` (candidates: Fraunces, Newsreader, Source Serif 4; choose by rendering the three at 56 px and 20 px with real names). Used for page headlines, character names, pocket cards, the recap's quoted line. Never for form labels or controls.
-- Scale (px): 12, 14, 16, 18, 22, 28, 40, 56; line height 1.5 body, 1.1 display. Letter-spacing on display −0.02em (replaces current −3.4 px fixed values).
+- **Display serif: Newsreader** (variable, `opsz` axis, `next/font`; chosen October 3 by 0A over Fraunces and Source Serif 4, see docs/tasks/0A-tokens.md). Used for page headlines, character names, pocket cards, the recap's quoted line. Never for form labels or controls.
+- Scale (px): 12, 14, 16, 18, 22, 28, 40, 56; line height 1.5 body, 1.1 display. Letter-spacing on display −0.02em (replaces current −3.4 px fixed values). Tokens: `--font-sans`, `--font-serif`, `--text-12` … `--text-56`, `--leading-body`, `--leading-display`, `--tracking-display`.
 
 ### Space, radius, size
 
-4-pt grid. Radius: `--r-sm 10px` (inputs, buttons; existing 10), `--r-md 16px` (cards; existing 16), `--r-lg 28px` (call tile, portrait), `--r-pill 999px`. Minimum hit target 44 px; call bar buttons 56 px.
+4-pt grid. Radius: `--r-sm 10px` (inputs, buttons; existing 10), `--r-md 16px` (cards; existing 16), `--r-lg 28px` (call tile, portrait), `--r-pill 999px`. Portrait radius scales by size: 10 / 16 / 28 / 28 for 40 / 64 / 120 / 240 (28 on a 40 px tile would be a circle). Minimum hit target 44 px (`--hit-min`); call bar buttons 56 px.
 
 ### Motion
 
@@ -53,7 +53,9 @@ Shadows are sage-tinted, never grey: `--shadow-1: 0 1px 2px rgb(52 90 73 / .08)`
 | `--t-calm` | `520ms cubic-bezier(.32,.72,0,1)` | Room ↔ call, entering green room and recap |
 | `--t-breath` | `5s ease-in-out infinite` | Settle circle, ringing pulse |
 
-`prefers-reduced-motion: reduce`: no morphs, pulses or slides; fades ≤150 ms; breathing circle becomes a static ring with a text count.
+`prefers-reduced-motion: reduce`: no morphs, pulses or slides; fades ≤150 ms; breathing circle becomes a static ring with a text count. Built as a global rule (all transitions and animations 0.01 ms) with `data-reduced-fade` as the opt-in for the 150 ms opacity fade. Springs live in `lib/ui/motion.ts` (`press`, `lift`, `pop`, `settle`).
+
+Disabled controls use `aria-disabled` (still focusable) with a visible reason linked by `aria-describedby`, a dashed `--surface-sunk` fill and `--muted` text, never opacity. The development gallery forces states with `data-preview-state="hover|focus|active"`.
 
 ### Sound
 
@@ -63,7 +65,7 @@ Ring (soft two-tone loop), connect (single warm chime), hang-up (descending two-
 
 | Component | Notes |
 |---|---|
-| **Portrait** | Rounded-28 image of the face still; fallback monogram on a clay→sage gradient. Sizes 40 / 64 / 120 / 240. Alt text "{name}, fictional AI character". |
+| **Portrait** | Rounded image of the face still (radius by size, see §2); fallback monogram on a clay→sage gradient. Sizes 40 / 64 / 120 / 240. Alt text "{name}, fictional AI character". |
 | **Person card** | Lobby tile, 4:5: portrait, serif name, relationship, ≤3 trait chips, meta line, "Practice with {name}". Whole card is one button with an accessible name "Practice with {name}, {relationship}"; the "⋯" menu is a separate button. Variants: saved, Starter (badge), Someone new (+). |
 | **Character card** | Portrait 120, name (serif 28), relationship (muted 14), "how they talk" line, `Wants …`, reaction chip, opening line in a speech bubble (surface-sunk, tail left). |
 | **Private card** | `--surface-sunk`, lock icon, title "Only you see this", holds goal and hard-moment line. Dashed border to read as "set aside". |
