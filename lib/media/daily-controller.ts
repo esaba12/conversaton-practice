@@ -31,6 +31,16 @@ function utteranceReader() {
   };
 }
 
+// Video-first (Q3): counterpart audio is never allowed to lead the picture. The component that renders the remote stream holds the
+// element muted until it sees video play, then calls reportRemoteVideoPlaying with that stream. The signal stays internal to the
+// controller and component; it is not a MediaEvent. The controller emits "ready" (which starts the live call) only after it.
+// If video does not play within VIDEO_FIRST_TIMEOUT_MS the call fails as "video_lost" instead of continuing as audio only.
+export const VIDEO_FIRST_TIMEOUT_MS = 45_000;
+const playingReporters = new WeakMap<object, () => void>();
+export function reportRemoteVideoPlaying(stream: MediaStream) {
+  playingReporters.get(stream)?.();
+}
+
 function stopTracks(stream: MediaStream | null) {
   stream?.getTracks().forEach((track) => track.stop());
 }
@@ -58,6 +68,9 @@ export const createDailyController: CreateMediaController = (onEvent) => {
   let preview: MediaStream | null = null;
   let remoteTracks: MediaStreamTrack[] = [];
   let remoteId: string | null = null;
+  let remoteStream: MediaStream | null = null;
+  let videoPlaying = false;
+  let watchdog: ReturnType<typeof setTimeout> | null = null;
   let destroyed: Promise<void> | null = null;
 
   function teardown() {
@@ -68,6 +81,9 @@ export const createDailyController: CreateMediaController = (onEvent) => {
     const current = call;
     call = null;
     remoteTracks = [];
+    remoteStream = null;
+    videoPlaying = false;
+    clearWatchdog();
     onEvent({ type: "remote-stream", stream: null });
     onEvent({ type: "local-preview", stream: null });
     stopTracks(preview);
@@ -83,6 +99,17 @@ export const createDailyController: CreateMediaController = (onEvent) => {
     }
     destroyed = current ? current.destroy().catch(() => {}) : Promise.resolve();
     return destroyed;
+  }
+
+  function clearWatchdog() {
+    if (watchdog) clearTimeout(watchdog);
+    watchdog = null;
+  }
+
+  // Runs from join until the call is ready and the current remote stream is playing video, and again whenever the stream is replaced.
+  function armWatchdog() {
+    clearWatchdog();
+    watchdog = setTimeout(() => { watchdog = null; fail("video_lost"); }, VIDEO_FIRST_TIMEOUT_MS);
   }
 
   function fail(reason: FailureReason) {
@@ -110,12 +137,22 @@ export const createDailyController: CreateMediaController = (onEvent) => {
     if (!tracks.some((track) => track.kind === "video")) return;
     if (tracks.length !== remoteTracks.length || tracks.some((track) => !remoteTracks.includes(track))) {
       remoteTracks = tracks;
-      onEvent({ type: "remote-stream", stream: new MediaStream(tracks) });
+      const stream = new MediaStream(tracks);
+      remoteStream = stream;
+      videoPlaying = false;
+      playingReporters.set(stream, () => {
+        if (ended || epoch !== generation || remoteStream !== stream || videoPlaying) return;
+        videoPlaying = true;
+        renderRemote(instance, epoch);
+      });
+      armWatchdog();
+      onEvent({ type: "remote-stream", stream });
     }
-    if (!readyEmitted && video?.state === "playable" && audio?.state === "playable") {
+    if (!readyEmitted && videoPlaying && video?.state === "playable" && audio?.state === "playable") {
       readyEmitted = true;
       onEvent({ type: "ready" });
     }
+    if (readyEmitted && videoPlaying) clearWatchdog();
   }
 
   return {
@@ -175,6 +212,7 @@ export const createDailyController: CreateMediaController = (onEvent) => {
           return;
         }
         render();
+        if (!ended && epoch === generation && !(readyEmitted && videoPlaying) && !watchdog) armWatchdog();
       } catch (error) {
         if (!ended) fail(isPermissionDenial(error) ? "microphone_denied" : "join");
         else if (!failure) return;
