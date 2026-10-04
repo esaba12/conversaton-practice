@@ -7,8 +7,8 @@ Coordinator: wow-pass coordinator (main checkout)
 Gate: Wow pass Phase 1
 Requirements/tests: docs/next/02-BUILD-PLAN.md §3 1A; docs/32 S3, S4, S5, S6; docs/next/04-NEW-SPECS.md W9 (call bar), W5; docs/next/03-CONTRACTS.md §2.8; docs/33 call screens; docs/next/05-UI-UPGRADE.md §2
 GitHub issue: https://github.com/esaba12/conversaton-practice/issues/60
-Pull request: not opened
-CI run: not run
+Pull request: https://github.com/esaba12/conversaton-practice/pull/72 (draft)
+CI run: see the PR checks
 
 ## Assignment and isolation
 
@@ -56,7 +56,7 @@ All on branch `agent/1a-call-screen`, worktree `.worktrees/1a`, October 4, 2026,
 
 ## Handoff
 
-- Changed paths and commit(s): `lib/media/interactions.ts` (new), `lib/media/daily-controller.ts`, `components/practice/{call-screen,call-bar,call-sheets,call-shortcuts,call-self-view,ringing}.tsx` (new), `components/practice/call.module.css` (new), `components/practice/call-stage.tsx`, `components/presentation/captions.tsx`, `components/presentation/captions.module.css`, `app/design-preview/{call-gallery.tsx,page.tsx,gallery.module.css}`, `tests/unit/{interactions,call-screen}.test.ts` (new), `tests/unit/daily-controller.test.ts`, this record. Commit and PR: see the PR link above.
+- Changed paths and commit(s): `lib/media/interactions.ts` (new), `lib/media/daily-controller.ts`, `components/practice/{call-screen,call-bar,call-sheets,call-shortcuts,call-self-view,ringing}.tsx` (new), `components/practice/call.module.css` (new), `components/practice/call-stage.tsx`, `components/presentation/captions.tsx`, `components/presentation/captions.module.css`, `app/design-preview/{call-gallery.tsx,page.tsx,gallery.module.css}`, `tests/unit/{interactions,call-screen}.test.ts` (new), `tests/unit/daily-controller.test.ts`, this record. Implementation commit `52b666e`; PR #72 (draft).
 - Behavior without wiring: `CallStage` now renders the night call screen. Until the diff below is applied it receives no live events and no `onInteraction`, so captions fall back to finished turns, there is no speaking glow, Type and Wait show "Typing and asking to wait aren't available in this call.", no wrap-up is sent (the honey cue still shows at T−30), and ringing Cancel falls back to End.
 - Proposed shared-file changes (coordinator applies; verified in a scratch copy):
 
