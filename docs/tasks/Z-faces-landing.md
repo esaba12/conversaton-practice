@@ -4,7 +4,7 @@ Status: review (draft PR open). Live not verified.
 Assigned writer: Z worker subagent
 Coordinator: wow-pass coordinator
 Gate: Compressed finish (docs/next/02-BUILD-PLAN.md §1a)
-Issue: [#81](https://github.com/esaba12/conversaton-practice/issues/81). PR: see the draft PR "Z: Faces and landing" on `agent/z-faces-landing`.
+Issue: [#81](https://github.com/esaba12/conversaton-practice/issues/81). PR: [#87](https://github.com/esaba12/conversaton-practice/pull/87) (draft).
 Base revision: `d0a71c5`.
 Requirements/tests: docs/32-FEATURE-SPECS.md B4, R6; docs/next/03-CONTRACTS.md §2.9 (starter map); migration `20261004020000_planned_and_presets.sql` (`people.preset_id`, RPC `person_set_preset(p_id, p_expected_version, p_preset)`)
 
