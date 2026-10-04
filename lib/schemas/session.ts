@@ -11,11 +11,13 @@ export { sessionPresetSchema, situationSchema, type SessionPreset, type Situatio
 // docs/30 retry: the server resolves the role as usual, then replaces only `opening`.
 const openingOverrideSchema = z.string().trim().min(1).max(300);
 
-// The fixture preset, a user-reviewed role, or a saved person. The strict role schema rejects private fields; no other client field is forwarded.
+// The fixture preset, a user-reviewed role, or a saved person. The strict role schema rejects private fields.
+// A reviewed role may also send `look` (a starter name). The server maps that name to a face and PAL. No provider id is accepted.
 // A preset start sends only the id; the server loads that fixture. A saved person sends only its ID and version (and optionally a situation);
 // the server loads the person and its shared facts for the signed-in owner. None of these bodies may carry the goal or hard-moment line.
 export const presetStartSchema = z.object({ idempotencyKey: z.uuid(), preset: sessionPresetSchema, durationSeconds: durationSchema, openingOverride: openingOverrideSchema.optional() }).strict();
-export const roleStartSchema = z.object({ idempotencyKey: z.uuid(), role: roleContextSchema, durationSeconds: durationSchema }).strict();
+// `look` picks a stock face and premade voice for this call. It does not replace the reviewed role.
+export const roleStartSchema = z.object({ idempotencyKey: z.uuid(), role: roleContextSchema, durationSeconds: durationSchema, look: sessionPresetSchema.optional() }).strict();
 export const personStartSchema = z.object({ idempotencyKey: z.uuid(), personId: z.uuid(), expectedVersion: versionSchema, durationSeconds: durationSchema, openingOverride: openingOverrideSchema.optional() }).strict();
 export const personSituationStartSchema = z.object({ idempotencyKey: z.uuid(), personId: z.uuid(), expectedVersion: versionSchema, situation: situationSchema, durationSeconds: durationSchema }).strict();
 

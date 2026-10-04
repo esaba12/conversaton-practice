@@ -214,8 +214,9 @@ test.describe("hero path", () => {
     await expect(page.getByRole("heading", { name: /Call with Jordan/ })).toBeVisible({ timeout: 10_000 });
 
     // The retry body is the reviewed role with only the opening replaced: no goal, line or transcript.
-    const retry = startBodies.at(-1) as { role?: { opening?: string }; durationSeconds?: number };
-    expect(Object.keys(retry).sort()).toEqual(["durationSeconds", "idempotencyKey", "role"]);
+    const retry = startBodies.at(-1) as { role?: { opening?: string }; durationSeconds?: number; look?: string };
+    expect(Object.keys(retry).sort()).toEqual(["durationSeconds", "idempotencyKey", "look", "role"]);
+    expect(retry.look).toBe("manager");
     expect(retry.durationSeconds).toBe(180);
     expect(retry.role?.opening).toBe("RETRY-OPENING So, what did you want to talk about?");
     expect(JSON.stringify(startBodies)).not.toMatch(/GOAL-MARKER|HARD-MARKER|HERO-TURN/);

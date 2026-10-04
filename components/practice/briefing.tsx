@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Chip, Portrait, PrimaryButton, PrivateCard } from "@/components/ui";
+import { LookCatalogue } from "@/components/practice/look-catalogue";
 import { examples } from "@/fixtures/examples";
 import { readPrivateState, subscribePrivateState, updatePrivateState, type PrivateState } from "@/lib/practice/private-state";
 import { applySkill, skillIds, skillSituation, skillTemplates } from "@/lib/practice/skill-templates";
@@ -43,6 +44,8 @@ export type BriefingDraft = {
   relationship: string;
   /** Set when a saved-situation chip filled the text; any edit clears it. */
   savedSituationId: string | null;
+  /** Stock face and premade voice for this practice. Null is the default pair. Starters start on their own. */
+  look: SessionPreset | null;
 };
 
 export function briefingKey(subject: BriefingSubject): string {
@@ -57,7 +60,7 @@ export function defaultSituation(subject: BriefingSubject): string {
 
 // P3: the briefing opens prefilled with the default situation.
 export function initialBriefingDraft(subject: BriefingSubject): BriefingDraft {
-  return { situation: defaultSituation(subject), name: "", relationship: "", savedSituationId: null };
+  return { situation: defaultSituation(subject), name: "", relationship: "", savedSituationId: null, look: subject.kind === "starter" ? subject.preset : null };
 }
 
 export function subjectName(subject: BriefingSubject, draft: BriefingDraft): string {
@@ -170,7 +173,7 @@ export function Briefing({
   const inert = disabled || generating;
   const tooLong = draft.situation.length > SITUATION_MAX;
   const reason = disabled ? disabledReason : tooLong ? `Shorten the situation to ${SITUATION_MAX} characters.` : "Say what’s going on first.";
-  const portraitSrc = subject.kind === "starter" ? starterPortraitSrc(subject.preset) : null;
+  const portraitSrc = subject.kind === "person" || !draft.look ? null : starterPortraitSrc(draft.look);
   const fallbackDefault = defaultSituation(subject);
   const suggestedGoal = subject.kind === "starter" ? examples[subject.preset].goal : "";
   const suggestedHardMoment = subject.kind === "starter" ? starterHardMoment[subject.preset] ?? "" : "";
@@ -195,6 +198,7 @@ export function Briefing({
       <div className={styles.columns}>
         <aside className={styles.identity} aria-label={subject.kind === "new" ? "Who this is" : `About ${displayName}`}>
           <PortraitTransition><Portrait name={displayName} size={240} src={portraitSrc} className={styles.portrait} /></PortraitTransition>
+          {subject.kind !== "person" ? <LookCatalogue value={draft.look} disabled={inert} onChange={(look) => { if (!inert) onDraftChange({ look }); }} /> : null}
           {subject.kind === "new" ? (
             <div className={styles.newFields}>
               <div className={styles.field}>

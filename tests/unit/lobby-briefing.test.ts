@@ -59,6 +59,8 @@ describe("P3 briefing", () => {
     expect(initialBriefingDraft({ kind: "starter", preset: "manager" }).situation).toBe(manager.publicContext);
     expect(initialBriefingDraft({ kind: "person", person: person(1) }).situation).toBe("Default situation 1.");
     expect(initialBriefingDraft({ kind: "new" }).situation).toBe("");
+    expect(initialBriefingDraft({ kind: "new" }).look).toBeNull();
+    expect(initialBriefingDraft({ kind: "starter", preset: "manager" }).look).toBe("manager");
     expect(briefingKey({ kind: "person", person: person(1) })).not.toBe(briefingKey({ kind: "person", person: person(2) }));
   });
 
@@ -72,6 +74,7 @@ describe("P3 briefing", () => {
     expect(html).toContain("Knows about you: 2 things");
     expect(html).toContain("Only you see this");
     expect(html).toContain("All people");
+    expect(html).not.toContain("Look and voice");
   });
 
   it("someone new offers an optional name and the relationship chips", () => {
@@ -83,6 +86,19 @@ describe("P3 briefing", () => {
     expect(formId).toBeTruthy();
     expect(html.match(/<input[^>]*id="[^"]*-name"[^>]*>/)?.[0]).toContain(`form="${formId}"`);
     expect(html.match(/<button[^>]*form="[^"]*"[^>]*>(?:<[^>]+>)*Roommate/)?.[0]).toContain(`form="${formId}"`);
+    expect(html).toContain("Look and voice");
+    expect(html).toContain("Default look and voice");
+    expect(html).toContain("Jordan’s look and voice");
+    expect(html).not.toContain("faceId");
+  });
+
+  it("a starter briefing opens on that starter’s look, and the choice stays out of the draft plan", () => {
+    const html = render({ kind: "starter", preset: "manager" });
+    expect(html).toContain("Look and voice");
+    expect(html).toMatch(/aria-label="Jordan’s look and voice"[^>]*checked/);
+    const plan = briefingPlan({ kind: "starter", preset: "manager" }, { ...initialBriefingDraft({ kind: "starter", preset: "manager" }), look: "roommate" }, "");
+    expect(plan).toEqual({ kind: "preset", preset: "manager" });
+    expect(JSON.stringify(plan)).not.toContain("roommate");
   });
 
   it("plans a preset start when a starter's situation is untouched, and a draft when edited", () => {
@@ -102,7 +118,7 @@ describe("P3 briefing", () => {
   });
 
   it("frames someone new with the typed name and relationship", () => {
-    const draft: BriefingDraft = { situation: "I want to ask for my sweater back.", name: "Rae", relationship: "Sibling", savedSituationId: null };
+    const draft: BriefingDraft = { situation: "I want to ask for my sweater back.", name: "Rae", relationship: "Sibling", savedSituationId: null, look: null };
     expect(briefingPlan({ kind: "new" }, draft, "")).toEqual({ kind: "draft", request: { situation: "With Rae, my sibling: I want to ask for my sweater back." } });
     expect(briefingPlan({ kind: "new" }, { ...draft, name: "", relationship: "" }, "")).toEqual({ kind: "draft", request: { situation: "I want to ask for my sweater back." } });
   });

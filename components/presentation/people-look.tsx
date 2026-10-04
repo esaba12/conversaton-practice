@@ -4,6 +4,7 @@ import { useEffect, useId, useState } from "react";
 import { z } from "zod";
 import { Portrait } from "@/components/ui/portrait";
 import { SessionClientError } from "@/lib/people/api-client";
+import { LOOKS } from "@/lib/practice/looks";
 import { sessionPresetSchema, type SessionPreset } from "@/lib/schemas/situation";
 import { requestJson } from "@/lib/session/api-client";
 import styles from "./people-look.module.css";
@@ -11,12 +12,6 @@ import setup from "./setup.module.css";
 
 // Only preset names cross the API; the server maps each one to a stock face and premade voice.
 const presetResponseSchema = z.strictObject({ preset: z.strictObject({ id: z.uuid(), version: z.number().int().positive(), presetId: sessionPresetSchema.nullable() }) });
-export const LOOKS: { id: SessionPreset; name: string; label: string }[] = [
-  { id: "roommate", name: "Alex", label: "Alex’s look and voice" },
-  { id: "professor", name: "Ellis", label: "Ellis’s look and voice" },
-  { id: "decline", name: "Sam", label: "Sam’s look and voice" },
-  { id: "manager", name: "Jordan", label: "Jordan’s look and voice" },
-];
 
 export type PeopleLookProps = {
   personId: string;

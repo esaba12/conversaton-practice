@@ -199,6 +199,30 @@ describe("session routes", () => {
     expect(calls("practice_acquire")[0]).toMatchObject({ p_kind: "practice", p_preset: "manager" });
   });
 
+  it("maps a reviewed role's catalogue look onto that starter's face and PAL, and keeps the role", async () => {
+    vi.stubEnv("TAVUS_STARTER_ROOMMATE_PAL_ID", "roommate-pal");
+    vi.stubEnv("TAVUS_STARTER_ROOMMATE_FACE_ID", "roommate-face");
+    vi.stubEnv("ELEVENLABS_STARTER_ROOMMATE_VOICE_ID", "roommate-voice");
+    handlers.practice_acquire = () => ({ data: { created: true, session: row() } });
+    handlers.practice_bind = (args) => ({ data: row({ provider_conversation_id: args.p_provider_id }) });
+    const fetchMock = tavus();
+    const response = await start(post("/api/sessions", { idempotencyKey: key, role: reviewed, durationSeconds: 180, look: "roommate" }));
+    expect(response.status).toBe(201);
+    const sent = JSON.parse(String(fetchMock.mock.calls[0][1].body));
+    expect(sent).toMatchObject({ pal_id: "roommate-pal", face_id: "roommate-face", custom_greeting: reviewed.opening });
+    expect(sent.conversational_context).toBe(buildRoleContext(reviewed));
+    expect(sent.conversational_context).not.toContain("Alex");
+    expect(calls("practice_acquire")[0]).toMatchObject({
+      p_preset: null,
+      p_fingerprint: startFingerprint(reviewed, 180, SECRET, undefined, "practice", "roommate"),
+    });
+    expect(startFingerprint(reviewed, 180, SECRET, undefined, "practice", "roommate")).not.toBe(startFingerprint(reviewed, 180, SECRET));
+    const providerCalls = fetchMock.mock.calls.length;
+    await errorOf(await start(post("/api/sessions", { idempotencyKey: key, role: reviewed, durationSeconds: 180, look: "boss" })), 400);
+    await errorOf(await start(post("/api/sessions", { idempotencyKey: key, role: reviewed, durationSeconds: 180, look: "roommate", faceId: "forged" })), 400);
+    expect(fetchMock.mock.calls.length).toBe(providerCalls);
+  });
+
   it("surfaces the database's fingerprint conflict when a key is replayed with a different role", async () => {
     handlers.practice_acquire = () => marker("IDEMPOTENCY_CONFLICT");
     const fetchMock = tavus();
