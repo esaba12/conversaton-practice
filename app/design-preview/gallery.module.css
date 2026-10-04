@@ -208,3 +208,31 @@
   font-size: var(--text-12);
   text-align: center;
 }
+
+/* Whole screens (1D): full width of the gallery, framed, never wider than the viewport. */
+.screenCapture {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--background);
+}
+
+.replay {
+  min-height: var(--hit-min);
+  margin: 12px;
+  padding: 0 16px;
+  border: 1px solid var(--sage);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--sage);
+  font: inherit;
+  font-size: var(--text-14);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.replay:hover { background: var(--sage-soft); }
+.replay:active { transform: translateY(.5px); }
+.replay:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }

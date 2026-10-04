@@ -2,9 +2,11 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Briefing, briefingKey, useBriefingDrafts, type BriefingPlan, type BriefingSubject } from "@/components/practice/briefing";
-import { Lobby } from "@/components/practice/lobby";
+import { GreenRoom } from "@/components/practice/green-room";
+import { Lobby, starterPortraitPath } from "@/components/practice/lobby";
 import { CallStage } from "@/components/practice/call-stage";
-import { MeetStage } from "@/components/practice/meet-stage";
+import { MeetCard, meetStateFromProgress, useStreamedDraft, type MeetState } from "@/components/practice/meet-card";
+import { personRole, personStartSituation, situationFromRole, type MeetStart } from "@/components/practice/meet-knowledge";
 import { RecapStage } from "@/components/practice/recap-stage";
 import { WorkspaceHeader } from "@/components/presentation/workspace-header";
 import type { PracticeDuration } from "@/components/presentation/duration-choice";
@@ -13,27 +15,28 @@ import { examples } from "@/fixtures/examples";
 import { createBrowserAuthClient } from "@/lib/auth/browser";
 import { selectMediaController } from "@/lib/media/controller-factory";
 import { initialLiveCallState, reduceLiveCall, type Interaction, type LiveCallState } from "@/lib/media/interactions";
-import { createPerson, deletePerson, getPerson, getPracticeHistory, listPeople, listPersonSituations, updatePerson } from "@/lib/people/api-client";
+import { createPerson, deletePerson, getPerson, getPracticeHistory, listFacts, listPeople, listPersonSituations, updatePerson } from "@/lib/people/api-client";
 import { callPhase, createFlowState, reduceFlow, type FlowEvent, type FlowState, type Teardown } from "@/lib/practice/flow";
 import { cleanupMessage, failureMessages, reflectionError, FALLBACK_GOAL, GENERATION_FAILED } from "@/lib/practice/messages";
-import { clearPrivateState, readPrivateState } from "@/lib/practice/private-state";
+import { clearPrivateState, readPrivateState, updatePrivateState } from "@/lib/practice/private-state";
+import type { MediaHandoff } from "@/lib/practice/devices";
 import { closedOffer, closedReflect, sameName, type CallOrigin, type Cleanup, type CleanupTarget, type ReflectState, type SaveOffer } from "@/lib/practice/types";
 import { requestReflection } from "@/lib/reflection/api-client";
-import type { DraftRequest } from "@/lib/schemas/draft";
+import type { DraftRequest, StanceOptions } from "@/lib/schemas/draft";
 import type { MediaController, MediaEvent } from "@/lib/schemas/media";
 import { roleToPersonFields, type Person, type PersonSituation } from "@/lib/schemas/people";
 import { appendTurn, type TranscriptTurn } from "@/lib/schemas/reflection";
 import { roleContextSchema, type RoleContext } from "@/lib/schemas/role-context";
 import type { EndReason, SessionPreset, StartResponse } from "@/lib/schemas/session";
 import type { Situation } from "@/lib/schemas/situation";
-import { SessionClientError, endSession, generateDraft, markConnected, startPresetSession, startSavedPersonSession, startSession } from "@/lib/session/api-client";
+import { SessionClientError, endSession, markConnected, startPresetSession, startSavedPersonSession, startSession } from "@/lib/session/api-client";
 
 // The stages live in lib/practice/flow.ts and the screens in components/practice/*; this shell
 // owns the requests, the media controller and the teardown the reducer asks for.
 export function PracticeWorkspace() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // The lobby is the first screen. The green room has no screen yet, so the shell never rests on it.
+  // The lobby is the first screen.
   const [flow, setFlow] = useState<FlowState>(() => createFlowState("lobby"));
   const [durationSeconds, setDurationSeconds] = useState<PracticeDuration>(180);
   const [starting, setStarting] = useState(false);
@@ -57,18 +60,19 @@ export function PracticeWorkspace() {
   const briefingDrafts = useBriefingDrafts();
   const [situations, setSituations] = useState<{ status: "loading" | "ready" | "error"; items: PersonSituation[] }>({ status: "ready", items: [] });
   const [practicedPresets, setPracticedPresets] = useState<SessionPreset[]>([]);
-  // A saved person's situation for this practice; null starts with the person's default situation.
-  const [personSituation, setPersonSituation] = useState<Situation | null>(null);
   // Set when a draft was generated around a saved person: the start sends the person's id and the
   // reviewed situation, never identity fields.
   const [draftPerson, setDraftPerson] = useState<Person | null>(null);
   const lastDraftRef = useRef<DraftRequest | null>(null);
   const [reviewRole, setReviewRole] = useState<RoleContext>(emptyRole);
-  const [reviewGoal, setReviewGoal] = useState("");
+  const [stanceOptions, setStanceOptions] = useState<StanceOptions | undefined>();
+  // The person's shared About-me facts as text, for the Meet card's "Knows" list only.
+  const [sharedFactTexts, setSharedFactTexts] = useState<string[]>([]);
+  // The green room's chosen microphone, for the call controller once it accepts a device id.
+  const micHandoffRef = useRef<MediaHandoff | null>(null);
   const [assumptions, setAssumptions] = useState<string[]>([]);
   const [setupMode, setSetupMode] = useState<SetupMode>("manual");
   const [examplePreset, setExamplePreset] = useState<SessionPreset | null>(null);
-  const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<{ message: string; outOfScope: boolean } | null>(null);
   const [callInfo, setCallInfo] = useState({ name: "", goal: "" });
   const [people, setPeople] = useState<Person[]>([]);
@@ -84,6 +88,11 @@ export function PracticeWorkspace() {
   const reflectGenerationRef = useRef(0);
   const reflectingRef = useRef(false);
   const generationRef = useRef(0);
+  const draftStream = useStreamedDraft({
+    onDone: (draft) => { setReviewRole(draft.role); setStanceOptions(draft.stanceOptions); setAssumptions(draft.assumptions); setSetupMode("generated"); setExamplePreset(null); },
+    onError: (error) => { if (error.code === "UNAUTHENTICATED") handleAuthLoss(); },
+  });
+  const generating = draftStream.progress.step === "reading" || draftStream.progress.step === "shaping";
 
   // Refs carry the authoritative call state so media/auth callbacks never act on stale renders.
   const flowRef = useRef(flow);
@@ -222,9 +231,10 @@ export function PracticeWorkspace() {
     clearPrivateState();
     generationRef.current++;
     briefingDrafts.clear(); setSubject(null); setSituations({ status: "ready", items: [] });
-    setPersonSituation(null); setDraftPerson(null); lastDraftRef.current = null;
-    setReviewRole(emptyRole); setReviewGoal(""); setAssumptions([]); setSetupMode("manual");
-    setGenerating(false); setGenerateError(null); setCallInfo({ name: "", goal: "" });
+    setDraftPerson(null); lastDraftRef.current = null;
+    draftStream.cancel(); setStanceOptions(undefined); setSharedFactTexts([]); micHandoffRef.current = null;
+    setReviewRole(emptyRole); setAssumptions([]); setSetupMode("manual");
+    setGenerateError(null); setCallInfo({ name: "", goal: "" });
     setSavedPerson(null); setCallOrigin(null); setSaveOffer(closedOffer);
   }
 
@@ -249,9 +259,12 @@ export function PracticeWorkspace() {
     returnToLobby();
     const resume = !!subject && briefingKey(subject) === briefingKey(next);
     showStage(next.kind === "new" ? { type: "pickSomeoneNew", resume } : { type: "pickPerson", resume });
-    setSubject(next); setSavedPerson(null); setPersonSituation(null); setDraftPerson(null);
+    setSubject(next); setSavedPerson(null); setDraftPerson(null);
     setGenerateError(null); setHeaderMessage(""); setPreviousSessionId(null); setSetupMessage(notice);
+    setSharedFactTexts([]);
     if (next.kind !== "person") return;
+    const shared = new Set(next.person.sharedFactIds);
+    if (shared.size) listFacts().then((facts) => setSharedFactTexts(facts.filter((fact) => shared.has(fact.id)).map((fact) => fact.text)), () => undefined);
     setSituations({ status: "loading", items: [] });
     listPersonSituations(next.person.id).then(
       (items) => setSituations({ status: "ready", items }),
@@ -271,7 +284,7 @@ export function PracticeWorkspace() {
 
   // Meet's Back for a saved person: the briefing for the same person, with what was typed kept.
   function leavePerson() {
-    setSavedPerson(null); setPersonSituation(null); setSetupMessage("");
+    setSavedPerson(null); setSetupMessage("");
     returnToBriefing();
     setMoveFocus(true);
     if (searchParams.get("person")) router.replace("/practice", { scroll: false });
@@ -290,27 +303,17 @@ export function PracticeWorkspace() {
     routeToSignIn();
   }
 
-  async function generate(request: DraftRequest) {
+  // U1: the Meet card shows at once and fills as fields stream in.
+  function generate(request: DraftRequest) {
     if (generating || authLostRef.current) return;
-    const generation = ++generationRef.current;
+    generationRef.current++;
     lastDraftRef.current = request;
     const person = subject?.kind === "person" && request.personId === subject.person.id ? subject.person : null;
-    setGenerating(true); setGenerateError(null); setSetupMessage("");
-    try {
-      const draft = await generateDraft(request);
-      if (generation !== generationRef.current) return;
-      setReviewRole(draft.role); setReviewGoal(draft.goal); setAssumptions(draft.assumptions); setSetupMode("generated"); setExamplePreset(null);
-      setDraftPerson(person);
-      showStage({ type: "draftReady" });
-    } catch (error) {
-      if (generation !== generationRef.current) return;
-      if (error instanceof SessionClientError && error.code === "UNAUTHENTICATED") { handleAuthLoss(); return; }
-      if (error instanceof SessionClientError && error.code === "OUT_OF_SCOPE") setGenerateError({ message: error.message, outOfScope: true });
-      else if (error instanceof SessionClientError && error.code === "USAGE_LIMIT") setGenerateError({ message: error.message, outOfScope: false });
-      else setGenerateError({ message: GENERATION_FAILED, outOfScope: false });
-    } finally {
-      if (generation === generationRef.current) setGenerating(false);
-    }
+    setGenerateError(null); setSetupMessage("");
+    setReviewRole(emptyRole); setStanceOptions(undefined); setAssumptions([]); setSetupMode("generated"); setExamplePreset(null);
+    setDraftPerson(person);
+    draftStream.start(request);
+    showStage({ type: "draftReady" });
   }
 
   // "Set up the scene" (P3). Only a draft plan calls the setup model.
@@ -321,18 +324,21 @@ export function PracticeWorkspace() {
       case "person-default":
       case "person-situation":
         if (subject?.kind !== "person") return;
-        setSavedPerson(subject.person); setDraftPerson(null);
-        setPersonSituation(plan.kind === "person-situation" ? plan.situation : null);
+        setSavedPerson(subject.person); setDraftPerson(null); draftStream.cancel(); setStanceOptions(undefined);
+       
+        setReviewRole(personRole(subject.person, plan.kind === "person-situation" ? plan.situation : undefined));
         showStage({ type: "draftReady" });
         return;
-      case "draft": void generate(plan.request); return;
+      case "draft": generate(plan.request); return;
     }
   }
 
   function applyExample(preset: SessionPreset) {
     if (generating) return;
     const example = examples[preset];
-    setReviewRole(example.role); setReviewGoal(readPrivateState().goal.trim() || example.goal); setAssumptions([]); setSetupMode("example"); setExamplePreset(preset); setGenerateError(null);
+    draftStream.cancel(); setStanceOptions(undefined);
+    if (!readPrivateState().goal.trim()) updatePrivateState({ goal: example.goal });
+    setReviewRole(example.role); setAssumptions([]); setSetupMode("example"); setExamplePreset(preset); setGenerateError(null);
     showStage({ type: "draftReady" });
   }
 
@@ -343,28 +349,22 @@ export function PracticeWorkspace() {
     setMoveFocus(true); setSetupMessage("");
   }
 
+  // Called from the green room once the microphone is released to the call.
   function start() {
     const role = parseReviewedRole(reviewRole);
     if (!role) return;
-    const person = draftPerson;
+    const goal = readPrivateState().goal.trim() || FALLBACK_GOAL;
+    const person = savedPerson ?? draftPerson;
     if (person) {
-      const { publicContext, opening, constraints, challenge, pace, wants, holdsBackBecause, softensWhen } = role;
-      const situation: Situation = { publicContext, opening, constraints, challenge, pace, ...(wants ? { wants } : {}), ...(holdsBackBecause ? { holdsBackBecause } : {}), ...(softensWhen ? { softensWhen } : {}) };
-      void launch({ kind: "person", person }, reviewGoal.trim() || FALLBACK_GOAL, (idempotencyKey) => startSavedPersonSession({ personId: person.id, expectedVersion: person.version, situation, durationSeconds, idempotencyKey }));
+      // Only the person's id, version and (when changed) the scene leave the browser; identity comes from the server.
+      const situation: Situation | undefined = draftPerson || personStartSituation(person, role) === "custom" ? situationFromRole(role) : undefined;
+      void launch({ kind: "person", person }, goal, (idempotencyKey) => startSavedPersonSession({ personId: person.id, expectedVersion: person.version, situation, durationSeconds, idempotencyKey }));
       return;
     }
     const preset = examplePreset && setupMode === "example" && JSON.stringify(role) === JSON.stringify(roleContextSchema.parse(examples[examplePreset].role)) ? examplePreset : null;
-    void launch({ kind: "role", role }, reviewGoal.trim() || FALLBACK_GOAL, (idempotencyKey) => preset
+    void launch({ kind: "role", role }, goal, (idempotencyKey) => preset
       ? startPresetSession({ preset, durationSeconds, idempotencyKey })
       : startSession({ role, durationSeconds, idempotencyKey }));
-  }
-
-  // Sends only the person's ID and version (and a chosen saved situation); private notes and goal stay in the browser.
-  function startPerson() {
-    const person = savedPerson;
-    if (!person) return;
-    const situation = personSituation ?? undefined;
-    void launch({ kind: "person", person }, readPrivateState().goal.trim() || FALLBACK_GOAL, (idempotencyKey) => startSavedPersonSession({ personId: person.id, expectedVersion: person.version, situation, durationSeconds, idempotencyKey }));
   }
 
   async function launch(origin: CallOrigin, goal: string, request: (idempotencyKey: string) => Promise<StartResponse>) {
@@ -372,7 +372,7 @@ export function PracticeWorkspace() {
     startingRef.current = true;
     plannedDurationRef.current = durationSeconds;
     const attempt = ++attemptRef.current;
-    const reflectGoal = (origin.kind === "role" || draftPerson ? reviewGoal.trim() : "") || readPrivateState().goal.trim();
+    const reflectGoal = readPrivateState().goal.trim();
     clearReflection();
     setStarting(true); setSetupMessage(""); setPreviousSessionId(null); setGenerateError(null);
     let joined = false;
@@ -387,9 +387,7 @@ export function PracticeWorkspace() {
       setCallOrigin(origin); setSaveOffer({ ...closedOffer, open: true });
       setReflect({ ...closedReflect, sessionId: session.id, goal: reflectGoal });
       setMutedState(false); setCameraEnabled(false); setCameraNote(""); setElapsedSeconds(0); setCallMessage(""); setCleanup(null); setCleanupTarget(null);
-      // The green room and the ring have no screen of their own yet, so the call opens on the
-      // accepted session exactly as it does today.
-      apply({ type: "toGreenRoom" });
+      // Ringing starts on acceptance, so a failed start stays in the green room with its message.
       apply({ type: "ready" });
       apply({ type: "sessionAccepted" });
       const media = mediaRef.current ??= selectMediaController();
@@ -454,6 +452,15 @@ export function PracticeWorkspace() {
     if (controller !== controllerRef.current) return;
     setCameraEnabled(next && enabled);
     if (next && !enabled) setCameraNote("Your camera isn’t available or permission was denied. Practice continues without a self-view.");
+  }
+
+  // The green room's Back: release the microphone and return to the Meet card.
+  function leaveGreenRoom() {
+    const { teardown } = apply({ type: "back" });
+    if (teardown.releaseMic) releaseMedia();
+    endForTeardown(teardown, "user", "close");
+    setSetupMessage(""); setPreviousSessionId(null);
+    setMoveFocus(true);
   }
 
   function backToSetup() {
@@ -617,20 +624,34 @@ export function PracticeWorkspace() {
 
   const statusMessage = [callMessage, cameraNote, phase === "ended" || phase === "interrupted" ? cleanupMessage(cleanup) : ""].filter(Boolean).join(" ");
   const canRetryCleanup = !!cleanupTarget && !!cleanup && cleanup.state !== "closing" && !(cleanup.state === "closed" && cleanup.cleanup === "confirmed");
-  const meetCommon = {
-    starting, disabled: starting || signingOut, startDisabled: endingPrevious || !!previousSessionId, focusHeading: moveFocus, statusMessage: setupMessage,
-    durationSeconds, onDurationChange: setDurationSeconds, previousSessionId, endingPrevious, onEndPrevious: () => void endPrevious(),
-  };
+  const meetPerson = savedPerson ?? draftPerson;
+  const meetStart: MeetStart = meetPerson
+    ? { kind: "person", person: meetPerson, sharedFacts: sharedFactTexts, situation: draftPerson ? "custom" : personStartSituation(meetPerson, reviewRole) }
+    : examplePreset && setupMode === "example" && JSON.stringify(roleContextSchema.safeParse(reviewRole).data) === JSON.stringify(roleContextSchema.parse(examples[examplePreset].role))
+      ? { kind: "preset", preset: examplePreset } : { kind: "role" };
+  const meetState: MeetState = setupMode === "generated" && draftStream.progress.step !== "idle"
+    ? meetStateFromProgress(draftStream.progress, draftStream.progress.step === "ready" ? reviewRole : null)
+    : { status: "ready", role: reviewRole, stanceOptions };
+  const portraitSrc = examplePreset && !meetPerson ? starterPortraitPath(examplePreset) : null;
+  const meetName = meetPerson?.name ?? (meetState.status === "ready" ? meetState.role.name : meetState.status === "streaming" ? meetState.partialRole?.name ?? "" : reviewRole.name);
+  const meetRelationship = meetPerson?.relationship ?? reviewRole.role;
 
   return <><WorkspaceHeader page="practice" signingOut={signingOut} onSignOut={() => void signOut()} quiet={phase !== null} />
     <main id="main">
       {headerMessage && <p role="status" className="notice">{headerMessage}</p>}
       {phase === null ? (flow.stage === "meet"
-        ? (savedPerson
-          ? <MeetStage kind="person" person={savedPerson} onStart={startPerson} onBack={leavePerson} durationDisabled={starting || signingOut} {...meetCommon} />
-          : <MeetStage kind="review" mode={setupMode} role={reviewRole} goal={reviewGoal} assumptions={assumptions} onRoleChange={setReviewRole} onGoalChange={setReviewGoal}
-              onBack={backToDescribe} onRegenerate={lastDraftRef.current ? () => { const request = lastDraftRef.current; if (request) void generate(request); } : undefined} onStart={() => void start()} regenerating={generating}
-              error={generateError} durationDisabled={starting || signingOut || generating} {...meetCommon} />)
+        ? <MeetCard identity={{ name: meetName, relationship: meetRelationship, portraitSrc }} state={meetState} onRoleChange={setReviewRole}
+            editable={meetPerson ? "situation" : "all"} start={meetStart} privateNotes={lastDraftRef.current?.privateNotes ?? ""}
+            durationSeconds={durationSeconds} onDurationChange={setDurationSeconds}
+            onBack={() => { draftStream.cancel(); if (savedPerson) leavePerson(); else backToDescribe(); }}
+            onCall={() => showStage({ type: "toGreenRoom" })}
+            onRetry={lastDraftRef.current ? () => { const request = lastDraftRef.current; if (request) draftStream.start(request); } : undefined}
+            disabled={signingOut} disabledReason="Signing you out…" focusHeading={moveFocus} />
+        : flow.stage === "green"
+          ? <GreenRoom name={meetName} relationship={meetRelationship} portraitSrc={portraitSrc}
+              onBack={leaveGreenRoom} onReady={(handoff) => { micHandoffRef.current = handoff; start(); }}
+              starting={starting} startError={setupMessage || null} disabled={signingOut || endingPrevious} disabledReason={signingOut ? "Signing you out…" : "Ending the previous practice…"} focusHeading={moveFocus}
+              extras={previousSessionId ? <button type="button" className="button secondary" onClick={() => void endPrevious()} disabled={endingPrevious}>{endingPrevious ? "Ending the previous practice…" : "End the previous practice"}</button> : undefined} />
         : flow.stage === "briefing" && subject
           ? <Briefing subject={subject} draft={briefingDrafts.draftFor(subject)} onDraftChange={(patch) => briefingDrafts.update(subject, patch)}
               situations={subject.kind === "person" ? situations : undefined} onBack={() => { showStage({ type: "back" }); }} onSetUp={setUp}
