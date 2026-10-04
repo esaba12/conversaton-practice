@@ -1,8 +1,10 @@
 # Project status
 
-## Submission morning (October 4, ~10:05 AM EDT, main `91ba25e`)
+## Submission morning (October 4, ~10:25 AM EDT, main `3c793aa`)
 
-Nothing broken has been reported from a live call. Every feature is still **live not verified** until the owner reports one.
+Owner live report, ~10:23 AM EDT, on the deployed app after the demo seed: they ran the two tests from this morning (saved Jordan through briefing, Show me first, the call, End, recap, and "Try that moment once"; then a new sitting after choosing Alex’s look and voice) and said **"it all worked."** That is the whole report. It is not itemized, and no defect was named. The longer LIVE-01 list (sharing probe, chip tone, Your data, video-loss, behavior probes) was not run. Session rows were not read back from here.
+
+Still to submit: Devpost (#36), using the paste in [DEMO-01](docs/tasks/DEMO-01-submission-prep.md). Demo URL: https://conversation-practice-zeta.vercel.app. The project is still unnamed (#34).
 
 Merged this morning, docs only, CI `verify` success on each:
 
@@ -11,7 +13,7 @@ Merged this morning, docs only, CI `verify` success on each:
 
 Sign-in is email and password. The project is still unnamed (#34). Do not invent a name.
 
-**Owner, before noon:** reset the demo account with `node --env-file=.env.local scripts/demo/seed.mjs --checkin`, record from the DEMO-01 script, and submit Devpost (#36). One useful live check (#35): Jordan, briefing, Show me first once, your call, End, recap, "Try that moment once." Fill "When it gets hard, I'll say" or that button will not appear. For #37, one extra call with a saved person set to Alex, Ellis, or Sam (not Default).
+**Owner, before noon:** submit Devpost (#36). The live checks for #35 and #37 are the report above. #30 and #31 stay open.
 
 **#30** auth/database scripts (`auth-database-check.mjs --g3-ui` and `--g5-ui`, plus the three SQL files) were **not** re-run. This checkout has no `.env.local` and no Supabase CLI login. The issue stays open. Evidence: [VERIFY-01](docs/tasks/VERIFY-01-regression-on-main.md).
 

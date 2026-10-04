@@ -23,7 +23,7 @@ Decided October 3, 17:23 EDT. Built October 4 as the four-starter picker ([PR #8
 
 The picker is on the saved-person page, under "Look and voice." The browser sends a starter name (`roommate`, `professor`, `decline`, `manager`) or null for Default. It never sends a provider id. The server maps that name to the starter's face and PAL. The larger catalog of about eight faces was cut with Phase 4. The stand-in face stays reserved and is not one of the four.
 
-A live call with a non-default face has not been reported. Until that call, this picker is automated-tested and **live not verified**. Details: [docs/02](02-UX.md), [docs/06](06-ELEVENLABS.md), [docs/26](26-PEOPLE-AND-SHARING.md).
+October 4, ~10:23 AM America/Detroit: the owner ran a call after choosing Alex’s look and voice and reported the morning’s tests as "it all worked." That report is not itemized. Details: [docs/02](02-UX.md), [docs/06](06-ELEVENLABS.md), [docs/26](26-PEOPLE-AND-SHARING.md).
 
 ## One-moment retry, October 3, 21:26 EDT
 

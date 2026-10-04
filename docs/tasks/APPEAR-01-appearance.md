@@ -14,10 +14,10 @@ CI run: not run
 
 The picker shipped in [PR #87](https://github.com/esaba12/conversaton-practice/pull/87) (`9689b15`), narrower than the original catalog: Default plus Alex, Ellis, Sam, and Jordan. Server mapping, unit tests for the mapping and the start body, and the two-owner `person_set_preset` SQL check are recorded on [Z](Z-faces-landing.md). This update covers the remaining docs: docs/00, docs/02, docs/06, and docs/26.
 
-Still open: one live call with a non-default face. The owner runs it. Issue #37 stays open until that call is reported and these docs are on `main`. No upload, no cloning, no provider ids in the browser.
+The owner ran that call on October 4, ~10:23 AM America/Detroit, after choosing Alex’s look and voice, and reported the morning’s tests as "it all worked." Not itemized. No upload, no cloning, no provider ids in the browser.
 
 - [x] docs/00, docs/02, docs/06, and docs/26 describe the four-starter picker
-- [ ] One live call with a non-default face (owner)
+- [x] One live call with a non-default face (owner: "it all worked," not itemized)
 
 ## Assignment and isolation
 
