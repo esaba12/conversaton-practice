@@ -7,7 +7,7 @@ Coordinator: wow-pass coordinator (main checkout)
 Gate: Wow pass Phase 1
 Requirements/tests: docs/next/02-BUILD-PLAN.md §3 1C; docs/32 P2, Q2; docs/next/04-NEW-SPECS.md W2, W11; docs/next/03-CONTRACTS.md §2 (C1 frozen, including the staging notes at the top of §2), §2.5 (M1), §2.9 (starter faces); docs/07, docs/08, docs/26
 GitHub issue: https://github.com/esaba12/conversaton-practice/issues/62
-Pull request: not opened
+Pull request: https://github.com/esaba12/conversaton-practice/pull/70 (draft)
 CI run: not run
 
 ## Assignment and isolation
