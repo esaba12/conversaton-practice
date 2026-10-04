@@ -6,7 +6,7 @@ All slices through Phase 3 in the compressed plan (docs/next/02-BUILD-PLAN.md §
 
 Demo account: `scripts/demo/seed.mjs` with `DEMO_EMAIL`/`DEMO_PASSWORD` in `.env.local` (fictional, not committed). It is seeded now (Jordan, two shared facts, check-in due today); rerun before the demo.
 
-Known gaps: portrait morphs not wired; goal pill hidden at ≤700px; stand-in PAL/face not provisioned (stand-in start returns 503 by design); sounds not listened to; preview TTS model differs for role and saved-person previews; nobody has run a live call since Phase 0. Cut by owner: Phase 4, brave things, people restyle, demo clip, new catalog PALs. The public deployment has not been updated.
+Known gaps: portrait morphs not wired; goal pill hidden at ≤700px; stand-in PAL/face not provisioned (stand-in start returns 503 by design); sounds not listened to; preview TTS model differs for role and saved-person previews; nobody has run a live call since Phase 0. Cut by owner: Phase 4, brave things, people restyle, demo clip, new catalog PALs. **Deployed (owner request, ~03:05):** `main` `fc94cc8` is live at https://conversation-practice-zeta.vercel.app (`dpl_GHHraLRTVzPtUf3LjedKehkaJzvL`), deployed from a clean worktree. Vercel production now has the four starter and stand-in face/PAL/voice ids, and its default face/PAL switched to the quality pair (owner A/B choice). Smoke check: new landing served, no "therap", signed-out `/practice` redirects to sign-in, preset API returns 401, none of the 20 provider ids or names in the landing JavaScript. Live not verified on production.
 
 ## Wow pass build started (October 3, 22:50 EDT)
 
