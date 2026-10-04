@@ -180,7 +180,21 @@ export async function connectSession(db: Db, id: string) {
 }
 
 // Commits the terminal state first; repeated calls retry remote cleanup for a bound provider ID.
+async function sessionChannel(db: Db, id: string): Promise<"video" | "text"> {
+  try {
+    const { data, error } = await db.from("practice_sessions").select("channel").eq("id", id).maybeSingle();
+    if (error || !data || typeof data !== "object") return "video";
+    return (data as { channel?: unknown }).channel === "text" ? "text" : "video";
+  } catch {
+    return "video";
+  }
+}
+
 export async function endSession(db: Db, id: string, reason: EndReason) {
+  if (await sessionChannel(db, id) === "text") {
+    const { finishTextSession } = await import("@/lib/text/finish");
+    return finishTextSession(db, id, reason);
+  }
   const secret = capability();
   const row = await sessions.end(db, secret, id, reason);
   return { session: sessions.publicSession(await cleanUp(db, secret, row)) };

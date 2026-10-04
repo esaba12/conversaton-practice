@@ -3,6 +3,7 @@ test("public entry leads to required sign-in", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Find your words. Then take them with you." })).toBeVisible();
   await expect(page.getByRole("heading", { name: "What stays in your hands" })).toBeVisible();
+  await expect(page.getByText("You can also rehearse by text message with the same fictional character.")).toBeVisible();
   await expect(page.getByText("Illustration only. A real practice uses a live video call after you sign in.")).toBeVisible();
   await page.getByRole("link", { name: "Start with a conversation" }).click();
   await expect(page).toHaveURL(/\/auth\/sign-in/);

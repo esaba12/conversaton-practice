@@ -11,6 +11,7 @@ import { HearButton, useHearHighlight } from "@/components/practice/hear-button"
 import { Lobby, starterPortraitPath } from "@/components/practice/lobby";
 import { CallStage } from "@/components/practice/call-stage";
 import { MeetCard, meetStateFromProgress, useStreamedDraft, type MeetState } from "@/components/practice/meet-card";
+import { TextLive, TextStart } from "@/components/practice/text-start";
 import { personRole, personStartSituation, situationFromRole, type MeetStart } from "@/components/practice/meet-knowledge";
 import { RecapStage } from "@/components/practice/recap-stage";
 import { RETRY_DURATION_SECONDS } from "@/components/practice/recap-retry";
@@ -44,7 +45,7 @@ import { appendTurn, type TranscriptTurn } from "@/lib/schemas/reflection";
 import { roleContextSchema, type RoleContext } from "@/lib/schemas/role-context";
 import type { EndReason, SessionPreset, StartResponse } from "@/lib/schemas/session";
 import type { Situation } from "@/lib/schemas/situation";
-import { SessionClientError, endSession, markConnected, startPresetSession, startSavedPersonSession, startSession } from "@/lib/session/api-client";
+import { SessionClientError, endSession, markConnected, startPresetSession, startSavedPersonSession, startSession, startTextPractice } from "@/lib/session/api-client";
 
 const CALL_CAP_MESSAGE = "That’s three calls for this sitting. Take a break, or practice with someone else.";
 
@@ -70,6 +71,7 @@ export function PracticeWorkspace() {
   const [cleanup, setCleanup] = useState<Cleanup | null>(null);
   const [cleanupTarget, setCleanupTarget] = useState<CleanupTarget | null>(null);
   const [signingOut, setSigningOut] = useState(false);
+  const [texting, setTexting] = useState<{ id: string; name: string } | null>(null);
   const [headerMessage, setHeaderMessage] = useState("");
   // Setup content is transient: never persisted, and private notes go only to generateDraft.
   const [moveFocus, setMoveFocus] = useState(false);
@@ -413,6 +415,25 @@ export function PracticeWorkspace() {
     void launch({ kind: "role", role }, goal, (idempotencyKey) => preset
       ? startPresetSession({ preset, durationSeconds, idempotencyKey })
       : startSession({ role, durationSeconds, idempotencyKey }));
+  }
+
+  async function startText() {
+    const role = parseReviewedRole(reviewRole);
+    if (!role) return;
+    const person = savedPerson ?? draftPerson;
+    const idempotencyKey = crypto.randomUUID();
+    const situation: Situation | undefined = person && (draftPerson || personStartSituation(person, role) === "custom") ? situationFromRole(role) : undefined;
+    const preset = examplePreset && setupMode === "example" && JSON.stringify(role) === JSON.stringify(roleContextSchema.parse(examples[examplePreset].role)) ? examplePreset : null;
+    try {
+      const started = person
+        ? await startTextPractice({ idempotencyKey, durationSeconds, personId: person.id, expectedVersion: person.version, ...(situation ? { situation } : {}) })
+        : preset
+          ? await startTextPractice({ idempotencyKey, durationSeconds, preset })
+          : await startTextPractice({ idempotencyKey, durationSeconds, role });
+      setTexting({ id: started.session.id, name: role.name });
+    } catch (error) {
+      setSetupMessage(error instanceof SessionClientError ? error.message : "Text practice could not start.");
+    }
   }
 
   // W10: a stand-in plays the user's side once. Only the goal and hard-moment line go with it, to the stand-in alone.
@@ -761,7 +782,7 @@ export function PracticeWorkspace() {
     <main id="main">
       {headerMessage && <p role="status" className="notice">{headerMessage}</p>}
       <StageTransition stage={flow.stage}>
-      {phase === null ? (flow.stage === "meet"
+      {texting ? <TextLive name={texting.name} onEnd={async () => { await endSession(texting.id, "user").catch(() => undefined); setTexting(null); }} /> : phase === null ? (flow.stage === "meet"
         ? <MeetCard identity={{ name: meetName, relationship: meetRelationship, portraitSrc }} state={meetState} onRoleChange={setReviewRole}
             hear={meetState.status === "ready" && meetState.role.opening.trim()
               ? <HearButton name={meetName} text={meetState.role.opening} presetId={meetStart.kind === "preset" ? meetStart.preset : undefined} onPlayingChange={hearHighlight.onPlayingChange} />
@@ -771,6 +792,7 @@ export function PracticeWorkspace() {
             durationSeconds={durationSeconds} onDurationChange={setDurationSeconds}
             onBack={() => { draftStream.cancel(); if (savedPerson) leavePerson(); else backToDescribe(); }}
             onCall={() => toGreenRoom(false)}
+            textAction={<TextStart disabled={signingOut} onStart={startText} />}
             actions={offer.shown ? ({ enabled, reason }) => (
               <StandInOfferButtons counterpartName={meetName} offer={offer} onShowMeFirst={() => toGreenRoom(true)} onSkip={() => toGreenRoom(false)}
                 callDisabledReason={enabled ? undefined : reason} />) : undefined}

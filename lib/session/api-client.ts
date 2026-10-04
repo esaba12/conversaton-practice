@@ -2,7 +2,8 @@ import type { z } from "zod";
 import { draftResponseSchema, type DraftRequest, type DraftResponse } from "@/lib/schemas/draft";
 import { errorSchema, type ErrorCode } from "@/lib/schemas/errors";
 import type { RoleContext } from "@/lib/schemas/role-context";
-import { sessionResponseSchema, startResponseSchema, type EndReason, type PracticeSession, type SessionPreset, type StartResponse } from "@/lib/schemas/session";
+import { sessionResponseSchema, startRequestSchema, startResponseSchema, type EndReason, type PracticeSession, type SessionPreset, type StartResponse } from "@/lib/schemas/session";
+import { textSessionResponseSchema } from "@/lib/schemas/text";
 import { situationSchema, type Situation } from "@/lib/schemas/situation";
 
 export type SessionClientErrorCode = ErrorCode | "NETWORK" | "MALFORMED_RESPONSE";
@@ -59,6 +60,10 @@ export function startPresetSession({ preset, durationSeconds, idempotencyKey = c
 // the server loads identity and shared facts.
 export function startSavedPersonSession({ personId, expectedVersion, situation, durationSeconds, idempotencyKey = crypto.randomUUID() }: { personId: string; expectedVersion: number; situation?: Situation; durationSeconds: 180 | 300; idempotencyKey?: string }): Promise<StartResponse> {
   return post("/api/sessions", { idempotencyKey, personId, expectedVersion, ...(situation ? { situation: situationSchema.parse(situation) } : {}), durationSeconds }, startResponseSchema);
+}
+
+export function startTextPractice(body: z.input<typeof startRequestSchema>) {
+  return requestJson("POST", "/api/text/sessions", startRequestSchema.parse(body), textSessionResponseSchema);
 }
 
 export async function markConnected(id: string): Promise<PracticeSession> {

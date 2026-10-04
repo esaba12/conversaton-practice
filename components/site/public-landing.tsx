@@ -43,6 +43,8 @@ export function PublicLanding() {
           ))}
         </section>
 
+        <p className="text-aside">You can also rehearse by text message with the same fictional character. After you sign in, add your number and text a one-time code to the practice line, then press Text or pick a saved person or an example from a card in the thread. Text does not start a video call. End on the site, or END or STOP in the thread, closes it.</p>
+
         <section className="assurance" aria-labelledby="assurance-title">
           <h2 id="assurance-title">What stays in your hands</h2>
           <div>

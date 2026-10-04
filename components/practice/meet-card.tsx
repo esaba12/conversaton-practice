@@ -58,6 +58,8 @@ export type MeetCardProps = {
   extras?: ReactNode;
   /** Replaces the Call button when it returns content, e.g. 1G's "Show me first" offer. Gets whether a call may start and why not. */
   actions?: (call: { enabled: boolean; reason: string }) => ReactNode;
+  /** Sits beside Call. Text practice; it does not open the green room or the call. */
+  textAction?: ReactNode;
   focusHeading?: boolean;
 };
 
@@ -306,7 +308,7 @@ export function ToneNotice({ name, tone = "room" }: { name: string; tone?: "room
 
 export function MeetCard({
   identity, state, onRoleChange, editable = "all", start, privateNotes = "", durationSeconds, onDurationChange, onBack, onCall, onRetry,
-  disabled = false, disabledReason = "Please wait a moment.", hear, bubbleClassName, extras, actions, focusHeading = false,
+  disabled = false, disabledReason = "Please wait a moment.", hear, bubbleClassName, extras, actions, textAction, focusHeading = false,
 }: MeetCardProps) {
   const id = useId();
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -445,6 +447,7 @@ export function MeetCard({
             {actions?.({ enabled: canCall, reason: reason || "Please wait a moment." }) ?? (canCall
               ? <PrimaryButton label={`Call ${name}`} icon={Phone} onClick={onCall} />
               : <PrimaryButton label={`Call ${name}`} icon={Phone} disabled disabledReason={reason || "Please wait a moment."} />)}
+            {textAction}
           </div>
           <p className={styles.fine}>A fictional AI character for practice. Real people may react differently.</p>
         </div>

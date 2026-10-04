@@ -75,7 +75,7 @@ Work through the build gates in order, with parallel tasks inside each gate. The
 - Repository specs and task evidence remain the detailed source of truth; GitHub tracks work and review. Do not put secrets, private practice content, or local environment files in issues, commits, Actions logs, or artifacts.
 
 ## Photon stretch
-The October 4 text-practice shape is docs/17-PHOTON-TEXT-PRACTICE.md: link a number on the website, then start from the review screen or from a Photon app card in the thread. It is specified and not built. Do not implement it during the current gates. Use Spectrum for iMessage only. Phone-call practice is not Photon. No existing-chat ingestion, contact access, messages to real counterparts, unsolicited follow-ups, or automatic memory writes. Confirm current SDK types and webhook verification before coding. Proposed application routes are not Photon APIs.
+The October 4 text-practice shape is docs/17-PHOTON-TEXT-PRACTICE.md: link a number on the website, then start from the review screen or from a Photon app card in the thread. It is implemented on this branch, not merged, and live not verified. It stays unmerged until a real iMessage round trip. The live video call remains the demo. Use Spectrum for iMessage only. Phone-call practice is not Photon. No existing-chat ingestion, contact access, messages to real counterparts, unsolicited follow-ups, or automatic memory writes. Confirm current SDK types and webhook verification before coding. Proposed application routes are not Photon APIs.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

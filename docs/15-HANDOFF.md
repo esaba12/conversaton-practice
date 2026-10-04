@@ -14,4 +14,4 @@ Settled direction: required sign-in; generated editable situations; fictional co
 
 Record checks as static/unit/mock/live, preserving failures and repairs. Do not close issues or mark gates passed from scaffolding alone. Review and integrate one task at a time; keep useful GitHub handoffs.
 
-Submission target remains October 4 at 11:30 AM America/Detroit, before the recorded noon deadline. Photon/Relay stay deferred until every core gate and submission preparation are covered.
+Submission target remains October 4 at 11:30 AM America/Detroit, before the recorded noon deadline. Text practice is implemented on this branch and stays unmerged until a real iMessage round trip. The live video call remains the demo. Relay stays deferred.

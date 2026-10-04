@@ -6,9 +6,12 @@ import { cleanupSchema, sessionSchema, sessionStatusSchema, type EndReason, type
 
 // Always the request-scoped user-JWT client from requireIdentity(); never a service-role client.
 export type Db = Pick<Awaited<ReturnType<typeof createAuthClient>>, "rpc" | "from">;
-export type SessionRow = { id: string; status: SessionStatus; expiresAt: string; cleanup: PracticeSession["cleanup"]; providerId: string | null };
+export type SessionRow = { id: string; status: SessionStatus; expiresAt: string; cleanup: PracticeSession["cleanup"]; providerId: string | null; channel: "video" | "text" };
 
-const rowSchema = z.object({ id: z.uuid(), status: sessionStatusSchema, expires_at: z.string(), cleanup: cleanupSchema, provider_conversation_id: z.string().nullable() });
+const rowSchema = z.object({
+  id: z.uuid(), status: sessionStatusSchema, expires_at: z.string(), cleanup: cleanupSchema,
+  provider_conversation_id: z.string().nullable(), channel: z.enum(["video", "text"]).optional(),
+});
 const markers: Record<string, [ErrorCode, string, number]> = {
   FORBIDDEN: ["FORBIDDEN", "This practice session is not available.", 403],
   INVALID_INPUT: ["VALIDATION_ERROR", "The request was not valid.", 400],
@@ -28,8 +31,8 @@ function toRow(raw: unknown): SessionRow {
   const parsed = rowSchema.safeParse(raw);
   const expires = parsed.success ? new Date(parsed.data.expires_at) : null;
   if (!parsed.success || !expires || Number.isNaN(expires.getTime())) throw unavailable();
-  const { id, status, cleanup, provider_conversation_id: providerId } = parsed.data;
-  return { id, status, cleanup, providerId, expiresAt: expires.toISOString() };
+  const { id, status, cleanup, provider_conversation_id: providerId, channel } = parsed.data;
+  return { id, status, cleanup, providerId, channel: channel ?? "video", expiresAt: expires.toISOString() };
 }
 export function publicSession(row: SessionRow): PracticeSession {
   return sessionSchema.parse({ id: row.id, status: row.status, expiresAt: row.expiresAt, cleanup: row.cleanup });

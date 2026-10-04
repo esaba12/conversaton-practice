@@ -50,7 +50,7 @@ Around 18:48–18:52 EDT the human saved a person and edited chips on a real cal
 ## Leave alone
 
 - Memory proposals (PRD P07 / tests T04–T07). G3 replaced them with explicit Save / Update.
-- Photon and Relay. First stretch only after submission prep is covered (docs/17).
+- Text practice is implemented on this branch and stays unmerged until a real iMessage round trip (docs/17). The live video call remains the demo. Relay stays deferred.
 - A full repeat of the call. The later shape is the one-moment retry in [docs/30](30-ONE-MOMENT-RETRY.md): decided, not built, and after submission. The old optional shortcut stays early in the docs/10 cut order.
 - A second model provider, voice cloning, photo upload, group calls, scores, and branching replay.
 - Dependency upgrades.

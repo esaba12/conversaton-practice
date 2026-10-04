@@ -11,7 +11,7 @@ The founder's experience is specific: a therapist played the other person so he 
 - One human builder, explicitly using multiple coding agents and worktrees in Warp. Parallelize independent engineering tasks inside ordered product gates. Keep shared contracts and integration under one coordinator; see docs/19-AGENT-WORKFLOW.md. This app's service access and credentials are not yet verified.
 - Fresh sessions are desired. Approved settings can persist without carrying fictional events into later sessions.
 - The user confirmed live roleplay: generate the counterpart, context, and opening from a user-described situation, then respond live to the user's speech. Written dialogue generation is outside the current scope.
-- Keep situation generation in core scope. Defer Photon until all core gates pass; simplify automated reflection and extra voices first.
+- Keep situation generation in core scope. The October 3 plan deferred Photon until the core gates passed. Current status is the October 4 text-practice section: implemented on this branch, unmerged until a real iMessage round trip. Simplify automated reflection and extra voices before cutting the video call.
 - The project remains unnamed.
 - Latest infrastructure direction: return to Supabase Auth/PostgreSQL because AWS credits will not arrive in time. This explicitly supersedes the earlier AWS/Cognito/Aurora plan. Keep required sign-in; no anonymous workspace. The user supplied the fresh project configuration; Auth health passed, while sign-in/database integration remains unverified. No unrelated project is being reused.
 - Sign-in is required before all persona/conversation design and practice. This supersedes anonymous sign-in and guest-first entry.
@@ -51,7 +51,7 @@ Research behind the one-moment retry, reviewed October 3. It informs the design.
 
 ## Text practice, October 4, 00:13 EDT
 
-Decided, not built. The buildable shape is [docs/17](17-PHOTON-TEXT-PRACTICE.md).
+Implemented on this branch, not merged, live not verified. It stays unmerged until a real iMessage round trip. The shape is [docs/17](17-PHOTON-TEXT-PRACTICE.md).
 
 Text is a later channel on the same practices. The user adds a mobile number on the website once. After that number is verified by texting a code to the Photon line, text practice unlocks. They can start from the review screen with Text, or text the line and pick a saved person or an example from a Photon app card in the thread. Both paths take the same session lease as a video call and do not open Tavus. In-person practice stays the video call. A phone-call practice, if it is built later, uses ElevenLabs and is not part of this decision.
 

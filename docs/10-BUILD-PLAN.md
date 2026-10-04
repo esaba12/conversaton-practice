@@ -2,7 +2,7 @@
 
 Confirmed scope: FaceTime-style calls with a visible talking AI counterpart are the main draw. Real synchronized video is required in G1. Complete the bounded provider feasibility checks in [live video](22-LIVE-VIDEO.md) before freezing media contracts; independent auth/database work can proceed in parallel. Voice-only, static portraits, and prerecorded responses do not pass.
 
-Confirmed team: one human builder coordinating multiple coding agents. Pass the gates in order; parallelize independent tasks within the active gate. Situation generation is a core user requirement and must not be removed as a solo scope cut. Start with one stock avatar and one voice and simplify automated reflection before compromising generation or live practice. Photon is deferred until all core gates pass and submission preparation is covered.
+Confirmed team: one human builder coordinating multiple coding agents. Pass the gates in order; parallelize independent tasks within the active gate. Situation generation is a core user requirement and must not be removed as a solo scope cut. Start with one stock avatar and one voice and simplify automated reflection before compromising generation or live practice. Text practice is implemented on this branch and stays unmerged until a real iMessage round trip. The live video call remains the demo.
 
 These are elapsed build targets, not a promise that a full 24 hours remains. Adjust optional work to the actual start time while preserving the submission buffer. The user authorizes proactive coding-agent delegation and worktrees; use them where they reduce the active gate's critical path.
 
@@ -98,7 +98,7 @@ Verify receipt and required fields, charge devices, and prepare the headset and 
 G1–G5 are implemented. The empty checkboxes above are the original elapsed targets, not a list of unfinished gates. On `main` after the gates: three example presets, a 3- or 5-minute choice, collapsed captions, saved-person session attribution, and a public landing with Google sign-in in the UI. Still open — live checks, Devpost, a project name, hosting, and the unbuilt appearance catalog — is [docs/29](29-REMAINING-WORK.md).
 
 ## Sponsor scope gate
-Keep the live video call, situation generation, and the core loop first. Defer Relay and Photon for the solo MVP. Gemini can replace the setup/reflection provider before that layer is implemented, but do not maintain two providers. Notability requires genuine Pro usage, a tools tag, a usage note, and two screenshots. Figma eligibility and prize stacking remain questions for organizers.
+Keep the live video call, situation generation, and the core loop first. Defer Relay. Text practice is implemented on this branch and stays unmerged until a real iMessage round trip. The live video call remains the demo. Gemini can replace the setup/reflection provider before that layer is implemented, but do not maintain two providers. Notability requires genuine Pro usage, a tools tag, a usage note, and two screenshots. Figma eligibility and prize stacking remain questions for organizers.
 
 ## Scope cuts
 Cut in order: Photon/other extra channels -> decorative UI motion -> the appearance preset catalog (docs/00; still unbuilt) -> the one-moment retry (docs/30; decided, not built; this replaces the older optional repeat-practice shortcut) -> automated reflection (keep self-reflection and explicit preference review). Recovery from a failed connection remains required. Do not start the preset catalog during the open G3 gate.
@@ -108,6 +108,5 @@ If database setup blocks progress, continue isolated development with a labeled 
 ## Per-task handoff
 Each worker records owned files, contract revision, changes, actual checks, blocker, and next action in its docs/tasks/ record. Only the coordinator updates STATUS.md after review/integration. Shared schemas and entrypoints have one assigned writer.
 
-## First stretch allocation: Photon
-Deferred for the solo MVP. Only consider a time-boxed 60-90 minute feasibility spike after all core gates pass and demo/submission preparation is covered. Verify a real Spectrum iMessage round trip and identity mapping before expanding scope. Do not wait for a sponsor workshop to prove the core video call.
-If access or integration is blocked, stop the spike. If successful and time remains, implement explicit start/end, shared approved persona settings, isolated temporary text context, delivery deduplication, and web reflection. Complete the relevant identity and closure tests before demonstrating the extension. Do not pursue Relay simultaneously. Text is the first scope cut if it jeopardizes the primary demo or submission.
+## Photon text practice
+Text practice is implemented on this branch and stays unmerged until a real iMessage round trip. The live video call remains the demo. No Photon line, webhook, or domain delivery has succeeded. Do not demonstrate text as a working integration until that round trip. Do not pursue Relay simultaneously. Text is the first scope cut if it jeopardizes the primary demo or submission.

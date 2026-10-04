@@ -1,6 +1,18 @@
 # Photon text practice
 
-Status: **specified, not built, not verified.** Decision recorded October 4, 2026, 00:13 America/Detroit, against `main` `916e5908a8a14f913ba4e88d5a7adee372d11892` (merge of contracts/c1). No Photon account, line, webhook, package install, or message has been created for this spec.
+Status: **snapshot on `docs/photon-text`, not merged, live not verified.** Taken October 4, 2026, out of time. `spectrum-ts` 12.10.1. Video calls do not read the Photon environment variables. The landing mention does not mean text works.
+
+## Shortcomings
+
+Do not merge this as a finished channel.
+
+- The migration `20261004130000_text_channel.sql` has not been applied to the shared database, and there is no SQL test run for it.
+- A Spectrum project id and secret are in the main checkout’s local env only. `SPECTRUM_WEBHOOK_SECRET`, `PHOTON_LINE_E164`, and `PHOTON_PUBLIC_ORIGIN` are unset. Those values are not on Vercel.
+- The Photon dashboard is on Free & Pro and shows `account_phone_missing`. There is no line number to text. A shared-pool plan does not give this app one stable number. A dedicated line is a Business-plan charge and was not created.
+- The webhook is not registered. Production does not serve `POST /api/integrations/photon/events`. `speakeasyapp.tech` was added in Vercel, and DNS was not pointed yet.
+- No iMessage has been sent or received. The signed-in Text control was not opened in a browser. Unit tests passed earlier in this worktree (792). That is not a live check.
+- This branch’s landing is the older public page, not the SpeakEasy landing on `ui/redesign`. Merging the two will conflict.
+- The branch was last merged with main at `5e0e793` and does not include later main, redesign, or privacy work.
 
 Documentation used: Photon **Stable** only ([docs index](https://photon.codes/docs/llms.txt), [Spectrum getting started](https://photon.codes/docs/spectrum-ts/getting-started), [webhooks](https://photon.codes/docs/webhooks), [events](https://photon.codes/docs/webhooks/events), [app cards](https://photon.codes/docs/spectrum-ts/content/app), [iMessage provider](https://photon.codes/docs/spectrum-ts/providers/imessage)). The Photon agent skill in `photon-hq/skills` pins `spectrum-ts` 12.2.0. That pin is a reading target, not an installed version. Before coding, read the installed package types and the Stable verifier page ([verifying signatures](https://photon.codes/docs/webhooks/verifying-signatures)). Do not paste a shortened signature check into the app.
 

@@ -61,5 +61,5 @@ Execution steps, including the push of local polish and the backup recording, ar
 
 Sources: S35-S38 in [sources](14-SOURCES.md).
 
-## Photon extension if implemented
-Keep the main pitch inside three minutes. For sponsor judging, demonstrate a real iMessage exchange with the configured fictional roommate, then End and open web reflection. Explain shared approved preferences and isolated session histories. Show actual Spectrum usage in the submission. Do not add Photon to the tools/prize entry as a working integration unless the real round trip works. A separate 20-30 second recorded text demonstration can support Q&A without displacing the core live voice exchange.
+## Photon text practice
+Text practice is implemented on this branch and stays unmerged until a real iMessage round trip. The live video call remains the demo. Keep the main pitch inside three minutes. No Photon line, webhook, or domain delivery has succeeded. Do not add Photon to the tools or prize entry as a working integration unless that round trip works. If it does, a sponsor demo can show a real iMessage exchange with the fictional roommate, then End and open web reflection, and explain shared approved preferences and isolated session histories. A separate 20–30 second recorded text demonstration can support Q&A without displacing the core live video exchange.

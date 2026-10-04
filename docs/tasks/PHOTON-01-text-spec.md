@@ -1,7 +1,7 @@
 # PHOTON-01: Specify text practice
 
-Status: review
-Updated: October 4, 2026, 00:20 America/Detroit
+Status: review. Implementation is in this worktree and is not merged.
+Updated: October 4, 2026, 03:10 America/Detroit
 Assigned writer: docs session on the photon-text worktree
 Coordinator: unassigned
 Gate: N/A. Documentation only. Text practice is not in the current wow-pass gates.
@@ -24,6 +24,8 @@ CI run: not run
 ## Scope and acceptance
 
 Outcome: docs/17 is the build map for iMessage practice. A linked website number unlocks it. Start is either the review screen or a Photon app card that picks a saved person or an example.
+
+The same worktree now contains the implementation (`spectrum-ts` 12.10.1, migration `20261004130000_text_channel.sql`, text routes, and the review-screen Text control). It is uncommitted and unmerged. The migration has not been applied. Live Photon behavior is not verified.
 
 Non-goals: application code, a Photon account, a phone-call channel, STATUS.md.
 

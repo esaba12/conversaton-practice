@@ -144,7 +144,7 @@ describe("POST /api/sessions/[id]/reflect", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(reflectResponseSchema.parse(await response.json())).toEqual({ reflection: output() });
-    expect(queries).toEqual([["from", ["practice_sessions"]], ["select", ["id,status,kind"]], ["eq", ["id", id]]]);
+    expect(queries).toEqual([["from", ["practice_sessions"]], ["select", ["id,status,kind,channel"]], ["eq", ["id", id]]]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     row = { data: { id, status: "interrupted" }, error: null };
     provider(() => ok(output()));

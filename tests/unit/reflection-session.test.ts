@@ -10,7 +10,7 @@ function db(row: Record<string, unknown> | null) {
 
 describe("requireEndedSession", () => {
   it("accepts an ended practice", async () => {
-    await expect(requireEndedSession(db({ id, status: "ended", kind: "practice" }), id)).resolves.toBeUndefined();
+    await expect(requireEndedSession(db({ id, status: "ended", kind: "practice" }), id)).resolves.toEqual({ channel: "video" });
   });
 
   it("treats an ended stand-in call as not found, so it is never reflected on", async () => {

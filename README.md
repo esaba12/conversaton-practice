@@ -37,7 +37,7 @@ On restart, begin with [STATUS.md](STATUS.md) and [AGENTS.md](AGENTS.md). Work s
 15. [Sources](docs/14-SOURCES.md)
 16. [Handoff and first Codex prompt](docs/15-HANDOFF.md)
 17. [MHacks prize strategy and confirmed requirements](docs/16-MHACKS-STRATEGY.md)
-18. [Photon text-message rehearsal stretch](docs/17-PHOTON-TEXT-PRACTICE.md)
+18. [Photon text practice](docs/17-PHOTON-TEXT-PRACTICE.md)
 19. [Latest design, required sign-in, and backend direction](docs/18-DESIGN-AND-AWS.md)
 20. [Multiagent workflow, Warp, and worktrees](docs/19-AGENT-WORKFLOW.md)
 21. [Documentation and verification standard](docs/20-DOCUMENTATION-STANDARD.md)
@@ -55,7 +55,7 @@ Repository: [esaba12/conversaton-practice](https://github.com/esaba12/conversato
 
 Gates G1–G5 are implemented. Workers maintain task evidence; the coordinator updates STATUS.md. This is a development workflow, not another application dependency.
 
-First stretch after all core gates pass: bounded iMessage rehearsal using Photon Spectrum. Deferred for the solo MVP. Share approved persona/profile settings, keep session histories separate, and keep reflection in the web app. Implementation is gated on remaining time, sponsor access, and current SDK verification.
+Text practice is implemented on this branch and stays unmerged until a real iMessage round trip. The live video call remains the demo. Share approved persona settings, keep session histories separate, and keep reflection in the web app. No Photon line, webhook, or domain delivery has succeeded, so the channel is not live-verified.
 
 [AGENTS.md](AGENTS.md) applies from this project root and carries the workflow across restarts and coding-agent sessions.
 
@@ -71,7 +71,7 @@ Confirmed event strategy: Actually Intelligent plus both listed ElevenLabs categ
 
 Confirmed: one human with parallel coding agents, fresh sessions, user-described situations as the primary input, warm minimal/crisp modern design, and sign-in before all workspace actions. The user supplied a fresh Supabase project; Auth and owner isolation are automated-tested. Situation generation is core scope.
 
-On `main`: three example starts (Alex, Ellis, Sam), a 3- or 5-minute choice, collapsed captions, saved-person session attribution, and a public landing with a signed-in home and a Google sign-in button. Google sign-in is not live-checked. Still open, in [docs/29](docs/29-REMAINING-WORK.md): appearance presets, a project name, app hosting, live G3–G5 checks, and Devpost. A one-moment retry is specified in [docs/30](docs/30-ONE-MOMENT-RETRY.md) and is not part of the submission build. Photon/Relay remain deferred.
+On `main`: three example starts (Alex, Ellis, Sam), a 3- or 5-minute choice, collapsed captions, saved-person session attribution, and a public landing with a signed-in home and a Google sign-in button. Google sign-in is not live-checked. Still open, in [docs/29](docs/29-REMAINING-WORK.md): appearance presets, a project name, app hosting, live G3–G5 checks, and Devpost. A one-moment retry is specified in [docs/30](docs/30-ONE-MOMENT-RETRY.md) and is not part of the submission build. Relay remains deferred. Text practice is implemented on this branch and stays unmerged until a real iMessage round trip. The live video call remains the demo.
 
 ## Evidence policy
 

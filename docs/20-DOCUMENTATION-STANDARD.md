@@ -28,7 +28,7 @@ specification before implementing against a competing interpretation.
 | Submission and event strategy | `11-DEMO-AND-SUBMISSION.md`, `16-MHACKS-STRATEGY.md` |
 | Tool setup and external evidence | `12-CODEX-SETUP.md`, `13-TOOL-RESEARCH.md`, `14-SOURCES.md`, `../tooling/README.md` |
 | Restart instructions | `15-HANDOFF.md`, with live progress in `../STATUS.md` |
-| Text practice (specified October 4, not built) | `17-PHOTON-TEXT-PRACTICE.md` |
+| Text practice (implemented on this branch, not merged, live not verified) | `17-PHOTON-TEXT-PRACTICE.md` |
 | Agent coordination and task evidence | `19-AGENT-WORKFLOW.md`, `tasks/<task-id>.md` |
 
 Paths in this table are relative to `docs/` unless indicated. README is an index and
