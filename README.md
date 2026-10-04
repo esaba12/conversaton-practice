@@ -33,7 +33,7 @@ The counterpart's context is built from an allowlist: role, traits, and the fact
 
 ## Status
 
-`main` `9b7bc93` is in production. CI passes: typecheck, 792 unit tests, build, client-bundle check, and Playwright (12 passed, 3 skipped without the service-role key).
+Production runs `main` `9b7bc93`. CI passes there: typecheck, 792 unit tests, build, client-bundle check, and Playwright (12 passed, 3 skipped without the service-role key). `main` has since gained [PR #102](https://github.com/esaba12/conversaton-practice/pull/102), a look-and-voice picker for a new practice (795 unit tests, CI green). It is not deployed and has not been tried on a live call.
 
 On October 4 at about 10:23 AM, the builder ran the current path live on the deployed app and reported that it all worked. That path was saved Jordan, Show me first, the call, the recap, and one retry, then a call using Alex's look and voice. The report is not itemized. At about 11:20 AM the builder ran another call on the redesigned app in production and reported "all was good." Sharing, chip-tone changes, Your data and video-loss handling are tested automatically and have not been checked live. Details: [STATUS.md](STATUS.md) and [LIVE-01](docs/tasks/LIVE-01-human-checks.md).
 
