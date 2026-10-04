@@ -20,7 +20,7 @@ function onAppMessage(e){const d=e?.data;if(!d||typeof d.event_type!=='string')r
  else if(d.event_type==='conversation.started_speaking'&&role==='user')mark('user started speaking');
  else if(d.event_type==='conversation.stopped_speaking'&&role==='user'){mark('user stopped speaking');pending={what:'user stopped',at:performance.now()};}}
 function interaction(event_type,properties){if(!call||!conversationId)return;call.sendAppMessage({message_type:'conversation',event_type,conversation_id:conversationId,properties},'*');}
-$('wrap').onclick=()=>{interaction('conversation.append_context',{context:'Start wrapping up the conversation naturally in your next reply or two. Do not mention time, the app, or practice.'});pending={what:'append_context sent',at:performance.now()};mark('append_context sent (wrap-up)');};
+$('wrap').onclick=()=>{interaction('conversation.append_llm_context',{context:'Start wrapping up the conversation naturally in your next reply or two. Do not mention time, the app, or practice.'});pending={what:'append_context sent',at:performance.now()};mark('append_context sent (wrap-up)');};
 $('respond').onclick=()=>{const text=$('typed').value.trim().slice(0,300);if(!text)return;interaction('conversation.respond',{text});$('typed').value='';pending={what:'respond sent',at:performance.now()};mark('conversation.respond sent');};
 function stopPreview(){if(preview)preview.getTracks().forEach(t=>t.stop());preview=null;$('preview').srcObject=null;$('camera').textContent='Enable local camera preview'}
 function detach(){const stream=$('remote').srcObject;$('remote').pause();$('remote').srcObject=null;stopPreview();return stream}

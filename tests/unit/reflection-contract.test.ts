@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { appendTurn, MAX_TRANSCRIPT_CHARS, MAX_TRANSCRIPT_TURNS, reflectionSchema, reflectRequestSchema, type TranscriptTurn } from "@/lib/schemas/reflection";
+import { appendTurn, DEFAULT_FEEDBACK_STYLE, feedbackStyleSchema, MAX_TRANSCRIPT_CHARS, MAX_TRANSCRIPT_TURNS, reflectionSchema, reflectRequestSchema, type TranscriptTurn } from "@/lib/schemas/reflection";
 import { deletePracticeDataRequestSchema, sessionSummarySchema } from "@/lib/schemas/practice-data";
 
 describe("reflection contract", () => {
@@ -29,10 +29,28 @@ describe("reflection contract", () => {
   });
 
   it("has no score field and bounds each line", () => {
-    const ok = { evidence: "partial", observedAction: "You asked one direct question.", takeaway: null, nextStep: null, supportExit: false };
+    const ok = { evidence: "partial", observedAction: "You asked one direct question.", quotedLine: "Can we talk about the dishes?", takeaway: null, nextStep: null, supportExit: false };
     expect(reflectionSchema.safeParse(ok).success).toBe(true);
-    expect(reflectionSchema.safeParse({ ...ok, score: 7 }).success).toBe(false);
+    expect(reflectionSchema.safeParse({ ...ok, quotedLine: null }).success).toBe(true);
+    for (const field of ["score", "grade", "rating", "confidence", "level"]) expect(reflectionSchema.safeParse({ ...ok, [field]: 7 }).success).toBe(false);
     expect(reflectionSchema.safeParse({ ...ok, takeaway: "x".repeat(301) }).success).toBe(false);
+    expect(reflectionSchema.safeParse({ ...ok, quotedLine: "q".repeat(201) }).success).toBe(false);
+    expect(reflectionSchema.safeParse({ ...ok, quotedLine: "" }).success).toBe(false);
+    const { quotedLine: _omitted, ...withoutQuote } = ok;
+    expect(reflectionSchema.safeParse(withoutQuote).success).toBe(false);
+  });
+
+  it("accepts the three feedback styles and nothing else, and never the private fields", () => {
+    const turns = [{ speaker: "user", text: "Can we talk about the dishes?" }];
+    for (const feedbackStyle of ["gentle", "direct", "list"]) expect(reflectRequestSchema.safeParse({ turns, feedbackStyle }).success).toBe(true);
+    expect(feedbackStyleSchema.options).toEqual(["gentle", "direct", "list"]);
+    expect(DEFAULT_FEEDBACK_STYLE).toBe("gentle");
+    for (const feedbackStyle of ["Gentle", "numeric", "", null]) expect(reflectRequestSchema.safeParse({ turns, feedbackStyle }).success).toBe(false);
+    // W4 and docs/30: the fear, the numbers and the hard-moment line are never part of a reflection request.
+    for (const field of ["hardMomentLine", "prediction", "likelihoodBefore", "likelihoodAfter", "fear"]) {
+      expect(reflectRequestSchema.safeParse({ turns, [field]: "x" }).success).toBe(false);
+      expect(reflectRequestSchema.safeParse({ turns, [field]: 80 }).success).toBe(false);
+    }
   });
 });
 

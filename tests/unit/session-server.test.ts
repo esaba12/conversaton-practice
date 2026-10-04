@@ -20,6 +20,7 @@ const id = "11111111-1111-4111-8111-111111111111", other = "22222222-2222-4222-8
 const key = "33333333-3333-4333-8333-333333333333";
 type Rpc = (args: Record<string, unknown>) => { data?: unknown; error?: { code: string; message: string } };
 let handlers: Record<string, Rpc>, rpc: ReturnType<typeof vi.fn>, active: string[];
+let peopleRead: (personId: string) => { data: unknown; error: unknown };
 const row = (patch: Record<string, unknown> = {}) => ({ id, owner_id: other, status: "connecting", cleanup: "not_started", provider_conversation_id: null, created_at: "2026-10-03T18:00:00.000000+00:00", expires_at: new Date(Date.now() + 180_000).toISOString().replace("Z", "+00:00"), ...patch });
 const marker = (message: string) => ({ error: { code: "P0001", message } });
 const post = (url: string, body?: unknown, headers: Record<string, string> = {}) => new Request(`http://127.0.0.1:3000${url}`, { method: "POST", headers, body: body === undefined ? undefined : typeof body === "string" ? body : JSON.stringify(body) });
@@ -53,7 +54,10 @@ beforeEach(() => {
   vi.stubEnv("TAVUS_API_KEY", "unit-secret"); vi.stubEnv("TAVUS_PAL_ID", "unit-pal"); vi.stubEnv("TAVUS_FACE_ID", "unit-face");
   handlers = {}; active = [];
   rpc = vi.fn(async (name: string, args: Record<string, unknown>) => { const result = handlers[name]?.(args) ?? { error: { code: "XX000", message: "unhandled" } }; return { data: result.data ?? null, error: result.error ?? null }; });
-  const from = vi.fn(() => ({ select: () => ({ in: () => ({ limit: async () => ({ data: active.map((value) => ({ id: value })), error: null }) }) }) }));
+  peopleRead = (personId) => ({ data: { id: personId, version: 2, preset_id: null }, error: null });
+  const from = vi.fn((table: string) => table === "people"
+    ? { select: () => ({ eq: (_: string, personId: string) => ({ maybeSingle: async () => peopleRead(personId) }) }) }
+    : { select: () => ({ in: () => ({ limit: async () => ({ data: active.map((value) => ({ id: value })), error: null }) }) }) });
   identity.requireIdentity.mockResolvedValue({ client: { rpc, from }, identity: { id: other, isAnonymous: false } });
 });
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
@@ -167,16 +171,32 @@ describe("session routes", () => {
     const providerCalls = fetchMock.mock.calls.length;
     const storageCalls = rpc.mock.calls.length;
     await errorOf(await start(post("/api/sessions", { idempotencyKey: key, preset: "boss", durationSeconds: 180 })), 400);
-    // C1 staging: frozen branches that 1C and 1G build are rejected before any storage or provider call.
-    const situation = { publicContext: "x", opening: "Hi.", constraints: [], challenge: "neutral", pace: "patient" };
-    for (const body of [
-      { idempotencyKey: key, preset: "manager", durationSeconds: 180, openingOverride: "Hey." },
-      { idempotencyKey: key, personId: crypto.randomUUID(), expectedVersion: 1, situation, durationSeconds: 180 },
-      { idempotencyKey: key, standIn: true, goal: "Ask for one thing.", preset: "manager", durationSeconds: 180 },
-    ]) await errorOf(await start(post("/api/sessions", body)), 400);
+    // W10: the stand-in branch is live, but fails closed without its reserved face and PAL (1G).
+    vi.stubEnv("TAVUS_STANDIN_PAL_ID", ""); vi.stubEnv("TAVUS_STANDIN_FACE_ID", "");
+    await errorOf(await start(post("/api/sessions", {
+      idempotencyKey: key, standIn: true, goal: "Ask for one thing.", preset: "manager", durationSeconds: 180,
+    })), 503);
     await errorOf(await start(post("/api/sessions", { idempotencyKey: key, preset: "professor", privateNotes: "PRIVATE-NOTE", durationSeconds: 180 })), 400);
     expect(fetchMock.mock.calls.length).toBe(providerCalls);
     expect(rpc.mock.calls.length).toBe(storageCalls);
+  });
+
+  it("uses starter media, records preset metadata, and applies only an opening override", async () => {
+    vi.stubEnv("TAVUS_STARTER_MANAGER_PAL_ID", "manager-pal");
+    vi.stubEnv("TAVUS_STARTER_MANAGER_FACE_ID", "manager-face");
+    vi.stubEnv("ELEVENLABS_STARTER_MANAGER_VOICE_ID", "manager-voice");
+    handlers.practice_acquire = () => ({ data: { created: true, session: row() } });
+    handlers.practice_bind = (args) => ({ data: row({ provider_conversation_id: args.p_provider_id }) });
+    const fetchMock = tavus();
+    const response = await start(post("/api/sessions", {
+      idempotencyKey: key, preset: "manager", durationSeconds: 180, openingOverride: "Let's pick up at the hard part.",
+    }));
+    expect(response.status).toBe(201);
+    const sent = JSON.parse(String(fetchMock.mock.calls[0][1].body));
+    expect(sent).toMatchObject({ pal_id: "manager-pal", face_id: "manager-face", custom_greeting: "Let's pick up at the hard part." });
+    expect(sent.conversational_context).toContain("Let's pick up at the hard part.");
+    expect(sent.conversational_context).toContain(manager.publicContext);
+    expect(calls("practice_acquire")[0]).toMatchObject({ p_kind: "practice", p_preset: "manager" });
   });
 
   it("surfaces the database's fingerprint conflict when a key is replayed with a different role", async () => {
@@ -268,7 +288,7 @@ describe("session routes", () => {
     const personId = "55555555-5555-4555-8555-555555555555", key2 = "44444444-4444-4444-8444-444444444444";
     const stored = {
       id: personId, version: 2, name: "Sam", relationship: "Your fictional coworker", traits: { tone: "blunt" }, style: "Direct; prefers specifics.",
-      public_context: "You share a desk on the design team.", opening: "Hey, got a minute?", constraints: ["Stay at work."], challenge: "neutral", pace: "patient",
+      background: "Sam is a senior designer on your team.", public_context: "You share a desk on the design team.", opening: "Hey, got a minute?", constraints: ["Stay at work."], challenge: "neutral", pace: "patient",
       known_about_user: ["SHARED-FACT I run on weekends"],
     };
     const personBody = { idempotencyKey: key, personId, expectedVersion: 2, durationSeconds: 180 };
@@ -287,7 +307,7 @@ describe("session routes", () => {
       expect((await start(post("/api/sessions", personBody))).status).toBe(201);
       expect(rpc.mock.calls.map(([name]) => name)).toEqual(["person_context", "practice_acquire", "practice_bind"]);
       const role = personToRole({ name: "Sam", relationship: "Your fictional coworker", style: stored.style, publicContext: stored.public_context, opening: stored.opening, constraints: stored.constraints, challenge: "neutral", pace: "patient", traits: { tone: "blunt" } });
-      const extras = { traits: { tone: "blunt" as const }, knownAboutUser: stored.known_about_user };
+      const extras = { background: stored.background, traits: { tone: "blunt" as const }, knownAboutUser: stored.known_about_user };
       const sent = sentBody(fetchMock);
       expect(sent.conversational_context).toBe(buildRoleContext(role, extras));
       expect(sent.conversational_context).toContain("SHARED-FACT I run on weekends"); expect(sent.conversational_context).toContain("blunt and direct");
@@ -317,6 +337,28 @@ describe("session routes", () => {
       expect(rpc).not.toHaveBeenCalled(); expect(fetchMock).not.toHaveBeenCalled();
     });
 
+    it("merges a validated fresh situation with server-loaded identity and shared facts", async () => {
+      live(); const fetchMock = tavus();
+      const situation = {
+        publicContext: "A new launch task needs to move to next sprint.",
+        opening: "Which task do you want to move?",
+        constraints: ["Keep it about this launch."],
+        challenge: "mild_pushback",
+        pace: "conversational",
+        wants: "Keep the launch on track",
+        holdsBackBecause: "The team is short staffed",
+        softensWhen: "You name what to drop",
+      } as const;
+      const response = await start(post("/api/sessions", { ...personBody, situation }));
+      expect(response.status).toBe(201);
+      const sent = sentBody(fetchMock);
+      for (const value of ["Sam", situation.publicContext, situation.wants, "SHARED-FACT I run on weekends"]) {
+        expect(sent.conversational_context).toContain(value);
+      }
+      expect(sent.conversational_context).not.toContain(stored.public_context);
+      expect(calls("practice_acquire")[0]).toMatchObject({ p_kind: "practice", p_preset: null, p_person_id: personId, p_person_version: 2 });
+    });
+
     it("fails closed with 503 on malformed person_context output", async () => {
       live(); const fetchMock = tavus();
       handlers.person_context = () => ({ data: { ...stored, private_prep: "PRIVATE-PREP-MARKER" } });
@@ -337,6 +379,51 @@ describe("session routes", () => {
       expect(a.p_fingerprint).not.toBe(b.p_fingerprint);
       expect(a).toMatchObject({ p_person_id: personId, p_person_version: 2 });
       expect(b).toMatchObject({ p_person_id: personId, p_person_version: 3 });
+    });
+
+    describe("look and voice preset (B4)", () => {
+      beforeEach(() => {
+        vi.stubEnv("ELEVENLABS_VOICE_ID", "unit-voice");
+        vi.stubEnv("TAVUS_STARTER_PROFESSOR_PAL_ID", "unit-professor-pal"); vi.stubEnv("TAVUS_STARTER_PROFESSOR_FACE_ID", "unit-professor-face");
+        vi.stubEnv("TAVUS_STANDIN_PAL_ID", "unit-standin-pal"); vi.stubEnv("TAVUS_STANDIN_FACE_ID", "unit-standin-face");
+      });
+
+      it("uses the mapped starter face and PAL when the person has a preset, and never returns provider ids", async () => {
+        live(); const fetchMock = tavus();
+        peopleRead = (pid) => ({ data: { id: pid, version: 2, preset_id: "professor" }, error: null });
+        const response = await start(post("/api/sessions", personBody));
+        expect(response.status).toBe(201);
+        const sent = sentBody(fetchMock);
+        expect(sent).toMatchObject({ pal_id: "unit-professor-pal", face_id: "unit-professor-face" });
+        const text = JSON.stringify(await response.json());
+        for (const leak of ["unit-professor", "unit-pal", "unit-face", "unit-standin", "professor"]) expect(text).not.toContain(leak);
+        expect(calls("practice_acquire")[0]).toMatchObject({ p_preset: null, p_person_id: personId });
+      });
+
+      it("uses the default face and PAL when the preset is null", async () => {
+        live(); const fetchMock = tavus();
+        expect((await start(post("/api/sessions", personBody))).status).toBe(201);
+        expect(sentBody(fetchMock)).toMatchObject({ pal_id: "unit-pal", face_id: "unit-face" });
+      });
+
+      it("rejects an unknown stored preset or a failed read before the lease and provider", async () => {
+        live(); const fetchMock = tavus();
+        peopleRead = (pid) => ({ data: { id: pid, version: 2, preset_id: "boss" }, error: null });
+        expect((await errorOf(await start(post("/api/sessions", personBody)), 503)).code).toBe("PROVIDER_UNAVAILABLE");
+        peopleRead = () => ({ data: null, error: { code: "42501", message: "denied" } });
+        expect((await errorOf(await start(post("/api/sessions", personBody)), 503)).code).toBe("PROVIDER_UNAVAILABLE");
+        peopleRead = () => ({ data: null, error: null });
+        expect((await errorOf(await start(post("/api/sessions", personBody)), 404)).code).toBe("NOT_FOUND");
+        expect(calls("practice_acquire")).toHaveLength(0); expect(fetchMock).not.toHaveBeenCalled();
+      });
+
+      it("refuses when the chosen starter has no face or PAL configured at all", async () => {
+        live(); const fetchMock = tavus();
+        vi.stubEnv("TAVUS_PAL_ID", ""); vi.stubEnv("TAVUS_FACE_ID", "");
+        peopleRead = (pid) => ({ data: { id: pid, version: 2, preset_id: "decline" }, error: null });
+        expect((await errorOf(await start(post("/api/sessions", personBody)), 503)).code).toBe("NOT_CONFIGURED");
+        expect(calls("practice_acquire")).toHaveLength(0); expect(fetchMock).not.toHaveBeenCalled();
+      });
     });
   });
 

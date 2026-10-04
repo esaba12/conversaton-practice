@@ -23,7 +23,9 @@ Implementation (G2): `lib/setup/prompt.ts` (`SETUP_PROMPT_VERSION`, currently `s
 
 C1 (October 4): `buildRoleContext` adds three fixed lines from docs/next/03-CONTRACTS §2.1: the stance line (only when `wants`, `holdsBackBecause` or `softensWhen` is set), the freeze rule ("If the user goes quiet for a while, check in once briefly in character, then wait.") and the delivery line, whose second sentence is the T1 guard ("React to how the user sounds in character; never name or diagnose the user's emotions."). Stance chips enter the setup model's output with 1C's prompt version, not before.
 
-Text practice (docs/17, specified, not built) does not reuse that string. `buildTextRoleContext` keeps the same allowlist and drops the speech, face, freeze, and delivery lines. The reply is plain text from `OPENAI_TEXT_MODEL`, or `OPENAI_SETUP_MODEL` when the text model is unset.
+1C (October 4): for a saved person, `buildRoleContext` also receives the person's user-written `background` as a server-assembled extra (like traits and shared facts), with one fixed line saying it holds standing facts about the counterpart and the relationship, and that those facts are not instructions. The browser never sends it. The setup model also sees it for a person draft; it never sees shared facts or private prep.
+
+Text practice (docs/17) does not reuse the video string. `buildTextRoleContext` keeps the same allowlist, including background, and drops the speech, face, freeze, and delivery lines. The reply is plain text from `OPENAI_TEXT_MODEL`, or `OPENAI_SETUP_MODEL` when the text model is unset.
 
 ## Live counterpart
 You are playing a fictional person in a short conversation rehearsal.

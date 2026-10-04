@@ -1,0 +1,432 @@
+/* Call mode begins: night surround over --t-calm (docs/33 §4.5). */
+.room {
+  background: var(--night);
+  color: var(--night-ink);
+  font-family: var(--font-sans);
+  animation: room-in var(--t-calm) both;
+}
+
+@keyframes room-in {
+  from { background: var(--background); }
+}
+
+.inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
+  max-width: 1184px;
+  margin: 0 auto;
+  padding: 32px 24px 96px;
+}
+
+@media (max-width: 480px) {
+  .inner { padding: 24px 16px 72px; gap: 24px; }
+}
+
+/* Night focus ring outside the light private card. */
+.back,
+.panel,
+.actions,
+.settle { --focus: var(--focus-night); }
+
+.back,
+.quiet,
+.quietDark {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--hit-min);
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--night-ink);
+  font: inherit;
+  font-size: var(--text-14);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t-quick);
+}
+
+.quietDark { color: var(--sage); padding: 0; }
+
+.back:hover,
+.quiet:hover { background: var(--night-raised); }
+.quietDark:hover { text-decoration: underline; }
+
+.back:active,
+.quiet:active,
+.secondary:active { transform: translateY(.5px); }
+
+.back:focus-visible,
+.quiet:focus-visible,
+.quietDark:focus-visible,
+.secondary:focus-visible,
+.switch input:focus-visible,
+.input:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.who {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.breathe {
+  display: inline-flex;
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-3);
+  animation: portrait-breathe var(--t-breath);
+}
+
+@keyframes portrait-breathe {
+  50% { transform: scale(1.02); }
+}
+
+@media (max-width: 600px) {
+  .who .portrait { width: 120px; height: 120px; }
+}
+
+.name {
+  margin: 12px 0 0;
+  font-family: var(--font-serif);
+  font-size: var(--text-40);
+  font-weight: 500;
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display);
+  overflow-wrap: anywhere;
+}
+
+.name:focus-visible {
+  outline: 3px solid var(--focus-night);
+  outline-offset: 4px;
+  border-radius: var(--r-sm);
+}
+
+.relationship {
+  margin: 0;
+  color: var(--night-muted);
+  font-size: var(--text-14);
+  overflow-wrap: anywhere;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
+}
+
+.column {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  min-width: 0;
+}
+
+.panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  padding: 20px;
+  border-radius: var(--r-md);
+  background: var(--night-raised);
+  backdrop-filter: blur(16px);
+}
+
+@media (max-width: 480px) {
+  .panel { padding: 16px 12px; }
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: var(--text-18);
+  font-weight: 600;
+}
+
+.line {
+  margin: 0;
+  color: var(--night-ink);
+  font-size: var(--text-16);
+  line-height: var(--leading-body);
+  overflow-wrap: anywhere;
+}
+
+.small {
+  margin: 0;
+  color: var(--night-muted);
+  font-size: var(--text-14);
+  line-height: var(--leading-body);
+  overflow-wrap: anywhere;
+}
+
+.meterRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+
+.meter {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 28px;
+  flex: none;
+}
+
+.bar {
+  width: 8px;
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--night-ink) 18%, var(--night));
+  transition: background var(--t-quick);
+}
+
+.bar[data-lit] { background: var(--focus-night); }
+
+.field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+}
+
+.field label {
+  font-size: var(--text-14);
+  font-weight: 600;
+}
+
+.input {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--hit-min);
+  padding: 8px 12px;
+  border: 1px solid var(--night-muted);
+  border-radius: var(--r-sm);
+  background: var(--night);
+  color: var(--night-ink);
+  font: inherit;
+  font-size: var(--text-16);
+}
+
+.problem {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--danger);
+  border-radius: var(--r-sm);
+}
+
+.problemTitle {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.secondary {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1px solid var(--night-muted);
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--night-ink);
+  font: inherit;
+  font-size: var(--text-14);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t-quick), border-color var(--t-quick);
+}
+
+.secondary:hover { background: var(--night-raised); border-color: var(--night-ink); }
+
+.secondary:disabled {
+  border-style: dashed;
+  color: var(--night-muted);
+  cursor: not-allowed;
+}
+
+.cameraRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  padding-top: 14px;
+  border-top: 1px solid color-mix(in srgb, var(--night-ink) 14%, transparent);
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--hit-min);
+  font-size: var(--text-16);
+  cursor: pointer;
+}
+
+.switch input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--focus-night);
+  flex: none;
+}
+
+.selfView {
+  width: 160px;
+  max-width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--r-md);
+  background: var(--night);
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.private { color: var(--ink); }
+
+.privateField {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  margin-top: 12px;
+  min-width: 0;
+}
+
+.privateField:first-child { margin-top: 0; }
+
+.privateField label {
+  font-size: var(--text-14);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.labelRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.optional {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.countMuted {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: var(--text-12);
+  font-variant-numeric: tabular-nums;
+}
+
+.privateInput {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--hit-min);
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-16);
+}
+
+.privateInput:focus-visible,
+.range:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.guess {
+  font-family: var(--font-serif);
+  font-size: var(--text-16);
+  font-variant-numeric: tabular-nums;
+}
+
+.range {
+  width: 100%;
+  min-height: var(--hit-min);
+  margin: 0;
+  accent-color: var(--clay);
+}
+
+.range[data-unset] { accent-color: var(--muted); }
+
+.settle {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 24px 16px;
+  border-radius: var(--r-md);
+  background: var(--night-raised);
+  text-align: center;
+}
+
+.circle {
+  width: 140px;
+  height: 140px;
+  border: 2px solid var(--focus-night);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--focus-night) 14%, transparent);
+  animation: settle-breathe var(--t-breath);
+}
+
+@keyframes settle-breathe {
+  0%, 100% { transform: scale(.72); }
+  50% { transform: scale(1); }
+}
+
+.settleText {
+  margin: 0;
+  max-width: 36ch;
+  line-height: var(--leading-body);
+  overflow-wrap: anywhere;
+}
+
+.count {
+  display: block;
+  color: var(--night-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Reduced motion: the circle becomes a static ring with the text count; nothing pulses. */
+@media (prefers-reduced-motion: reduce) {
+  .room,
+  .breathe,
+  .circle { animation: none; }
+  .circle { transform: none; }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.actions > *,
+.actions button { max-width: 100%; min-width: 0; }
+
+.actions button {
+  white-space: normal;
+  line-height: 1.25;
+  padding-block: 12px;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+/* The primary button's reason line, readable on night. */
+.actions [id$="-reason"] { color: var(--night-muted); }

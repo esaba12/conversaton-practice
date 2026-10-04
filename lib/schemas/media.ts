@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { Interaction, LiveEvent } from "@/lib/media/interactions";
 // Frozen after the 14:54 human preflight (usable video/speech, imperfect lip sync). Never contains API keys.
 export const mediaCredentialSchema = z.object({
   provider: z.literal("tavus"),
@@ -32,5 +33,8 @@ export interface MediaController {
   setCamera(enabled: boolean): Promise<boolean>;
   // Idempotent, synchronous-first local release; never awaits the application server.
   end(): Promise<void>;
+  // Live interactions (docs/next/03-CONTRACTS.md §2.8). True only when the message left for a live call. Optional so test controllers may omit it.
+  send?(interaction: Interaction): boolean;
 }
-export type CreateMediaController = (onEvent: (event: MediaEvent) => void) => MediaController;
+// `onLive` carries captions, speaking state and network quality for the screen only; never analysis fields.
+export type CreateMediaController = (onEvent: (event: MediaEvent) => void, onLive?: (event: LiveEvent) => void) => MediaController;

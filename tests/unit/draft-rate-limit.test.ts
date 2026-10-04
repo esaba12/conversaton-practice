@@ -9,8 +9,17 @@ import { reserveDraft, resetDraftLimitsForTests } from "@/lib/setup/rate-limit";
 
 const alice = "11111111-1111-4111-8111-111111111111";
 const bob = "22222222-2222-4222-8222-222222222222";
-const role = { name: "Jordan", role: "Your manager", style: "Brief and direct.", publicContext: "You manage the user's team.", opening: "Hey, you wanted to talk?", constraints: [], challenge: "neutral", pace: "conversational" };
-const ok = () => Response.json({ status: "completed", output: [{ type: "message", role: "assistant", content: [{ type: "output_text", text: JSON.stringify({ outOfScope: false, role, goal: "Ask for Friday off", assumptions: [] }) }] }] });
+const role = {
+  name: "Jordan", role: "Your manager", style: "Brief and direct.", publicContext: "You manage the user's team.",
+  opening: "Hey, you wanted to talk?", constraints: [], challenge: "neutral", pace: "conversational",
+  wants: "Keep coverage steady", holdsBackBecause: "The week is busy", softensWhen: "You offer coverage",
+};
+const stanceOptions = {
+  wants: ["Keep coverage steady", "Finish the schedule", "Avoid a gap"],
+  holdsBackBecause: ["The week is busy", "Two people are out", "Plans are set"],
+  softensWhen: ["You offer coverage", "You give notice", "You suggest a swap"],
+};
+const ok = () => Response.json({ status: "completed", output: [{ type: "message", role: "assistant", content: [{ type: "output_text", text: JSON.stringify({ outOfScope: false, role, goal: "Ask for Friday off", assumptions: [], stanceOptions }) }] }] });
 const post = (value: unknown = { situation: "I need to ask my manager for Friday off." }) => new Request("http://127.0.0.1:3000/api/scenarios/draft", { method: "POST", body: JSON.stringify(value) });
 const signIn = (id: string) => identity.requireIdentity.mockResolvedValue({ client: {}, identity: { id, isAnonymous: false } });
 let fetchMock: ReturnType<typeof vi.fn>;
@@ -75,7 +84,7 @@ describe("draft rate limit", () => {
   });
 
   it("counts out-of-scope and provider failures", async () => {
-    const outOfScope = () => Response.json({ status: "completed", output: [{ type: "message", content: [{ type: "output_text", text: JSON.stringify({ outOfScope: true, role, goal: "x", assumptions: [] }) }] }] });
+    const outOfScope = () => Response.json({ status: "completed", output: [{ type: "message", content: [{ type: "output_text", text: JSON.stringify({ outOfScope: true, role, goal: "x", assumptions: [], stanceOptions }) }] }] });
     fetchMock.mockImplementation(async () => outOfScope());
     for (let i = 0; i < DRAFT_RATE_LIMIT.max / 2; i++) expect((await POST(post())).status).toBe(422);
     fetchMock.mockImplementation(async () => new Response("down", { status: 500 }));

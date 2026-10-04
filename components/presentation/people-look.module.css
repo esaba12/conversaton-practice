@@ -1,0 +1,9 @@
+.look { grid-column: 1 / -1; }
+.title { margin: 0; font-size: 19px; font-weight: 500; letter-spacing: -0.5px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
+.option { position: relative; display: grid; justify-items: center; gap: 8px; padding: 14px 10px; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; text-align: center; }
+.option[data-selected="true"] { border-color: var(--sage); box-shadow: 0 0 0 2px var(--sage) inset; }
+.option:has(.radio:focus-visible) { outline: 3px solid var(--focus); outline-offset: 3px; }
+.option:has(.radio:disabled) { cursor: not-allowed; border-style: dashed; background: var(--surface-sunk); }
+.radio { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: inherit; }
+.label { font-size: 13px; line-height: 1.4; }

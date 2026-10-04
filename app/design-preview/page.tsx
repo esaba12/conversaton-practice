@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { PracticePreview } from "@/components/presentation/practice-preview";
+import { LobbyBriefingGallery } from "./lobby-briefing-gallery";
+import { MeetGreenRoomGallery } from "./meet-green-room-gallery";
 import { PrimitivesGallery } from "./primitives-gallery";
 import { SerifCandidates } from "./serif-candidates";
 import styles from "./gallery.module.css";
@@ -13,6 +15,8 @@ export default function DesignPreviewPage() {
         <h2 id="design-system-heading" className={styles.galleryTitle}>Design system</h2>
         <SerifCandidates />
         <PrimitivesGallery />
+        <LobbyBriefingGallery />
+        <MeetGreenRoomGallery />
       </section>
     </>
   );

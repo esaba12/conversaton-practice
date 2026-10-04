@@ -36,10 +36,11 @@ describe("C1 role context", () => {
 });
 
 describe("C1 draft", () => {
-  it("accepts an optional personId and keeps stance out of the model output until 1C", () => {
+  it("accepts an optional personId and requires stance in the 1C model output", () => {
     expect(draftRequestSchema.safeParse({ situation: "x", personId }).success).toBe(true);
     expect(draftRequestSchema.safeParse({ situation: "x", personId: "nope" }).success).toBe(false);
-    expect(Object.keys(draftModelOutputSchema.shape.role.shape)).not.toContain("wants");
+    expect(Object.keys(draftModelOutputSchema.shape.role.shape)).toContain("wants");
+    expect(draftModelOutputSchema.shape.stanceOptions).toBe(stanceOptionsSchema);
   });
   it("stance options need three or four chips per field", () => {
     const three = ["a", "b", "c"];

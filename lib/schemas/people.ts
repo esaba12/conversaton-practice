@@ -25,6 +25,7 @@ export type PersonFields = z.infer<typeof personFieldsSchema>;
 // hasPracticed (W10): server-derived, true when the owner has an ended kind='practice' session with this person. Optional until 1G derives it.
 export const personSchema = z.object({
   ...personFieldsSchema.shape,
+  background: personBackgroundSchema,
   id: z.uuid(),
   version: versionSchema,
   sharedFactIds: z.array(z.uuid()).max(MAX_ABOUT_ME_FACTS),
@@ -61,11 +62,12 @@ export const privatePrepWriteSchema = z.object({ notes: z.string().trim().max(10
 export const privatePrepResponseSchema = z.object({ privatePrep: privatePrepSchema }).strict();
 
 export function personToRole(person: PersonFields): RoleContext {
-  const { relationship: role, traits: _traits, ...rest } = person;
+  const { relationship: role, traits: _traits, background: _background, ...rest } = person;
   return roleContextSchema.parse({ ...rest, role });
 }
 export function roleToPersonFields(role: RoleContext, traits: TraitChips = {}): PersonFields {
-  const { role: relationship, ...rest } = roleContextSchema.parse(role);
+  // Stance chips belong to a situation, not a person.
+  const { role: relationship, wants: _wants, holdsBackBecause: _holds, softensWhen: _softens, ...rest } = roleContextSchema.parse(role);
   return personFieldsSchema.parse({ ...rest, relationship, traits });
 }
 

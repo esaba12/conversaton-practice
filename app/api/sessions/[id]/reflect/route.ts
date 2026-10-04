@@ -4,7 +4,7 @@ import { generateReflection } from "@/lib/reflection/generate";
 import { requireEndedSession, reserveReflection } from "@/lib/reflection/session";
 import { reflectRequestSchema, reflectResponseSchema, type Reflection } from "@/lib/schemas/reflection";
 
-const insufficient: Reflection = { evidence: "insufficient", observedAction: null, takeaway: null, nextStep: null, supportExit: false };
+const insufficient: Reflection = { evidence: "insufficient", observedAction: null, quotedLine: null, takeaway: null, nextStep: null, supportExit: false };
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   return handle(request, async () => {

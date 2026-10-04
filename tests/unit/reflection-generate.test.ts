@@ -6,8 +6,8 @@ import { MAX_REFLECTIONS_PER_SESSION, reflectResponseSchema } from "@/lib/schema
 const identity = vi.hoisted(() => ({ requireIdentity: vi.fn() }));
 vi.mock("@/lib/auth/server", () => identity);
 import { POST } from "@/app/api/sessions/[id]/reflect/route";
-import { enforceReflectionRules, REFLECTION_FORMAT_NAME, reflectionJsonSchema } from "@/lib/reflection/generate";
-import { REFLECTION_SYSTEM_PROMPT } from "@/lib/reflection/prompt";
+import { enforceReflectionRules, REFLECTION_FORMAT_NAME, reflectionJsonSchema, verifyQuotedLine } from "@/lib/reflection/generate";
+import { feedbackStyleWording, REFLECTION_PROMPT_VERSION, reflectionSystemPrompt } from "@/lib/reflection/prompt";
 
 const owner = "11111111-1111-4111-8111-111111111111";
 const turns = [
@@ -15,7 +15,7 @@ const turns = [
   { speaker: "user", text: "Can we agree to clean the kitchen by ten each night?" },
 ];
 const body = { turns, goal: "Make one request without apologizing", selfReflection: "I rushed the ask a bit." };
-const output = (patch: Record<string, unknown> = {}) => ({ evidence: "complete", observedAction: "You stated one request with a specific time.", takeaway: "That matched your goal.", nextStep: "Pause after the request next time.", supportExit: false, ...patch });
+const output = (patch: Record<string, unknown> = {}) => ({ evidence: "complete", observedAction: "You stated one request with a specific time.", quotedLine: "clean the kitchen by ten each night", takeaway: "That matched your goal.", nextStep: "Pause after the request next time.", supportExit: false, ...patch });
 const raw = (content: unknown[], status = "completed") => Response.json({ status, output: [{ type: "reasoning", summary: [] }, { type: "message", role: "assistant", content }] });
 const ok = (value: unknown) => raw([{ type: "output_text", text: typeof value === "string" ? value : JSON.stringify(value) }]);
 const refusal = () => raw([{ type: "refusal", refusal: "I can't help with that." }]);
@@ -60,18 +60,80 @@ describe("strict reflection schema", () => {
       properties: {
         evidence: { type: "string", enum: ["complete", "partial", "insufficient"] },
         observedAction: { type: ["string", "null"] },
+        quotedLine: { type: ["string", "null"] },
         takeaway: { type: ["string", "null"] },
         nextStep: { type: ["string", "null"] },
         supportExit: { type: "boolean" },
       },
-      required: ["evidence", "observedAction", "takeaway", "nextStep", "supportExit"],
+      required: ["evidence", "observedAction", "quotedLine", "takeaway", "nextStep", "supportExit"],
       additionalProperties: false,
     });
   });
 
   it("backstops support exits and insufficient evidence", () => {
-    expect(enforceReflectionRules(output({ supportExit: true }) as never)).toEqual({ evidence: "complete", observedAction: null, takeaway: null, nextStep: null, supportExit: true });
-    expect(enforceReflectionRules(output({ evidence: "insufficient" }) as never)).toMatchObject({ observedAction: null, takeaway: "That matched your goal." });
+    expect(enforceReflectionRules(output({ supportExit: true }) as never, turns as never)).toEqual({ evidence: "complete", observedAction: null, quotedLine: null, takeaway: null, nextStep: null, supportExit: true });
+    expect(enforceReflectionRules(output({ evidence: "insufficient" }) as never, turns as never)).toMatchObject({ observedAction: null, quotedLine: null, takeaway: "That matched your goal." });
+  });
+});
+
+describe("quotedLine, the user's own words", () => {
+  const spoken = [
+    { speaker: "counterpart" as const, text: "The kitchen is fine as it is." },
+    { speaker: "user" as const, text: "Can we agree to clean the kitchen by ten each night?" },
+  ];
+
+  it("returns the user's exact words, matching across spacing and case", () => {
+    expect(verifyQuotedLine("clean the kitchen by ten", spoken)).toBe("clean the kitchen by ten");
+    expect(verifyQuotedLine("CLEAN the  kitchen\nby ten", spoken)).toBe("clean the kitchen by ten");
+    expect(verifyQuotedLine(spoken[1].text, spoken)).toBe(spoken[1].text);
+    expect(verifyQuotedLine("can we", spoken)).toBeNull();
+    expect(verifyQuotedLine("a", spoken)).toBeNull();
+  });
+
+  it("drops counterpart text, paraphrases and anything spanning two turns", () => {
+    expect(verifyQuotedLine("The kitchen is fine as it is.", spoken)).toBeNull();
+    expect(verifyQuotedLine("Can we clean the kitchen nightly?", spoken)).toBeNull();
+    expect(verifyQuotedLine("as it is. Can we agree", spoken)).toBeNull();
+    expect(verifyQuotedLine(null, spoken)).toBeNull();
+    expect(verifyQuotedLine("   ", spoken)).toBeNull();
+    expect(verifyQuotedLine("clean the kitchen by ten", [])).toBeNull();
+  });
+
+  it("is nulled by the server when the model invents one, in the response too", async () => {
+    expect(enforceReflectionRules(output({ quotedLine: "The kitchen is fine as it is." }) as never, spoken as never).quotedLine).toBeNull();
+    expect(enforceReflectionRules(output() as never, spoken as never).quotedLine).toBe("clean the kitchen by ten each night");
+    provider(() => ok(output({ quotedLine: "I think you should relax about the kitchen." })));
+    const reflection = reflectResponseSchema.parse(await (await reflect()).json()).reflection;
+    expect(reflection.quotedLine).toBeNull();
+    expect(reflection.observedAction).toBe("You stated one request with a specific time.");
+  });
+});
+
+describe("feedback style (L3)", () => {
+  it("bumps the prompt version and changes wording only", () => {
+    expect(REFLECTION_PROMPT_VERSION).toBe("reflection-2026-10-04.1");
+    const prompts = (["gentle", "direct", "list"] as const).map((style) => reflectionSystemPrompt(style));
+    expect(new Set(prompts).size).toBe(3);
+    expect(reflectionSystemPrompt()).toBe(reflectionSystemPrompt("gentle"));
+    for (const prompt of prompts) {
+      // Same content limits in every style: no score, one next step, one observed action, no verdict.
+      expect(prompt).toContain("No diagnosis, personality label, grade, score, rating");
+      expect(prompt).toContain("at most one optional, concrete communication action");
+      expect(prompt).toContain("Do not judge whether the user gave in, caved, held firm");
+      expect(prompt).toContain("copied word for word from a single turn");
+    }
+    for (const wording of Object.values(feedbackStyleWording)) expect(wording).toMatch(/no score/i);
+  });
+
+  it("sends the style the request asked for and nothing about it in the transcript block", async () => {
+    const fetchMock = provider(() => ok(output()), () => ok(output()));
+    await reflect({ ...body, feedbackStyle: "direct" });
+    const sent = JSON.parse(String((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body));
+    expect(sent.input[0].content).toBe(reflectionSystemPrompt("direct"));
+    expect(sent.input[1].content).not.toContain("direct");
+    await reflect(body);
+    expect(JSON.parse(String((fetchMock.mock.calls[1] as unknown as [string, RequestInit])[1].body)).input[0].content).toBe(reflectionSystemPrompt());
+    expect((await errorOf(await reflect({ ...body, feedbackStyle: "spicy" }), 400)).code).toBe("VALIDATION_ERROR");
   });
 });
 
@@ -82,7 +144,7 @@ describe("POST /api/sessions/[id]/reflect", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(reflectResponseSchema.parse(await response.json())).toEqual({ reflection: output() });
-    expect(queries).toEqual([["from", ["practice_sessions"]], ["select", ["id,status"]], ["eq", ["id", id]]]);
+    expect(queries).toEqual([["from", ["practice_sessions"]], ["select", ["id,status,kind"]], ["eq", ["id", id]]]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     row = { data: { id, status: "interrupted" }, error: null };
     provider(() => ok(output()));
@@ -100,7 +162,7 @@ describe("POST /api/sessions/[id]/reflect", () => {
     const sent = JSON.parse(sentText);
     expect(sent).toMatchObject({ model: "reflect-model", store: false, text: { format: { type: "json_schema", name: REFLECTION_FORMAT_NAME, strict: true, schema: reflectionJsonSchema() } } });
     expect(sent.input.map((m: { role: string }) => m.role)).toEqual(["system", "user"]);
-    expect(sent.input[0].content).toBe(REFLECTION_SYSTEM_PROMPT);
+    expect(sent.input[0].content).toBe(reflectionSystemPrompt());
     for (const text of ["clean the kitchen", "apologizing", "rushed the ask"]) expect(sent.input[0].content).not.toContain(text);
     const user: string = sent.input[1].content;
     expect(user.match(/<\/untrusted_input>/g)).toHaveLength(1);
@@ -187,7 +249,7 @@ describe("POST /api/sessions/[id]/reflect", () => {
 
   it("short-circuits a transcript with no user turn without a model call or using the cap", async () => {
     const fetchMock = provider();
-    const empty = { evidence: "insufficient", observedAction: null, takeaway: null, nextStep: null, supportExit: false };
+    const empty = { evidence: "insufficient", observedAction: null, quotedLine: null, takeaway: null, nextStep: null, supportExit: false };
     for (let i = 0; i <= MAX_REFLECTIONS_PER_SESSION; i++) {
       const response = await reflect({ turns: [{ speaker: "counterpart", text: "Hello?" }], goal: "Ask once" });
       expect(reflectResponseSchema.parse(await response.json())).toEqual({ reflection: empty });
@@ -222,7 +284,7 @@ describe("POST /api/sessions/[id]/reflect", () => {
 
   it("enforces the support-exit and insufficient-evidence backstops on model output", async () => {
     provider(() => ok(output({ supportExit: true })));
-    expect(reflectResponseSchema.parse(await (await reflect()).json()).reflection).toEqual({ evidence: "complete", observedAction: null, takeaway: null, nextStep: null, supportExit: true });
+    expect(reflectResponseSchema.parse(await (await reflect()).json()).reflection).toEqual({ evidence: "complete", observedAction: null, quotedLine: null, takeaway: null, nextStep: null, supportExit: true });
     provider(() => ok(output({ evidence: "insufficient" })));
     expect(reflectResponseSchema.parse(await (await reflect()).json()).reflection).toMatchObject({ evidence: "insufficient", observedAction: null });
   });

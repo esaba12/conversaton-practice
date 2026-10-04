@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { MediaCredential, MediaEvent } from "@/lib/schemas/media";
+import type { Interaction, LiveEvent } from "@/lib/media/interactions";
 
 type Handler = (event: unknown) => void;
 type FakeTrack = { kind: "audio" | "video"; readyState: "live" | "ended"; stop: ReturnType<typeof vi.fn> };
@@ -31,6 +32,7 @@ function makeCall(options: unknown) {
     on: vi.fn((name: string, handler: Handler) => { handlers.set(name, [...(handlers.get(name) ?? []), handler]); return call; }),
     join: vi.fn((..._args: unknown[]) => (daily.joinImpl ? daily.joinImpl() : Promise.resolve())),
     setLocalAudio: vi.fn((..._args: unknown[]) => call),
+    sendAppMessage: vi.fn((..._args: unknown[]) => call),
     destroy: vi.fn(() => Promise.resolve()),
   };
   return call;
@@ -41,6 +43,7 @@ vi.mock("@daily-co/daily-js", () => ({
 }));
 
 const { createDailyController, reportRemoteVideoPlaying, VIDEO_FIRST_TIMEOUT_MS } = await import("@/lib/media/daily-controller");
+const { buildAskToWait, buildTypedTurn, buildWrapUp } = await import("@/lib/media/interactions");
 
 const credential: MediaCredential = { provider: "tavus", roomUrl: "https://example.daily.co/room", meetingToken: "unit-token", expiresAt: new Date(Date.now() + 600_000).toISOString() };
 
@@ -431,5 +434,127 @@ describe("Daily media controller", () => {
       expect(events.some((event) => event.type === "failed" || event.type === "ready")).toBe(false);
       expect(vi.getTimerCount()).toBe(0);
     });
+  });
+});
+
+describe("Daily media controller: live interactions (1A)", () => {
+  const tavusCredential: MediaCredential = { ...credential, roomUrl: "https://tavus.daily.co/c123456" };
+
+  function liveSetup(cred = tavusCredential) {
+    const events: MediaEvent[] = [];
+    const live: LiveEvent[] = [];
+    const controller = createDailyController((event) => events.push(event), (event) => live.push(event));
+    controllers.push(controller);
+    return { events, live, controller, connect: async () => { await controller.connect(cred); return daily.calls.at(-1)!; } };
+  }
+
+  function goLive(call: FakeCall, events: MediaEvent[]) {
+    call.setRemote(remote("playable", "playable").participant);
+    call.emit("track-started");
+    reportRemoteVideoPlaying(lastStream(events));
+    expect(events.some((event) => event.type === "ready")).toBe(true);
+  }
+
+  const app = (call: FakeCall, data: unknown) => call.emit("app-message", { fromId: "pal", data });
+
+  it("emits streaming captions for pal and user, drops legacy duplicates once pal is seen, and drops analysis", async () => {
+    const { events, live, connect } = liveSetup();
+    const call = await connect();
+    const streaming = (role: string, speech: unknown, extra: Record<string, unknown> = {}) =>
+      app(call, { message_type: "conversation", event_type: "conversation.utterance.streaming", inference_id: "i1", properties: { role, speech, content_index: 1, ...extra } });
+    streaming("replica", "Hey");
+    streaming("pal", "Hey, got", { final: false, user_audio_analysis: "sounds nervous" });
+    streaming("replica", "Hey, got");
+    streaming("pal", "Hey, got a minute?", { final: true, is_interrupted: false });
+    streaming("user", "<user_audio_analysis>hesitant</user_audio_analysis>Sure", { final: false });
+    streaming("user", "<user_audio_analysis>unterminated tone note");
+    streaming("user", 42);
+    expect(live).toEqual([
+      { type: "caption", speaker: "counterpart", text: "Hey", final: false },
+      { type: "caption", speaker: "counterpart", text: "Hey, got", final: false },
+      { type: "caption", speaker: "counterpart", text: "Hey, got a minute?", final: true },
+      { type: "caption", speaker: "user", text: "Sure", final: false },
+    ]);
+    expect(JSON.stringify(live)).not.toMatch(/nervous|hesitant|tone note|analysis|inference|content_index/);
+    expect(events.filter((event) => event.type === "utterance")).toHaveLength(0);
+  });
+
+  it("maps started/stopped speaking for pal, legacy replica and user", async () => {
+    const { live, connect } = liveSetup();
+    const call = await connect();
+    const speak = (event_type: string, role: string) => app(call, { message_type: "conversation", event_type, properties: { role, duration: 1.2, interrupted: false } });
+    speak("conversation.started_speaking", "pal");
+    speak("conversation.stopped_speaking", "replica");
+    speak("conversation.started_speaking", "user");
+    speak("conversation.stopped_speaking", "user");
+    speak("conversation.started_speaking", "someone");
+    expect(live).toEqual([
+      { type: "speaking", speaker: "counterpart", speaking: true },
+      { type: "speaking", speaker: "counterpart", speaking: false },
+      { type: "speaking", speaker: "user", speaking: true },
+      { type: "speaking", speaker: "user", speaking: false },
+    ]);
+  });
+
+  it("reports a weak connection only for Daily's bad network state", async () => {
+    const { live, connect } = liveSetup();
+    const call = await connect();
+    call.emit("network-quality-change", { networkState: "warning" });
+    call.emit("network-quality-change", { networkState: "bad" });
+    call.emit("network-quality-change", { networkState: "good" });
+    expect(live).toEqual([{ type: "network", weak: false }, { type: "network", weak: true }, { type: "network", weak: false }]);
+  });
+
+  it("sends interactions only while live, with the conversation id from the room URL, and never after End", async () => {
+    const { events, controller, connect } = liveSetup();
+    const call = await connect();
+    const wrap = buildWrapUp("Jordan")!;
+    expect(controller.send(wrap)).toBe(false);
+    goLive(call, events);
+    expect(controller.send(wrap)).toBe(true);
+    const [interrupt, context] = buildAskToWait();
+    expect(controller.send(interrupt)).toBe(true);
+    expect(controller.send(context)).toBe(true);
+    expect(controller.send(buildTypedTurn("Can we move Atlas?")!)).toBe(true);
+    expect(controller.send({ event_type: "conversation.append_llm_context", properties: { context: "goal: move Atlas" } } as unknown as Interaction)).toBe(false);
+    expect(call.sendAppMessage.mock.calls).toEqual([
+      [{ message_type: "conversation", event_type: "conversation.append_llm_context", conversation_id: "c123456", properties: { context: "About 30 seconds remain. Begin wrapping up naturally as Jordan, in character. Do not mention time limits or the app." } }, "*"],
+      [{ message_type: "conversation", event_type: "conversation.interrupt", conversation_id: "c123456" }, "*"],
+      [{ message_type: "conversation", event_type: "conversation.append_llm_context", conversation_id: "c123456", properties: { context: "The user asked for a moment. Stay quiet until they speak again. If they say something, respond normally." } }, "*"],
+      [{ message_type: "conversation", event_type: "conversation.respond", conversation_id: "c123456", properties: { text: "Can we move Atlas?" } }, "*"],
+    ]);
+    await controller.end();
+    expect(controller.send(wrap)).toBe(false);
+    expect(call.sendAppMessage).toHaveBeenCalledTimes(4);
+  });
+
+  it("sends nothing when the room URL carries no usable conversation id", async () => {
+    const { events, controller, connect } = liveSetup({ ...tavusCredential, roomUrl: "https://tavus.daily.co/" });
+    const call = await connect();
+    goLive(call, events);
+    expect(controller.send(buildWrapUp("Jordan")!)).toBe(false);
+    expect(call.sendAppMessage).not.toHaveBeenCalled();
+  });
+
+  it("cancel while ringing (join still pending) releases the microphone, destroys the call and emits nothing after", async () => {
+    let resolveJoin: () => void = () => undefined;
+    daily.joinImpl = () => new Promise<void>((resolve) => { resolveJoin = resolve; });
+    const { events, live, controller } = liveSetup();
+    const connecting = controller.connect(tavusCredential);
+    await vi.waitFor(() => expect(daily.calls).toHaveLength(1));
+    const call = daily.calls[0];
+    await controller.end();
+    expect(call.setLocalAudio).toHaveBeenCalledWith(false);
+    expect(call.localMic.stop).toHaveBeenCalled();
+    expect(call.destroy).toHaveBeenCalledTimes(1);
+    resolveJoin();
+    await expect(connecting).resolves.toBeUndefined();
+    const before = events.length;
+    call.setRemote(remote("playable", "playable").participant);
+    call.emit("track-started");
+    app(call, { event_type: "conversation.started_speaking", properties: { role: "pal" } });
+    expect(events).toHaveLength(before);
+    expect(live).toEqual([]);
+    expect(events.some((event) => event.type === "ready" || event.type === "failed")).toBe(false);
   });
 });

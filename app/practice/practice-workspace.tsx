@@ -1,39 +1,60 @@
 "use client";
+import { HomeCheckin, PlannedSection } from "@/components/practice/planned-section";
+import { StageTransition, startStage } from "@/components/practice/transitions";
+import { useSoundCues } from "@/lib/practice/use-sound-cues";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { BriefingStage } from "@/components/practice/briefing-stage";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Briefing, briefingKey, useBriefingDrafts, type BriefingPlan, type BriefingSubject } from "@/components/practice/briefing";
+import { GreenRoom } from "@/components/practice/green-room";
+import { GoalLightToggle } from "@/components/practice/goal-pill";
+import { HearButton, useHearHighlight } from "@/components/practice/hear-button";
+import { Lobby, starterPortraitPath } from "@/components/practice/lobby";
 import { CallStage } from "@/components/practice/call-stage";
-import { MeetStage } from "@/components/practice/meet-stage";
+import { MeetCard, meetStateFromProgress, useStreamedDraft, type MeetState } from "@/components/practice/meet-card";
+import { personRole, personStartSituation, situationFromRole, type MeetStart } from "@/components/practice/meet-knowledge";
 import { RecapStage } from "@/components/practice/recap-stage";
+import { RETRY_DURATION_SECONDS } from "@/components/practice/recap-retry";
+import { PocketCard } from "@/components/practice/pocket-card";
+import { closedAlternative, type AlternativeState } from "@/components/presentation/reflection-panel";
+import { STAND_IN_PILL, pushbackPrompt, standInCallTitle } from "@/components/practice/stand-in-call";
+import { StandInOfferButtons } from "@/components/practice/stand-in-offer";
+import { StandInYourTurn } from "@/components/practice/stand-in-your-turn";
 import { WorkspaceHeader } from "@/components/presentation/workspace-header";
 import type { PracticeDuration } from "@/components/presentation/duration-choice";
-import type { SetupDescribeError } from "@/components/presentation/setup-describe";
 import { emptyRole, parseReviewedRole, type SetupMode } from "@/components/presentation/setup-review";
 import { examples } from "@/fixtures/examples";
 import { createBrowserAuthClient } from "@/lib/auth/browser";
+import { useGoalLight } from "@/lib/goal-check/use-goal-light";
 import { selectMediaController } from "@/lib/media/controller-factory";
-import { createPerson, getPerson, listPeople, updatePerson } from "@/lib/people/api-client";
+import { initialLiveCallState, reduceLiveCall, type Interaction, type LiveCallState } from "@/lib/media/interactions";
+import { createPerson, deletePerson, getPerson, getPracticeHistory, listFacts, listPeople, listPersonSituations, updatePerson } from "@/lib/people/api-client";
 import { callPhase, createFlowState, reduceFlow, type FlowEvent, type FlowState, type Teardown } from "@/lib/practice/flow";
 import { cleanupMessage, failureMessages, reflectionError, FALLBACK_GOAL, GENERATION_FAILED } from "@/lib/practice/messages";
-import { clearPrivateState } from "@/lib/practice/private-state";
+import { clearPrivateState, readPrivateState, subscribePrivateState, updatePrivateState } from "@/lib/practice/private-state";
+import type { MediaHandoff } from "@/lib/practice/devices";
+import { startStandInSession, type StandInTarget } from "@/lib/practice/stand-in-client";
+import { beginCall, beginRetry, beginStandIn, canRetry, canStartCall, endStandIn, initialStandInSitting, standInOffer, type StandInSitting } from "@/lib/practice/stand-in-sitting";
 import { closedOffer, closedReflect, sameName, type CallOrigin, type Cleanup, type CleanupTarget, type ReflectState, type SaveOffer } from "@/lib/practice/types";
-import { requestReflection } from "@/lib/reflection/api-client";
-import type { DraftRequest } from "@/lib/schemas/draft";
+import { requestAlternative, requestReflection } from "@/lib/reflection/api-client";
+import { getFeedbackStyle } from "@/lib/practice/feedback-style";
+import type { DraftRequest, StanceOptions } from "@/lib/schemas/draft";
 import type { MediaController, MediaEvent } from "@/lib/schemas/media";
-import { roleToPersonFields, type Person } from "@/lib/schemas/people";
+import { roleToPersonFields, type Person, type PersonSituation } from "@/lib/schemas/people";
 import { appendTurn, type TranscriptTurn } from "@/lib/schemas/reflection";
 import { roleContextSchema, type RoleContext } from "@/lib/schemas/role-context";
 import type { EndReason, SessionPreset, StartResponse } from "@/lib/schemas/session";
-import { SessionClientError, endSession, generateDraft, markConnected, startPresetSession, startSavedPersonSession, startSession } from "@/lib/session/api-client";
+import type { Situation } from "@/lib/schemas/situation";
+import { SessionClientError, endSession, markConnected, startPresetSession, startSavedPersonSession, startSession } from "@/lib/session/api-client";
+
+const CALL_CAP_MESSAGE = "That’s three calls for this sitting. Take a break, or practice with someone else.";
 
 // The stages live in lib/practice/flow.ts and the screens in components/practice/*; this shell
 // owns the requests, the media controller and the teardown the reducer asks for.
 export function PracticeWorkspace() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Today's first screen is the description form, which is the briefing stage. The lobby and the
-  // green room have no screen yet, so the shell never rests on them.
-  const [flow, setFlow] = useState<FlowState>(() => createFlowState("briefing"));
+  // The lobby is the first screen.
+  const [flow, setFlow] = useState<FlowState>(() => createFlowState("lobby"));
   const [durationSeconds, setDurationSeconds] = useState<PracticeDuration>(180);
   const [starting, setStarting] = useState(false);
   const [setupMessage, setSetupMessage] = useState("");
@@ -52,16 +73,31 @@ export function PracticeWorkspace() {
   const [headerMessage, setHeaderMessage] = useState("");
   // Setup content is transient: never persisted, and private notes go only to generateDraft.
   const [moveFocus, setMoveFocus] = useState(false);
-  const [situation, setSituation] = useState("");
-  const [intent, setIntent] = useState("");
-  const [privateNotes, setPrivateNotes] = useState("");
+  const [subject, setSubject] = useState<BriefingSubject | null>(null);
+  const briefingDrafts = useBriefingDrafts();
+  const [situations, setSituations] = useState<{ status: "loading" | "ready" | "error"; items: PersonSituation[] }>({ status: "ready", items: [] });
+  const [practicedPresets, setPracticedPresets] = useState<SessionPreset[]>([]);
+  // Set when a draft was generated around a saved person: the start sends the person's id and the
+  // reviewed situation, never identity fields.
+  const [draftPerson, setDraftPerson] = useState<Person | null>(null);
+  const lastDraftRef = useRef<DraftRequest | null>(null);
   const [reviewRole, setReviewRole] = useState<RoleContext>(emptyRole);
-  const [reviewGoal, setReviewGoal] = useState("");
+  const [stanceOptions, setStanceOptions] = useState<StanceOptions | undefined>();
+  // The person's shared About-me facts as text, for the Meet card's "Knows" list only.
+  const [sharedFactTexts, setSharedFactTexts] = useState<string[]>([]);
+  // The green room's chosen microphone, for the call controller once it accepts a device id.
+  const micHandoffRef = useRef<MediaHandoff | null>(null);
+  // W10 "Show me first": calls this sitting, whether the current call is the stand-in, and the user's note for their turn (browser memory only).
+  const [sitting, setSitting] = useState<StandInSitting>(initialStandInSitting);
+  const [standInLive, setStandInLive] = useState(false);
+  const standInRef = useRef(false);
+  const standInChosenRef = useRef(false);
+  const [standInChosen, setStandInChosen] = useState(false);
+  const [noteToSelf, setNoteToSelf] = useState("");
   const [assumptions, setAssumptions] = useState<string[]>([]);
   const [setupMode, setSetupMode] = useState<SetupMode>("manual");
   const [examplePreset, setExamplePreset] = useState<SessionPreset | null>(null);
-  const [generating, setGenerating] = useState(false);
-  const [generateError, setGenerateError] = useState<SetupDescribeError | null>(null);
+  const [generateError, setGenerateError] = useState<{ message: string; outOfScope: boolean } | null>(null);
   const [callInfo, setCallInfo] = useState({ name: "", goal: "" });
   const [people, setPeople] = useState<Person[]>([]);
   const [peopleStatus, setPeopleStatus] = useState<"loading" | "ready" | "error">("loading");
@@ -70,10 +106,22 @@ export function PracticeWorkspace() {
   const [saveOffer, setSaveOffer] = useState<SaveOffer>(closedOffer);
   // The provider transcript for the current attempt only; never logged or persisted.
   const [turns, setTurns] = useState<TranscriptTurn[]>([]);
+  // G1 goal light: off by default; browser memory only.
+  const [goalLightOn, setGoalLightOn] = useState(false);
+  const hearHighlight = useHearHighlight();
+  // Captions, speaking glow and network quality for the call screen only; never stored.
+  const [liveCall, setLiveCall] = useState<LiveCallState>(initialLiveCallState);
   const [reflect, setReflect] = useState<ReflectState>(closedReflect);
+  const [alternative, setAlternative] = useState<AlternativeState>(closedAlternative);
+  const privateState = useSyncExternalStore(subscribePrivateState, readPrivateState, readPrivateState);
   const reflectGenerationRef = useRef(0);
   const reflectingRef = useRef(false);
   const generationRef = useRef(0);
+  const draftStream = useStreamedDraft({
+    onDone: (draft) => { setReviewRole(draft.role); setStanceOptions(draft.stanceOptions); setAssumptions(draft.assumptions); setSetupMode("generated"); setExamplePreset(null); },
+    onError: (error) => { if (error.code === "UNAUTHENTICATED") handleAuthLoss(); },
+  });
+  const generating = draftStream.progress.step === "reading" || draftStream.progress.step === "shaping";
 
   // Refs carry the authoritative call state so media/auth callbacks never act on stale renders.
   const flowRef = useRef(flow);
@@ -88,31 +136,40 @@ export function PracticeWorkspace() {
   const mediaRef = useRef<ReturnType<typeof selectMediaController> | null>(null);
   const [testMedia, setTestMedia] = useState(false);
   const backToSetupRef = useRef<HTMLButtonElement>(null);
+  const sound = useSoundCues();
 
   // One flow event. The reducer decides the stage and what leaving it must release; the shell
   // performs the release, because a tracked close and a keepalive abandon are different requests.
-  function apply(event: FlowEvent) {
+  function apply(event: FlowEvent, animate = false) {
     const transition = reduceFlow(flowRef.current, event);
     flowRef.current = transition.state;
-    setFlow(transition.state);
+    if (animate) startStage(() => setFlow(transition.state));
+    else setFlow(transition.state);
     if (transition.clearPrivate) clearPrivateState();
     return transition;
   }
 
   // A stage change the user asked for: move focus to the new heading and drop the old notice.
   function showStage(event: FlowEvent) {
-    apply(event);
+    apply(event, true);
     setMoveFocus(true);
     setSetupMessage("");
   }
 
-  // Back to the description screen. Idempotent, because the lobby and the briefing share it today.
+  // Back to the briefing from the Meet card. Idempotent.
   function returnToBriefing() {
     if (flowRef.current.stage === "meet") apply({ type: "back" });
   }
 
+  function returnToLobby() {
+    returnToBriefing();
+    if (flowRef.current.stage === "briefing") apply({ type: "back" });
+    setSubject(null);
+  }
+
   // Releases local media without waiting on any network request; later events from this attempt are ignored.
   function releaseMedia() {
+    sound.stopRing();
     attemptRef.current++;
     const controller = controllerRef.current;
     controllerRef.current = null;
@@ -120,6 +177,12 @@ export function PracticeWorkspace() {
     setRemoteStream(null);
     setLocalStream(null);
     setCameraEnabled(false);
+    setLiveCall(initialLiveCallState);
+  }
+
+  // Wrap-up, ask-to-wait and typed turns: fixed templates plus the reviewed name, or the user's typed turn.
+  function sendInteraction(interaction: Interaction) {
+    return controllerRef.current?.send?.(interaction) ?? false;
   }
 
   function takeSessionId() {
@@ -149,12 +212,21 @@ export function PracticeWorkspace() {
 
   function finish(reason: "user" | "time_limit") {
     const before = flowRef.current;
-    const { teardown, changed } = apply({ type: "ended" });
+    const { teardown, changed } = apply({ type: "ended" }, true);
     if (!changed) return;
     if (teardown.releaseMic) releaseMedia();
+    sound.hangup();
     if (reason === "time_limit") setCallMessage("Time’s up. The practice reached its planned length.");
     else setCallMessage(before.outcome === "interrupted" ? "The call was interrupted before it ended." : "");
     endForTeardown(teardown, reason, "close");
+    dropStandInTurns();
+  }
+
+  // Nothing said in a stand-in call survives its end, and it is never reflected on.
+  function dropStandInTurns() {
+    if (!standInRef.current) return;
+    clearReflection();
+    setTurns([...endStandIn(sitting).turns]);
   }
 
   function interrupt(message: string) {
@@ -163,6 +235,7 @@ export function PracticeWorkspace() {
     if (teardown.releaseMic) releaseMedia();
     setCallMessage(`${message} You can end practice and start again.`);
     endForTeardown(teardown, "connection_failure", "close");
+    dropStandInTurns();
   }
 
   function handleMediaEvent(attempt: number, event: MediaEvent) {
@@ -175,6 +248,8 @@ export function PracticeWorkspace() {
       case "utterance": setTurns((current) => appendTurn(current, event.speaker, event.text)); return;
       case "ready": {
         if (!apply({ type: "videoPlaying" }).changed) return;
+        sound.stopRing();
+        sound.connect();
         startedAtRef.current = Date.now();
         const id = sessionIdRef.current;
         if (id) markConnected(id).catch((error) => {
@@ -190,6 +265,7 @@ export function PracticeWorkspace() {
   }
 
   function clearReflection() {
+    setAlternative(closedAlternative);
     reflectGenerationRef.current++;
     reflectingRef.current = false;
     setTurns([]); setReflect(closedReflect);
@@ -199,9 +275,12 @@ export function PracticeWorkspace() {
     clearReflection();
     clearPrivateState();
     generationRef.current++;
-    setSituation(""); setIntent(""); setPrivateNotes("");
-    setReviewRole(emptyRole); setReviewGoal(""); setAssumptions([]); setSetupMode("manual");
-    setGenerating(false); setGenerateError(null); setCallInfo({ name: "", goal: "" });
+    briefingDrafts.clear(); setSubject(null); setSituations({ status: "ready", items: [] });
+    setDraftPerson(null); lastDraftRef.current = null;
+    draftStream.cancel(); setStanceOptions(undefined); setSharedFactTexts([]); micHandoffRef.current = null;
+    setSitting(initialStandInSitting); standInRef.current = false; setStandInLive(false); chooseStandIn(false); setNoteToSelf("");
+    setReviewRole(emptyRole); setAssumptions([]); setSetupMode("manual");
+    setGenerateError(null); setCallInfo({ name: "", goal: "" });
     setSavedPerson(null); setCallOrigin(null); setSaveOffer(closedOffer);
   }
 
@@ -220,28 +299,38 @@ export function PracticeWorkspace() {
     }
   }
 
-  // A saved person is a new setup: the briefing is skipped until slice 1B gives it a screen.
-  function choosePerson(person: Person, notice = "") {
-    apply({ type: "pickPerson" });
-    apply({ type: "draftReady" });
-    setSavedPerson(person);
-    setMoveFocus(true);
-    setSetupMessage(notice); setPreviousSessionId(null); setHeaderMessage("");
+  // P3: every pick opens the briefing. Re-entering the same subject in this sitting keeps the
+  // goal and hard-moment line; a different subject is a new sitting and clears them.
+  function openBriefing(next: BriefingSubject, notice = "") {
+    returnToLobby();
+    const resume = !!subject && briefingKey(subject) === briefingKey(next);
+    if (!resume) { setSitting(initialStandInSitting); setNoteToSelf(""); }
+    showStage(next.kind === "new" ? { type: "pickSomeoneNew", resume } : { type: "pickPerson", resume });
+    setSubject(next); setSavedPerson(null); setDraftPerson(null);
+    setGenerateError(null); setHeaderMessage(""); setPreviousSessionId(null); setSetupMessage(notice);
+    setSharedFactTexts([]);
+    if (next.kind !== "person") return;
+    const shared = new Set(next.person.sharedFactIds);
+    if (shared.size) listFacts().then((facts) => setSharedFactTexts(facts.filter((fact) => shared.has(fact.id)).map((fact) => fact.text)), () => undefined);
+    setSituations({ status: "loading", items: [] });
+    listPersonSituations(next.person.id).then(
+      (items) => setSituations({ status: "ready", items }),
+      (error) => { if (isAuthError(error)) handleAuthLoss(); else setSituations({ status: "error", items: [] }); });
   }
 
   async function openPerson(personId: string, notice = "") {
     try {
-      choosePerson(await getPerson(personId), notice);
+      openBriefing({ kind: "person", person: await getPerson(personId) }, notice);
     } catch (error) {
       if (isAuthError(error)) { handleAuthLoss(); return; }
-      setSavedPerson(null); returnToBriefing();
+      setSavedPerson(null); returnToLobby();
       setHeaderMessage(error instanceof SessionClientError && error.code === "NOT_FOUND" ? "That saved person wasn’t found." : "We couldn’t load that person. Please try again.");
       void loadPeople();
     }
   }
 
+  // Meet's Back for a saved person: the briefing for the same person, with what was typed kept.
   function leavePerson() {
-    clearPrivateState();
     setSavedPerson(null); setSetupMessage("");
     returnToBriefing();
     setMoveFocus(true);
@@ -261,39 +350,42 @@ export function PracticeWorkspace() {
     routeToSignIn();
   }
 
-  async function generate() {
-    if (generating || authLostRef.current || !situation.trim()) return;
-    const generation = ++generationRef.current;
-    const request: DraftRequest = { situation: situation.trim() };
-    if (intent.trim()) request.goal = intent.trim();
-    if (privateNotes.trim()) request.privateNotes = privateNotes.trim();
-    setGenerating(true); setGenerateError(null); setSetupMessage("");
-    try {
-      const draft = await generateDraft(request);
-      if (generation !== generationRef.current) return;
-      setReviewRole(draft.role); setReviewGoal(draft.goal); setAssumptions(draft.assumptions); setSetupMode("generated"); setExamplePreset(null);
-      showStage({ type: "draftReady" });
-    } catch (error) {
-      if (generation !== generationRef.current) return;
-      if (error instanceof SessionClientError && error.code === "UNAUTHENTICATED") { handleAuthLoss(); return; }
-      if (error instanceof SessionClientError && error.code === "OUT_OF_SCOPE") setGenerateError({ message: error.message, outOfScope: true });
-      else if (error instanceof SessionClientError && error.code === "USAGE_LIMIT") setGenerateError({ message: error.message, outOfScope: false });
-      else setGenerateError({ message: GENERATION_FAILED, outOfScope: false });
-    } finally {
-      if (generation === generationRef.current) setGenerating(false);
-    }
+  // U1: the Meet card shows at once and fills as fields stream in.
+  function generate(request: DraftRequest) {
+    if (generating || authLostRef.current) return;
+    generationRef.current++;
+    lastDraftRef.current = request;
+    const person = subject?.kind === "person" && request.personId === subject.person.id ? subject.person : null;
+    setGenerateError(null); setSetupMessage("");
+    setReviewRole(emptyRole); setStanceOptions(undefined); setAssumptions([]); setSetupMode("generated"); setExamplePreset(null);
+    setDraftPerson(person);
+    draftStream.start(request);
+    showStage({ type: "draftReady" });
   }
 
-  function setUpManually() {
-    if (generating) return;
-    setReviewRole(emptyRole); setReviewGoal(intent.trim()); setAssumptions([]); setSetupMode("manual"); setExamplePreset(null); setGenerateError(null);
-    showStage({ type: "draftReady" });
+  // "Set up the scene" (P3). Only a draft plan calls the setup model.
+  function setUp(plan: BriefingPlan) {
+    if (generating || signingOut) return;
+    switch (plan.kind) {
+      case "preset": applyExample(plan.preset); return;
+      case "person-default":
+      case "person-situation":
+        if (subject?.kind !== "person") return;
+        setSavedPerson(subject.person); setDraftPerson(null); draftStream.cancel(); setStanceOptions(undefined);
+       
+        setReviewRole(personRole(subject.person, plan.kind === "person-situation" ? plan.situation : undefined));
+        showStage({ type: "draftReady" });
+        return;
+      case "draft": generate(plan.request); return;
+    }
   }
 
   function applyExample(preset: SessionPreset) {
     if (generating) return;
     const example = examples[preset];
-    setReviewRole(example.role); setReviewGoal(example.goal); setAssumptions([]); setSetupMode("example"); setExamplePreset(preset); setGenerateError(null);
+    draftStream.cancel(); setStanceOptions(undefined);
+    if (!readPrivateState().goal.trim()) updatePrivateState({ goal: example.goal });
+    setReviewRole(example.role); setAssumptions([]); setSetupMode("example"); setExamplePreset(preset); setGenerateError(null);
     showStage({ type: "draftReady" });
   }
 
@@ -304,28 +396,63 @@ export function PracticeWorkspace() {
     setMoveFocus(true); setSetupMessage("");
   }
 
+  // Called from the green room once the microphone is released to the call.
   function start() {
     const role = parseReviewedRole(reviewRole);
     if (!role) return;
+    if (!canStartCall(sitting)) { setSetupMessage(CALL_CAP_MESSAGE); return; }
+    const goal = readPrivateState().goal.trim() || FALLBACK_GOAL;
+    const person = savedPerson ?? draftPerson;
+    if (person) {
+      // Only the person's id, version and (when changed) the scene leave the browser; identity comes from the server.
+      const situation: Situation | undefined = draftPerson || personStartSituation(person, role) === "custom" ? situationFromRole(role) : undefined;
+      void launch({ kind: "person", person }, goal, (idempotencyKey) => startSavedPersonSession({ personId: person.id, expectedVersion: person.version, situation, durationSeconds, idempotencyKey }));
+      return;
+    }
     const preset = examplePreset && setupMode === "example" && JSON.stringify(role) === JSON.stringify(roleContextSchema.parse(examples[examplePreset].role)) ? examplePreset : null;
-    void launch({ kind: "role", role }, reviewGoal.trim() || FALLBACK_GOAL, (idempotencyKey) => preset
+    void launch({ kind: "role", role }, goal, (idempotencyKey) => preset
       ? startPresetSession({ preset, durationSeconds, idempotencyKey })
       : startSession({ role, durationSeconds, idempotencyKey }));
   }
 
-  // Sends only the person's ID and version; private notes and goal stay in the browser.
-  function startPerson() {
-    const person = savedPerson;
-    if (!person) return;
-    void launch({ kind: "person", person }, FALLBACK_GOAL, (idempotencyKey) => startSavedPersonSession({ personId: person.id, expectedVersion: person.version, durationSeconds, idempotencyKey }));
+  // W10: a stand-in plays the user's side once. Only the goal and hard-moment line go with it, to the stand-in alone.
+  function startStandIn() {
+    const { goal, hardMomentLine } = readPrivateState();
+    const role = parseReviewedRole(reviewRole);
+    if (!goal.trim() || !role) return;
+    if (!canStartCall(sitting)) { setSetupMessage(CALL_CAP_MESSAGE); return; }
+    const person = savedPerson ?? draftPerson;
+    const situation = person && (draftPerson || personStartSituation(person, role) === "custom") ? situationFromRole(role) : undefined;
+    const target: StandInTarget = person
+      ? { kind: "person", person: { id: person.id, version: person.version }, ...(situation ? { situation } : {}) }
+      : examplePreset && setupMode === "example" && JSON.stringify(role) === JSON.stringify(roleContextSchema.parse(examples[examplePreset].role))
+        ? { kind: "preset", preset: examplePreset } : { kind: "role", role };
+    const origin: CallOrigin = person ? { kind: "person", person } : { kind: "role", role };
+    standInRef.current = true; setStandInLive(true);
+    // An empty goal keeps it off the call screen; the stand-in screen shows no goal.
+    void launch(origin, "", (idempotencyKey) => startStandInSession({ target, goal, hardMomentLine, idempotencyKey }), { standIn: true });
   }
 
-  async function launch(origin: CallOrigin, goal: string, request: (idempotencyKey: string) => Promise<StartResponse>) {
+  // The Your-turn card's "Call {name}": leave the stand-in recap without spending the retry, then the green room again.
+  function callAfterStandIn() {
+    standInRef.current = false; setStandInLive(false); chooseStandIn(false); setNoteToSelf("");
+    const { teardown } = apply({ type: "back" });
+    endForTeardown(teardown, "user", "close");
+    setCallMessage(""); setCleanup(null); setCleanupTarget(null); setSetupMessage("");
+    showStage({ type: "toGreenRoom" });
+  }
+
+  function chooseStandIn(value: boolean) {
+    standInChosenRef.current = value;
+    setStandInChosen(value);
+  }
+
+  async function launch(origin: CallOrigin, goal: string, request: (idempotencyKey: string) => Promise<StartResponse>, options: { standIn?: boolean; retry?: boolean } = {}) {
     if (startingRef.current || controllerRef.current || sessionIdRef.current || authLostRef.current || generating) return;
     startingRef.current = true;
-    plannedDurationRef.current = durationSeconds;
+    plannedDurationRef.current = options.retry ? RETRY_DURATION_SECONDS : durationSeconds;
     const attempt = ++attemptRef.current;
-    const reflectGoal = origin.kind === "role" ? reviewGoal.trim() : "";
+    const reflectGoal = readPrivateState().goal.trim();
     clearReflection();
     setStarting(true); setSetupMessage(""); setPreviousSessionId(null); setGenerateError(null);
     let joined = false;
@@ -337,36 +464,41 @@ export function PracticeWorkspace() {
       }
       sessionIdRef.current = session.id;
       setCallInfo({ name: origin.kind === "role" ? origin.role.name : origin.person.name, goal });
-      setCallOrigin(origin); setSaveOffer({ ...closedOffer, open: true });
-      setReflect({ ...closedReflect, sessionId: session.id, goal: reflectGoal });
+      setCallOrigin(origin);
+      setSitting((current) => options.standIn ? beginStandIn(current) : options.retry ? beginRetry(current) : beginCall(current));
+      if (!options.standIn) { setSaveOffer({ ...closedOffer, open: true }); setReflect({ ...closedReflect, sessionId: session.id, goal: reflectGoal }); }
       setMutedState(false); setCameraEnabled(false); setCameraNote(""); setElapsedSeconds(0); setCallMessage(""); setCleanup(null); setCleanupTarget(null);
-      // The green room and the ring have no screen of their own yet, so the call opens on the
-      // accepted session exactly as it does today.
-      apply({ type: "toGreenRoom" });
-      apply({ type: "ready" });
-      apply({ type: "sessionAccepted" });
+      // Ringing starts on acceptance, so a failed start stays in the green room (or the recap, for a retry) with its message.
+      if (options.retry) apply({ type: "retryAccepted" });
+      else { apply({ type: "ready" }); apply({ type: "sessionAccepted" }); }
+      sound.ring();
       const media = mediaRef.current ??= selectMediaController();
       setTestMedia(media.testMode);
-      const controller = media.create((event) => handleMediaEvent(attempt, event));
+      setLiveCall(initialLiveCallState);
+      const controller = media.create((event) => handleMediaEvent(attempt, event), (event) => {
+        if (attempt === attemptRef.current) setLiveCall((state) => reduceLiveCall(state, event));
+      });
       controllerRef.current = controller;
       joined = true;
       await controller.connect(credential);
     } catch (error) {
       if (attempt !== attemptRef.current) return;
       if (joined) { interrupt(failureMessages.join); return; }
+      if (options.standIn) { standInRef.current = false; setStandInLive(false); }
+      const fail = options.retry ? setHeaderMessage : setSetupMessage;
       if (error instanceof SessionClientError) {
         if (error.code === "UNAUTHENTICATED") { handleAuthLoss(); return; }
         if (error.code === "SESSION_ACTIVE" && error.sessionId) {
           setPreviousSessionId(error.sessionId);
-          setSetupMessage("A previous practice is still open. End it before starting a new one.");
+          fail("A previous practice is still open. End it before starting a new one.");
           return;
         }
         if (origin.kind === "person" && error.code === "VERSION_CONFLICT") { void openPerson(origin.person.id, `${origin.person.name} changed since you opened this page. This is the latest version; start again when you’re ready.`); return; }
         if (origin.kind === "person" && error.code === "NOT_FOUND") { void openPerson(origin.person.id); return; }
-        setSetupMessage(error.code === "NETWORK" || error.code === "MALFORMED_RESPONSE" ? "Practice couldn’t start. Please try again." : error.message);
+        fail(error.code === "NETWORK" || error.code === "MALFORMED_RESPONSE" ? "Practice couldn’t start. Please try again." : error.message);
         return;
       }
-      setSetupMessage("Practice couldn’t start. Please try again.");
+      fail("Practice couldn’t start. Please try again.");
     } finally {
       startingRef.current = false;
       setStarting(false);
@@ -406,6 +538,15 @@ export function PracticeWorkspace() {
     if (next && !enabled) setCameraNote("Your camera isn’t available or permission was denied. Practice continues without a self-view.");
   }
 
+  // The green room's Back: release the microphone and return to the Meet card.
+  function leaveGreenRoom() {
+    const { teardown } = apply({ type: "back" });
+    if (teardown.releaseMic) releaseMedia();
+    endForTeardown(teardown, "user", "close");
+    setSetupMessage(""); setPreviousSessionId(null);
+    setMoveFocus(true);
+  }
+
   function backToSetup() {
     const origin = callOrigin;
     const { teardown } = apply({ type: "back" });
@@ -419,6 +560,34 @@ export function PracticeWorkspace() {
   }
 
   // One request at a time; a newer attempt or a clear drops a late result.
+  // docs/30: one retry per sitting. Same reviewed role and resolution path; only the opening changes. Nothing private is sent.
+  function startRetry(opening: string) {
+    const role = parseReviewedRole({ ...reviewRole, opening });
+    if (!role || !canRetry(sitting) || flow.retryUsed || flowRef.current.stage !== "recap") return;
+    const goal = readPrivateState().goal.trim() || FALLBACK_GOAL;
+    const person = savedPerson ?? draftPerson;
+    if (person) {
+      const situation: Situation = { ...situationFromRole(role), opening };
+      void launch({ kind: "person", person }, goal, (idempotencyKey) => startSavedPersonSession({ personId: person.id, expectedVersion: person.version, situation, durationSeconds: RETRY_DURATION_SECONDS, idempotencyKey }), { retry: true });
+      return;
+    }
+    void launch({ kind: "role", role }, goal, (idempotencyKey) => startSession({ role, durationSeconds: RETRY_DURATION_SECONDS, idempotencyKey }), { retry: true });
+  }
+
+  // A1, on request only. The goal line is the only content sent.
+  async function requestAlternativeNow() {
+    const goal = readPrivateState().goal.trim() || reflect.goal.trim();
+    if (!reflect.sessionId || !goal || alternative.pending || alternative.requested) return;
+    setAlternative((state) => ({ ...state, pending: true, error: null }));
+    try {
+      const text = await requestAlternative(reflect.sessionId, goal);
+      setAlternative({ text, pending: false, error: null, requested: true });
+    } catch (error) {
+      if (isAuthError(error)) { handleAuthLoss(); return; }
+      setAlternative({ text: null, pending: false, error: "We couldn’t find another way to say it. Your own words are fine.", requested: false });
+    }
+  }
+
   async function requestReflectionNow() {
     const { sessionId, goal, selfReflection, reflection } = reflect;
     if (!sessionId || reflection || reflectingRef.current || authLostRef.current) return;
@@ -426,7 +595,7 @@ export function PracticeWorkspace() {
     const generation = reflectGenerationRef.current;
     setReflect((state) => ({ ...state, pending: true, error: null }));
     try {
-      const result = await requestReflection(sessionId, { turns, goal: goal || undefined, selfReflection: selfReflection.trim() || undefined });
+      const result = await requestReflection(sessionId, { turns, goal: goal || undefined, selfReflection: selfReflection.trim() || undefined, feedbackStyle: getFeedbackStyle() });
       if (generation !== reflectGenerationRef.current) return;
       setReflect((state) => ({ ...state, pending: false, reflection: result }));
     } catch (error) {
@@ -495,6 +664,8 @@ export function PracticeWorkspace() {
   }
 
   const phase = callPhase(flow);
+  // Only the user's own call; reflect.sessionId is set for practice starts and never for the stand-in.
+  const goalLight = useGoalLight({ enabled: goalLightOn && !standInLive, sessionId: phase === "live" ? reflect.sessionId : null, goal: callInfo.goal, turns });
   const live = flow.stage === "call" || flow.stage === "retry-call";
   useEffect(() => {
     if (!live) return;
@@ -521,6 +692,8 @@ export function PracticeWorkspace() {
   useEffect(() => {
     mediaRef.current ??= selectMediaController();
     setTestMedia(mediaRef.current.testMode);
+    // W10 history orders the starters; until its route exists the lobby simply has none.
+    getPracticeHistory().then(setPracticedPresets, () => undefined);
   }, []);
 
   useEffect(() => {
@@ -544,7 +717,7 @@ export function PracticeWorkspace() {
       clearPrivateSetup();
       // Only the setup screens start over, as they do today; a finished call screen stays put.
       if (!callPhase(flowRef.current)) {
-        const state = createFlowState("briefing");
+        const state = createFlowState("lobby");
         flowRef.current = state;
         setFlow(state);
       }
@@ -565,32 +738,95 @@ export function PracticeWorkspace() {
 
   const statusMessage = [callMessage, cameraNote, phase === "ended" || phase === "interrupted" ? cleanupMessage(cleanup) : ""].filter(Boolean).join(" ");
   const canRetryCleanup = !!cleanupTarget && !!cleanup && cleanup.state !== "closing" && !(cleanup.state === "closed" && cleanup.cleanup === "confirmed");
-  const meetCommon = {
-    starting, disabled: starting || signingOut, startDisabled: endingPrevious || !!previousSessionId, focusHeading: moveFocus, statusMessage: setupMessage,
-    durationSeconds, onDurationChange: setDurationSeconds, previousSessionId, endingPrevious, onEndPrevious: () => void endPrevious(),
-  };
+  const meetPerson = savedPerson ?? draftPerson;
+  const meetStart: MeetStart = meetPerson
+    ? { kind: "person", person: meetPerson, sharedFacts: sharedFactTexts, situation: draftPerson ? "custom" : personStartSituation(meetPerson, reviewRole) }
+    : examplePreset && setupMode === "example" && JSON.stringify(roleContextSchema.safeParse(reviewRole).data) === JSON.stringify(roleContextSchema.parse(examples[examplePreset].role))
+      ? { kind: "preset", preset: examplePreset } : { kind: "role" };
+  const meetState: MeetState = setupMode === "generated" && draftStream.progress.step !== "idle"
+    ? meetStateFromProgress(draftStream.progress, draftStream.progress.step === "ready" ? reviewRole : null)
+    : { status: "ready", role: reviewRole, stanceOptions };
+  const portraitSrc = examplePreset && !meetPerson ? starterPortraitPath(examplePreset) : null;
+  const meetName = meetPerson?.name ?? (meetState.status === "ready" ? meetState.role.name : meetState.status === "streaming" ? meetState.partialRole?.name ?? "" : reviewRole.name);
+  const meetRelationship = meetPerson?.relationship ?? reviewRole.role;
+  const offer = standInOffer({
+    counterpartName: meetName,
+    goal: readPrivateState().goal,
+    hasPracticed: meetPerson ? !!meetPerson.hasPracticed : meetStart.kind === "preset" ? practicedPresets.includes(meetStart.preset) : false,
+    sitting,
+  });
+  const toGreenRoom = (withStandIn: boolean) => { chooseStandIn(withStandIn); showStage({ type: "toGreenRoom" }); };
 
   return <><WorkspaceHeader page="practice" signingOut={signingOut} onSignOut={() => void signOut()} quiet={phase !== null} />
     <main id="main">
       {headerMessage && <p role="status" className="notice">{headerMessage}</p>}
+      <StageTransition stage={flow.stage}>
       {phase === null ? (flow.stage === "meet"
-        ? (savedPerson
-          ? <MeetStage kind="person" person={savedPerson} onStart={startPerson} onBack={leavePerson} durationDisabled={starting || signingOut} {...meetCommon} />
-          : <MeetStage kind="review" mode={setupMode} role={reviewRole} goal={reviewGoal} assumptions={assumptions} onRoleChange={setReviewRole} onGoalChange={setReviewGoal}
-              onBack={backToDescribe} onRegenerate={situation.trim() ? () => void generate() : undefined} onStart={() => void start()} regenerating={generating}
-              error={generateError} durationDisabled={starting || signingOut || generating} {...meetCommon} />)
-        // The lobby and the green room share today's description screen until slices 1B and 1D.
-        : <BriefingStage situation={situation} goal={intent} privateNotes={privateNotes} onSituationChange={setSituation} onGoalChange={setIntent} onPrivateNotesChange={setPrivateNotes}
-            onGenerate={() => void generate()} onManual={setUpManually} onUseExample={applyExample} generating={generating} disabled={signingOut} error={generateError} focusHeading={moveFocus}
-            people={people} peopleStatus={peopleStatus} peopleDisabled={signingOut || generating} onPickPerson={(person) => choosePerson(person)} onRetryPeople={() => void loadPeople()} />
+        ? <MeetCard identity={{ name: meetName, relationship: meetRelationship, portraitSrc }} state={meetState} onRoleChange={setReviewRole}
+            hear={meetState.status === "ready" && meetState.role.opening.trim()
+              ? <HearButton name={meetName} text={meetState.role.opening} presetId={meetStart.kind === "preset" ? meetStart.preset : undefined} onPlayingChange={hearHighlight.onPlayingChange} />
+              : undefined}
+            bubbleClassName={hearHighlight.bubbleClassName}
+            editable={meetPerson ? "situation" : "all"} start={meetStart} privateNotes={lastDraftRef.current?.privateNotes ?? ""}
+            durationSeconds={durationSeconds} onDurationChange={setDurationSeconds}
+            onBack={() => { draftStream.cancel(); if (savedPerson) leavePerson(); else backToDescribe(); }}
+            onCall={() => toGreenRoom(false)}
+            actions={offer.shown ? ({ enabled, reason }) => (
+              <StandInOfferButtons counterpartName={meetName} offer={offer} onShowMeFirst={() => toGreenRoom(true)} onSkip={() => toGreenRoom(false)}
+                callDisabledReason={enabled ? undefined : reason} />) : undefined}
+            onRetry={lastDraftRef.current ? () => { const request = lastDraftRef.current; if (request) draftStream.start(request); } : undefined}
+            disabled={signingOut} disabledReason="Signing you out…" focusHeading={moveFocus} />
+        : flow.stage === "green"
+          ? <GreenRoom name={meetName} relationship={meetRelationship} portraitSrc={portraitSrc}
+              onBack={leaveGreenRoom} onReady={(handoff) => { sound.unlock(); micHandoffRef.current = handoff; if (standInChosenRef.current) startStandIn(); else start(); }}
+              starting={starting} startError={setupMessage || null} disabled={signingOut || endingPrevious} disabledReason={signingOut ? "Signing you out…" : "Ending the previous practice…"} focusHeading={moveFocus}
+              extras={<>
+                {standInChosen && <p className="notice">First, a stand-in plays you. You play {meetName}.</p>}
+                <GoalLightToggle checked={goalLightOn} onChange={setGoalLightOn} />
+                {previousSessionId && <button type="button" className="button secondary" onClick={() => void endPrevious()} disabled={endingPrevious}>{endingPrevious ? "Ending the previous practice…" : "End the previous practice"}</button>}
+              </>} />
+        : flow.stage === "briefing" && subject
+          ? <Briefing subject={subject} draft={briefingDrafts.draftFor(subject)} onDraftChange={(patch) => briefingDrafts.update(subject, patch)}
+              situations={subject.kind === "person" ? situations : undefined} onBack={() => { showStage({ type: "back" }); }} onSetUp={setUp}
+              generating={generating} error={generateError} disabled={signingOut} disabledReason="Signing you out…" focusHeading={moveFocus} />
+          : <><HomeCheckin people={people} /><Lobby people={people} status={peopleStatus} practicedPresets={practicedPresets} onRetry={() => void loadPeople()}
+              onPickPerson={(person) => openBriefing({ kind: "person", person })} onPickStarter={(preset) => openBriefing({ kind: "starter", preset })}
+              onSomeoneNew={() => openBriefing({ kind: "new" })}
+              onAddStarter={async (preset) => { await createPerson(roleToPersonFields(examples[preset].role)); await loadPeople(); }}
+              onEditPerson={(person) => router.push(`/practice/people/${encodeURIComponent(person.id)}`)}
+              onDeletePerson={async (person) => { await deletePerson(person.id); await loadPeople(); }}
+              disabled={signingOut || generating} disabledReason="Please wait a moment." focusHeading={moveFocus} notice={setupMessage || undefined} /></>
       ) : <>
-        <CallStage counterpartName={callInfo.name} goal={callInfo.goal} phase={phase} muted={muted} cameraEnabled={cameraEnabled} elapsedSeconds={elapsedSeconds} durationSeconds={plannedDurationRef.current}
-          remoteStream={remoteStream} localStream={localStream}
-          onMuteToggle={toggleMute} onCameraToggle={() => void toggleCamera()} onEnd={() => finish("user")} statusMessage={statusMessage} testMedia={testMedia} turns={turns} />
-        {(phase === "ended" || phase === "interrupted") && <RecapStage ended={phase === "ended"} origin={callOrigin} saveOffer={saveOffer} people={people} peopleStatus={peopleStatus}
+        {standInLive && (phase === "ended" || phase === "interrupted")
+          ? <StandInYourTurn counterpartName={callInfo.name} goal={readPrivateState().goal} hardMomentLine={readPrivateState().hardMomentLine}
+              note={noteToSelf} onGoalChange={(goal) => updatePrivateState({ goal })}
+              onHardMomentLineChange={(hardMomentLine) => updatePrivateState({ hardMomentLine })} onNoteChange={setNoteToSelf}
+              onCall={callAfterStandIn} starting={starting} />
+          : <>
+            <CallStage counterpartName={callInfo.name} goal={callInfo.goal} goalLight={goalLight} phase={phase} muted={muted} cameraEnabled={cameraEnabled} elapsedSeconds={elapsedSeconds} durationSeconds={plannedDurationRef.current}
+              remoteStream={remoteStream} localStream={localStream}
+              onMuteToggle={toggleMute} onCameraToggle={() => void toggleCamera()} onEnd={() => finish("user")} statusMessage={statusMessage} testMedia={testMedia} turns={turns}
+              live={liveCall} onInteraction={standInLive ? undefined : sendInteraction} onCancel={backToSetup}
+              standIn={standInLive ? { title: standInCallTitle(callInfo.name), pill: STAND_IN_PILL, prompt: readPrivateState().prediction.trim() ? pushbackPrompt(callInfo.name) : undefined } : undefined} />
+            {(phase === "ended" || phase === "interrupted") && <RecapStage ended={phase === "ended"} origin={callOrigin} saveOffer={saveOffer} people={people} peopleStatus={peopleStatus}
+          counterpartName={callInfo.name} portraitSrc={portraitSrc} role={reviewRole}
+          isRetry={flow.stage === "retry-recap"} hardMomentLine={privateState.hardMomentLine}
+          retryAvailable={canRetry(sitting) && !flow.retryUsed} onRetry={startRetry} retryStarting={starting}
+          prediction={privateState.prediction} likelihoodBefore={privateState.likelihoodBefore}
+          likelihoodAfter={privateState.likelihoodAfter} onLikelihoodAfterChange={(likelihoodAfter) => updatePrivateState({ likelihoodAfter })}
+          alternative={alternative} onAlternative={() => void requestAlternativeNow()}
+          keep={<>
+            <details><summary className="button secondary">Make a pocket card</summary>
+              <PocketCard name={callInfo.name} goal={privateState.goal} hardMomentLine={privateState.hardMomentLine} practicedOn={new Date().toLocaleDateString("en-CA")} />
+            </details>
+            {callOrigin?.kind === "person" && people.some((p) => p.id === callOrigin.person.id) && <PlannedSection personId={callOrigin.person.id} personName={callOrigin.person.name}
+              guess={privateState.prediction.trim() || privateState.likelihoodBefore !== null ? { fear: privateState.prediction, likelihoodBefore: privateState.likelihoodBefore } : null} />}
+          </>}
           onSave={() => void saveFromCall()} onDismissSave={dismissSave} reflect={reflect} turns={turns}
           onSelfReflectionChange={(selfReflection) => setReflect((state) => ({ ...state, selfReflection }))} onReflect={() => void requestReflectionNow()} onReflectionDone={clearReflection}
           canRetryCleanup={canRetryCleanup} onRetryCleanup={() => cleanupTarget && closeRemote(cleanupTarget.id, cleanupTarget.reason)} onBackToSetup={backToSetup} backToSetupRef={backToSetupRef} />}
+          </>}
       </>}
+      </StageTransition>
     </main></>;
 }

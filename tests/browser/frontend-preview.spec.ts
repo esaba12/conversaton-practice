@@ -23,7 +23,7 @@ test.describe("development presentation preview", () => {
     const start = page.getByRole("button", { name: "Start practice" });
     await page.getByLabel("Disable start").check();
     await expect(start).toBeDisabled();
-    await expect(page.getByRole("status")).toHaveText("Practice is unavailable in this example state.");
+    await expect(page.getByRole("status").filter({ hasText: "Practice is unavailable" })).toHaveText("Practice is unavailable in this example state.");
     await page.getByLabel("Disable start").uncheck();
     await page.getByLabel("Long example text").focus();
     await page.keyboard.press("Tab");

@@ -26,6 +26,8 @@ Rules carried into every contract: Zod `.strict()` on all bodies and model outpu
 
 ### 2.1 Role context (`lib/schemas/role-context.ts`)
 
+*Amended by 1C (coordinator, October 4):* `roleExtrasSchema` gains `background` (1–600, server-assembled from `person_context` for person starts) and `buildRoleContext` emits `BACKGROUND_LINE` when it is present.
+
 ```ts
 const stanceChip = z.string().trim().min(1).max(40);
 // added to roleContextSchema, all optional so presets and saved roles stay valid
@@ -127,7 +129,7 @@ startRequestSchema branches:
 
 ### 2.8 Live interactions (`lib/media/interactions.ts`, worker-owned, coordinator-reviewed)
 
-Typed builders only for `conversation.append_context`, `conversation.interrupt` and `conversation.respond`, sent through the Daily app-message path. The builders accept only fixed templates plus the reviewed name, or the user's typed turn (≤300). Payload shapes are confirmed against the Tavus Interaction docs at build time and the source and date are recorded in the 1A task file.
+Typed builders only for `conversation.append_llm_context` (the documented name; the October 3 harness used `conversation.append_context`), `conversation.interrupt` and `conversation.respond`, sent through the Daily app-message path. The builders accept only fixed templates plus the reviewed name, or the user's typed turn (≤300). Payload shapes are confirmed against the Tavus Interaction docs at build time and the source and date are recorded in the 1A task file.
 
 Event parsing additions: `conversation.utterance.streaming` (captions), `conversation.started_speaking` / `stopped_speaking` with role `pal` or legacy `replica` (speaking glow). Any `user_audio_analysis` field is dropped at parse time and never reaches React state.
 

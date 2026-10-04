@@ -1,8 +1,10 @@
 "use client";
 
-import { PracticeCall } from "@/components/presentation/practice";
+import { initialLiveCallState, type Interaction, type LiveCallState } from "@/lib/media/interactions";
 import type { PracticePhase } from "@/lib/practice/flow";
 import type { TranscriptTurn } from "@/lib/schemas/reflection";
+import type { GoalLightState } from "@/lib/goal-check/client";
+import { CallScreen } from "./call-screen";
 import { RemoteStreamVideo, StreamVideo } from "./remote-media";
 
 // Stages `ringing`, `call` and `recap` (and their retry twins): one screen whose phase follows
@@ -10,6 +12,7 @@ import { RemoteStreamVideo, StreamVideo } from "./remote-media";
 export type CallStageProps = {
   counterpartName: string;
   goal: string;
+  goalLight?: GoalLightState;
   phase: PracticePhase;
   muted: boolean;
   cameraEnabled: boolean;
@@ -24,14 +27,17 @@ export type CallStageProps = {
   statusMessage: string;
   testMedia: boolean;
   turns: readonly TranscriptTurn[];
+  // Cancel while ringing: the same teardown as leaving the call (microphone released, session ended).
+  onCancel?: () => void;
+  portraitSrc?: string | null;
+  cameraPending?: boolean;
+  live?: LiveCallState;
+  onInteraction?: (interaction: Interaction) => boolean;
+  standIn?: { title: string; pill: string; prompt?: string };
 };
 
-export function CallStage({
-  counterpartName, goal, phase, muted, cameraEnabled, elapsedSeconds, durationSeconds,
-  remoteStream, localStream, onMuteToggle, onCameraToggle, onEnd, statusMessage, testMedia, turns,
-}: CallStageProps) {
-  return <PracticeCall counterpartName={counterpartName} goal={goal} phase={phase} muted={muted} cameraEnabled={cameraEnabled} elapsedSeconds={elapsedSeconds} durationSeconds={durationSeconds}
+export function CallStage({ remoteStream, localStream, statusMessage, live = initialLiveCallState, ...rest }: CallStageProps) {
+  return <CallScreen {...rest} live={live} statusMessage={statusMessage || undefined}
     remoteMedia={remoteStream ? <RemoteStreamVideo stream={remoteStream} /> : null}
-    localPreview={localStream ? <StreamVideo stream={localStream} muted /> : undefined}
-    onMuteToggle={onMuteToggle} onCameraToggle={onCameraToggle} onEnd={onEnd} statusMessage={statusMessage || undefined} testMedia={testMedia} turns={turns} />;
+    localPreview={localStream ? <StreamVideo stream={localStream} muted /> : undefined} />;
 }

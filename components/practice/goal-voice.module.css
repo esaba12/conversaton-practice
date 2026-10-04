@@ -1,0 +1,94 @@
+/* G1 goal pill (night surface) */
+.pill {
+  margin: 0;
+  padding: 8px 14px;
+  border: 1px solid color-mix(in srgb, var(--night-ink) 35%, transparent);
+  border-radius: var(--r-md);
+  color: var(--night-ink);
+  font-size: var(--text-14);
+  line-height: 1.35;
+  transition: border-color var(--t-calm), box-shadow var(--t-calm);
+}
+.pillLabel { display: flex; align-items: center; gap: 6px; color: var(--night-muted); font-size: var(--text-12); }
+.pill[data-goal-state="reached"] {
+  border-color: var(--clay);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--clay) 38%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--clay) 60%, transparent);
+  animation: lightOnce 1.2s cubic-bezier(.32, .72, 0, 1) 1 both;
+}
+.pill[data-goal-state="reached"] .pillLabel { color: color-mix(in srgb, var(--clay) 55%, var(--night-ink)); }
+.check { flex: none; color: var(--clay); }
+
+@keyframes lightOnce {
+  0% { box-shadow: 0 0 0 color-mix(in srgb, var(--clay) 0%, transparent); }
+  45% { box-shadow: 0 0 28px color-mix(in srgb, var(--clay) 62%, transparent), inset 0 0 0 1px var(--clay); }
+  100% { box-shadow: 0 0 18px color-mix(in srgb, var(--clay) 38%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--clay) 60%, transparent); }
+}
+
+/* G1 green-room toggle (night surface) */
+.toggleRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  padding-top: 14px;
+  border-top: 1px solid color-mix(in srgb, var(--night-ink) 14%, transparent);
+}
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--hit-min);
+  color: var(--night-ink);
+  font-size: var(--text-16);
+  cursor: pointer;
+}
+.switch input { accent-color: var(--clay); }
+.switch input:focus-visible { outline: 3px solid var(--focus-night); outline-offset: 2px; }
+.note {
+  margin: 0;
+  color: var(--night-muted);
+  font-size: var(--text-14);
+  line-height: var(--leading-body);
+}
+
+/* W3 hear button (room surface) */
+.hearRow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.hear {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--hit-min);
+  padding: 0 14px;
+  border: 1px solid var(--sage);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--sage);
+  font: inherit;
+  font-size: var(--text-14);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t-quick);
+}
+.hear:hover { background: var(--sage-soft); }
+.hear:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.hear[aria-busy="true"] { cursor: progress; }
+.hear[aria-disabled="true"] {
+  border-style: dashed;
+  border-color: var(--muted);
+  background: var(--surface-sunk);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+.hearReason { margin: 0; color: var(--muted); font-size: var(--text-14); }
+
+/* Applied to the opening-line bubble while the preview plays; useHearHighlight never applies it under reduced motion. */
+.bubbleHearing[class] {
+  background: color-mix(in srgb, var(--clay) 14%, var(--surface-sunk));
+  box-shadow: inset 3px 0 0 var(--clay);
+  animation: hearingIn var(--t-base) both;
+}
+.bubbleHearing[class]::before { background: color-mix(in srgb, var(--clay) 14%, var(--surface-sunk)); }
+@keyframes hearingIn { from { background: var(--surface-sunk); box-shadow: inset 0 0 0 var(--clay); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .pill, .pill[data-goal-state="reached"], .bubbleHearing[class] { animation: none; transition: none; }
+}

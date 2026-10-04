@@ -2,7 +2,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { PlannedSection } from "@/components/practice/planned-section";
 import { PersonEditor, emptyPerson, parsePersonDraft } from "@/components/presentation/people-editor";
+import { PeopleLook } from "@/components/presentation/people-look";
 import { WorkspaceHeader } from "@/components/presentation/workspace-header";
 import { KnowsAboutYou, NeverShared } from "@/components/presentation/people-sharing";
 import styles from "@/components/presentation/people.module.css";
@@ -146,7 +148,10 @@ export function PersonWorkspace({ personId }: { personId: string | null }) {
             practiceHref={person ? `/practice?person=${person.id}` : undefined} />
           <KnowsAboutYou personName={name} facts={facts} sharedIds={person?.sharedFactIds ?? []} onToggle={(factId, share) => void toggleShare(factId, share)}
             disabled={!person || deleting} disabledReason={!person ? "Save this person first, then choose what they know about you." : factsError || undefined} announcement={announcement} />
+          {person && <PeopleLook personId={person.id} personName={person.name} version={person.version} disabled={deleting || sharing || saving}
+            onSaved={(version) => setPerson((current) => (current ? { ...current, version } : current))} onAuthLost={authLost} />}
         </div>
+        {person && <PlannedSection personId={person.id} personName={person.name} />}
         <NeverShared notes={notes} onChange={setNotes} onSave={() => void saveNotes()} saving={notesSaving} dirty={notes.trim() !== savedNotes} statusMessage={notesMessage.status} errorMessage={notesMessage.error} />
       </>}
     </div></main></>;
