@@ -29,7 +29,7 @@ export async function runG5({ chromium, credentials, clients, rpc, assert }) {
       await page.getByLabel("Email", { exact: true }).fill(email);
       await page.getByLabel("Password", { exact: true }).fill(password);
       await page.getByRole("button", { name: "Sign in", exact: true }).click();
-      await page.waitForURL("**/practice", { timeout: 20_000 });
+      await page.waitForURL((url) => !url.pathname.startsWith("/auth"), { timeout: 20_000 }); await page.goto(new URL("/practice", page.url()).href);
       return { context, page, api: context.request };
     };
     const call = async (who, method, path, data) => {

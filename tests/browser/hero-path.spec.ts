@@ -110,6 +110,8 @@ test.describe("hero path", () => {
       await page.getByLabel("Email", { exact: true }).fill(email);
       await page.getByLabel("Password", { exact: true }).fill(password);
       await page.getByRole("button", { name: "Sign in", exact: true }).click();
+      await page.waitForURL((url) => !url.pathname.startsWith("/auth"), { timeout: 30_000 });
+      await page.goto("/practice");
       await expect(page.getByRole("heading", { name: "Who do you want to practice with?" })).toBeVisible({ timeout: 30_000 });
     };
     return { errors, startBodies, count, liveAudio, opened, allowMic, backToMeet, signIn };

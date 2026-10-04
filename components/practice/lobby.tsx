@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
-import { RotateCcw } from "lucide-react";
+import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { motion, useReducedMotion } from "motion/react";
+import { CloudOff, Plus, RotateCcw, Sparkles, UsersRound, Video } from "lucide-react";
 import { PersonCard, PersonCardSkeleton, type PersonCardAction } from "@/components/ui/person-card";
+import { Portrait } from "@/components/ui/portrait";
+import { reducedFade, springs } from "@/lib/ui/motion";
 import { examples } from "@/fixtures/examples";
 import type { Person } from "@/lib/schemas/people";
 import type { SessionPreset } from "@/lib/schemas/situation";
@@ -75,6 +78,16 @@ function isTypingTarget(target: EventTarget | null): boolean {
 
 export type LobbyStatus = "loading" | "ready" | "error";
 
+/** Staggered rise-in for one grid cell; static when `enter` is off. */
+function LobbyItem({ index, enter, children, ...rest }: { index: number; enter: boolean; children: ReactNode; "data-preset"?: string }) {
+  return (
+    <motion.li {...rest} initial={enter ? { opacity: 0, y: 14 } : false} animate={{ opacity: 1, y: 0 }}
+      transition={enter ? { ...springs.lift, delay: Math.min(index, 10) * 0.045 } : reducedFade}>
+      {children}
+    </motion.li>
+  );
+}
+
 export type LobbyProps = {
   /** Already owner-scoped by GET /api/people; the lobby never lists anything else. */
   people: readonly Person[];
@@ -107,6 +120,7 @@ export function Lobby({
   starterPortraitSrc = starterPortraitPath, disabled = false, disabledReason = "Please wait a moment.", focusHeading = false, notice, shortcuts = true,
 }: LobbyProps) {
   const id = useId();
+  const reduced = useReducedMotion();
   const rootRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const keepRef = useRef<HTMLButtonElement>(null);
@@ -179,21 +193,42 @@ export function Lobby({
   const hasPeople = status === "ready" && ordered.length > 0;
   const highlight = highlightJordan(people, status, practicedPresets);
   const common = { disabled, disabledReason, onCardKeyDown };
+  // Returning from the briefing morphs a portrait back into its card; an entrance fade would hide the landing spot.
+  const enter = !reduced && !morphSource;
 
-  const someoneNew = (
-    <li key="someone-new">
+  const someoneNew = (index: number) => (
+    <LobbyItem key="someone-new" index={index} enter={enter}>
       <PersonCard variant="new" name="Someone new" meta="Name them, or we’ll pick a name." onOpen={onSomeoneNew} {...common} />
-    </li>
+    </LobbyItem>
   );
 
   return (
     <section ref={rootRef} className={styles.lobby} aria-labelledby={`${id}-title`} data-status={status}>
-      <header className={styles.header}>
-        <h1 id={`${id}-title`} ref={headingRef} tabIndex={-1} className={styles.title}>Who do you want to practice with?</h1>
-        <p className={styles.lede}>
-          Pick someone, then tell us what’s going on.
-          {shortcuts ? <>{" "}<span className={styles.keys}>Arrow keys move between cards; N starts someone new.</span></> : null}
-        </p>
+      <header className={styles.hero}>
+        <span className={styles.glow} aria-hidden="true" />
+        <div className={styles.heroText}>
+          <p className={styles.eyebrow}><span className={styles.liveDot} aria-hidden="true" />Live video practice</p>
+          <h1 id={`${id}-title`} ref={headingRef} tabIndex={-1} className={styles.title}>Who do you want to practice with?</h1>
+          <p className={styles.lede}>Pick someone, then tell us what’s going on. They answer out loud, face to face, and you can stop any time.</p>
+          <div className={styles.heroActions}>
+            <button type="button" className={styles.newPill} aria-disabled={disabled || undefined} aria-describedby={disabled ? `${id}-hero-reason` : undefined}
+              onClick={() => { if (!disabled) onSomeoneNew(); }}>
+              <span className={styles.newPillIcon} aria-hidden="true"><Plus size={18} strokeWidth={2} /></span>
+              Someone new
+              {shortcuts ? <kbd className={styles.kbd} aria-hidden="true">N</kbd> : null}
+            </button>
+            {disabled ? <span id={`${id}-hero-reason`} className={styles.heroReason}>{disabledReason}</span>
+              : shortcuts ? <span className={styles.keys}>Arrow keys move between cards; N starts someone new.</span> : null}
+          </div>
+        </div>
+        <div className={styles.cast} aria-hidden="true">
+          {starterOrder.map((preset, index) => (
+            <span key={preset} className={styles.castFace} style={{ "--i": index } as CSSProperties}>
+              <Portrait name={examples[preset].role.name} size={120} src={starterPortraitSrc(preset)} className={styles.castPortrait} />
+            </span>
+          ))}
+          <span className={styles.castNote}><Video size={16} strokeWidth={1.75} />{starterOrder.length} starters ready to talk</span>
+        </div>
       </header>
 
       {notice ? <p className={styles.notice} role="status">{notice}</p> : null}
@@ -210,53 +245,62 @@ export function Lobby({
       ) : null}
 
       <section className={styles.group} aria-labelledby={`${id}-people`}>
-        <h2 id={`${id}-people`} className={styles.groupTitle}>Your people</h2>
+        <div className={styles.groupHead}>
+          <span className={styles.groupIcon} aria-hidden="true"><UsersRound size={18} strokeWidth={1.75} /></span>
+          <h2 id={`${id}-people`} className={styles.groupTitle}>Your people</h2>
+          {hasPeople ? <span className={styles.count} aria-hidden="true">{ordered.length}</span> : null}
+        </div>
           {status === "error" ? (<>
             <div className={styles.error} role="alert">
+              <span className={styles.errorIcon} aria-hidden="true"><CloudOff size={20} strokeWidth={1.75} /></span>
               <p>We couldn’t load your people. The starters below still work.</p>
               <button type="button" className={styles.secondary} onClick={onRetry}><RotateCcw size={16} strokeWidth={1.75} aria-hidden="true" />Try again</button>
             </div>
-            <ul className={styles.grid} data-lobby-grid="people">{someoneNew}</ul>
+            <ul className={styles.grid} data-lobby-grid="people">{someoneNew(0)}</ul>
           </>) : status === "loading" ? (
             <ul className={styles.grid} aria-busy="true" aria-label="Loading your people">
               {showSkeleton ? [0, 1, 2].map((n) => <li key={n}><PersonCardSkeleton /></li>) : null}
-              {someoneNew}
+              {someoneNew(0)}
             </ul>
           ) : !hasPeople ? (
             <>
               <p className={styles.groupNote}>Add the people you want to practice talking to.</p>
-              <ul className={styles.grid} data-lobby-grid="people">{someoneNew}</ul>
+              <ul className={styles.grid} data-lobby-grid="people">{someoneNew(0)}</ul>
             </>
           ) : (
             <ul className={styles.grid} data-lobby-grid="people">
-              {ordered.map((person) => {
+              {ordered.map((person, index) => {
                 const actions: PersonCardAction[] = [];
                 if (onEditPerson) actions.push({ label: "Edit details", onSelect: () => onEditPerson(person) });
                 if (onDeletePerson) actions.push({ label: "Delete", tone: "danger", onSelect: () => { setMessage(""); setConfirming(person); } });
                 return (
-                  <li key={person.id}>
+                  <LobbyItem key={person.id} index={index} enter={enter}>
                     <PersonCard variant="saved" name={person.name} relationship={person.relationship} traits={personTraits(person)} meta={knowsLine(person.sharedFactIds.length)}
                       morphing={morphSource === person.id} onOpen={() => onPickPerson(person)} actions={actions} {...common} />
-                  </li>
+                  </LobbyItem>
                 );
               })}
-              {someoneNew}
+              {someoneNew(ordered.length)}
             </ul>
           )}
         </section>
 
       <section className={styles.group} aria-labelledby={`${id}-starters`}>
-        <h2 id={`${id}-starters`} className={styles.groupTitle}>Starter characters</h2>
+        <div className={styles.groupHead}>
+          <span className={styles.groupIcon} data-tone="warm" aria-hidden="true"><Sparkles size={18} strokeWidth={1.75} /></span>
+          <h2 id={`${id}-starters`} className={styles.groupTitle}>Starter characters</h2>
+          <span className={styles.count} aria-hidden="true">{starterOrder.length}</span>
+        </div>
         <p className={styles.groupNote}>Fictional characters with a ready situation you can change before you start.</p>
         <ul className={styles.grid} data-lobby-grid="starters">
-          {starterOrder.map((preset) => {
+          {starterOrder.map((preset, index) => {
             const { role, label } = examples[preset];
             const actions: PersonCardAction[] = onAddStarter ? [{ label: "Add to my people", onSelect: () => void addStarter(preset) }] : [];
             return (
-              <li key={preset} data-preset={preset}>
+              <LobbyItem key={preset} data-preset={preset} index={index + 2} enter={enter}>
                 <PersonCard variant="starter" name={role.name} relationship={starterRelationship[preset]} meta={label} portraitSrc={starterPortraitSrc(preset)}
                   highlight={preset === "manager" && highlight} morphing={morphSource === preset} onOpen={() => onPickStarter(preset)} actions={actions} {...common} />
-              </li>
+              </LobbyItem>
             );
           })}
         </ul>
