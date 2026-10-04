@@ -102,7 +102,7 @@
 
 .stateGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -130,10 +130,25 @@
 }
 
 .portraitRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 24px;
+  align-items: end;
+}
+
+.nightSurface {
+  display: inline-flex;
+  padding: 16px;
+  border-radius: var(--r-md);
+  background: var(--night);
+  color: var(--night-ink);
+}
+
+.galleryCapture {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: inherit;
 }
 
 .portraitFigure {
@@ -148,6 +163,14 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   align-items: start;
+}
+
+@media (max-width: 899px) {
+  .stateGrid, .portraitRow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 389px) {
+  .stateGrid, .portraitRow { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 700px) {

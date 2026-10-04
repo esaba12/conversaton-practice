@@ -6,9 +6,33 @@ import { Chip, Portrait, PrimaryButton, PrivateCard, portraitSizes } from "@/com
 import styles from "./gallery.module.css";
 
 const states = ["Default", "Hover", "Focus-visible", "Active", "Disabled with reason", "Loading"] as const;
+const stateSlugs = ["default", "hover", "focus-visible", "active", "disabled", "loading"] as const;
 const skills = ["Ask for what you need", "Stay calm", "Say no kindly"];
 
-function StateRow({ title, cells }: { title: string; cells: ReactNode[] }) {
+function GalleryCapture({
+  galleryState,
+  surface = "room",
+  night,
+  children,
+}: {
+  galleryState: string;
+  surface?: "room" | "night";
+  night?: boolean;
+  children: ReactNode;
+}) {
+  const resolvedSurface = night ? "night" : surface;
+  return (
+    <div
+      data-gallery-state={galleryState}
+      data-surface={resolvedSurface}
+      className={[styles.galleryCapture, night ? styles.nightSurface : undefined].filter(Boolean).join(" ")}
+    >
+      {children}
+    </div>
+  );
+}
+
+function StateRow({ prefix, title, cells }: { prefix: string; title: string; cells: ReactNode[] }) {
   return (
     <div className={styles.stateRow} role="group" aria-label={`${title} states`}>
       <h3 className={styles.rowTitle}>{title}</h3>
@@ -16,7 +40,9 @@ function StateRow({ title, cells }: { title: string; cells: ReactNode[] }) {
         {cells.map((cell, index) => (
           <div key={states[index]} className={styles.stateCell}>
             <span className={styles.stateLabel}>{states[index]}</span>
-            {cell}
+            <GalleryCapture galleryState={`${prefix}-${stateSlugs[index]}`} surface="room">
+              {cell}
+            </GalleryCapture>
           </div>
         ))}
       </div>
@@ -34,6 +60,7 @@ export function PrimitivesGallery() {
       <p className={styles.sectionNote}>Hover, focus-visible and active are forced here with <code>data-preview-state</code> so they can be compared side by side. Synthetic examples only; nothing here starts a call.</p>
 
       <StateRow
+        prefix="primary-button"
         title="Primary button"
         cells={[
           <PrimaryButton key="d" label="Call Jordan" icon={Phone} />,
@@ -46,6 +73,7 @@ export function PrimitivesGallery() {
       />
 
       <StateRow
+        prefix="chip"
         title="Chip (unselected)"
         cells={[
           <Chip key="d" label="Stay calm" selected={false} />,
@@ -58,6 +86,7 @@ export function PrimitivesGallery() {
       />
 
       <StateRow
+        prefix="chip-selected"
         title="Chip (selected)"
         cells={[
           <Chip key="d" label="Say no kindly" selected />,
@@ -71,9 +100,11 @@ export function PrimitivesGallery() {
 
       <div className={styles.stateRow}>
         <h3 className={styles.rowTitle}>Chip (try it: click, or Tab then Space)</h3>
-        <div className={styles.chipRow} role="group" aria-label="Skills to practice">
-          {skills.map((skill) => <Chip key={skill} label={skill} selected={picked.includes(skill)} onSelectedChange={(on) => toggle(skill, on)} />)}
-        </div>
+        <GalleryCapture galleryState="chip-interactive-group" surface="room">
+          <div className={styles.chipRow} role="group" aria-label="Skills to practice">
+            {skills.map((skill) => <Chip key={skill} label={skill} selected={picked.includes(skill)} onSelectedChange={(on) => toggle(skill, on)} />)}
+          </div>
+        </GalleryCapture>
       </div>
 
       <div className={styles.stateRow}>
@@ -81,31 +112,48 @@ export function PrimitivesGallery() {
         <div className={styles.portraitRow}>
           {portraitSizes.map((size) => (
             <figure key={size} className={styles.portraitFigure}>
-              <Portrait name="Jordan" size={size} />
+              <GalleryCapture galleryState={`portrait-${size}`} surface="room">
+                <Portrait name="Jordan" size={size} />
+              </GalleryCapture>
               <figcaption className={styles.stateLabel}>{size} px</figcaption>
             </figure>
           ))}
           <figure className={styles.portraitFigure}>
-            <Portrait name="Alex Rivera" size={120} />
+            <GalleryCapture galleryState="portrait-monogram-two-words" surface="room">
+              <Portrait name="Alex Rivera" size={120} />
+            </GalleryCapture>
             <figcaption className={styles.stateLabel}>Two words</figcaption>
           </figure>
           <figure className={styles.portraitFigure}>
-            <Portrait name="Ellis" size={120} src="/design-preview-missing-face.jpg" />
+            <GalleryCapture galleryState="portrait-image-error" surface="room">
+              <Portrait name="Ellis" size={120} src="/design-preview-missing-face.jpg" />
+            </GalleryCapture>
             <figcaption className={styles.stateLabel}>Image failed to load</figcaption>
           </figure>
         </div>
       </div>
 
       <div className={styles.stateRow}>
+        <h3 className={styles.rowTitle}>Portrait on night surface (call context)</h3>
+        <GalleryCapture galleryState="portrait-120-night" surface="night" night>
+          <Portrait name="Jordan" size={120} />
+        </GalleryCapture>
+      </div>
+
+      <div className={styles.stateRow}>
         <h3 className={styles.rowTitle}>Private card (not interactive)</h3>
         <div className={styles.privateRow}>
-          <PrivateCard note="Jordan never sees this.">
-            <p><strong>Goal:</strong> Ask for a clear answer about the deadline.</p>
-            <p><strong>Hard moment:</strong> If Jordan changes the subject, I’ll bring it back once.</p>
-          </PrivateCard>
-          <PrivateCard>
-            <p>Ask for a fairer way to share the cleaning.</p>
-          </PrivateCard>
+          <GalleryCapture galleryState="private-card-with-note" surface="room">
+            <PrivateCard note="Jordan never sees this.">
+              <p><strong>Goal:</strong> Ask for a clear answer about the deadline.</p>
+              <p><strong>Hard moment:</strong> If Jordan changes the subject, I’ll bring it back once.</p>
+            </PrivateCard>
+          </GalleryCapture>
+          <GalleryCapture galleryState="private-card-minimal" surface="room">
+            <PrivateCard>
+              <p>Ask for a fairer way to share the cleaning.</p>
+            </PrivateCard>
+          </GalleryCapture>
         </div>
       </div>
     </section>
