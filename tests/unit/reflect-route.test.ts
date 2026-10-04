@@ -16,7 +16,7 @@ const turns = [
   { speaker: "counterpart" as const, text: "Hey, what's up?" },
   { speaker: "user" as const, text: "Can we talk about the dishes?" },
 ];
-const reflection = { evidence: "complete" as const, observedAction: "You named the dishes.", takeaway: "Being specific helped.", nextStep: "Propose a time next time.", supportExit: false };
+const reflection = { evidence: "complete" as const, observedAction: "You named the dishes.", quotedLine: "Can we talk about the dishes?", takeaway: "Being specific helped.", nextStep: "Propose a time next time.", supportExit: false };
 let client: { from: ReturnType<typeof vi.fn> };
 
 const posted = (value: unknown) => {

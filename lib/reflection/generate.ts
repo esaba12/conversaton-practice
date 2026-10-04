@@ -1,11 +1,12 @@
 import "server-only";
 import { z } from "zod";
 import { AppError } from "@/lib/schemas/errors";
-import { reflectionModelOutputSchema, type ReflectRequest, type Reflection } from "@/lib/schemas/reflection";
+import { alternativeModelOutputSchema, reflectionModelOutputSchema, type AlternativeRequest, type ReflectRequest, type Reflection, type TranscriptTurn } from "@/lib/schemas/reflection";
 import { toStrictSchema } from "@/lib/setup/generate";
-import { buildReflectionUserMessage, REFLECTION_SYSTEM_PROMPT } from "./prompt";
+import { ALTERNATIVE_SYSTEM_PROMPT, buildAlternativeUserMessage, buildReflectionUserMessage, reflectionSystemPrompt } from "./prompt";
 
 export const REFLECTION_FORMAT_NAME = "practice_reflection";
+export const ALTERNATIVE_FORMAT_NAME = "practice_alternative";
 const ATTEMPTS = 2;
 const TIMEOUT_MS = 20_000;
 
@@ -25,7 +26,9 @@ function nullableTypes(node: unknown): unknown {
   }
   return out;
 }
-export const reflectionJsonSchema = () => nullableTypes(toStrictSchema(z.toJSONSchema(reflectionModelOutputSchema))) as Json;
+const strictJsonSchema = (schema: z.ZodType) => nullableTypes(toStrictSchema(z.toJSONSchema(schema))) as Json;
+export const reflectionJsonSchema = () => strictJsonSchema(reflectionModelOutputSchema);
+export const alternativeJsonSchema = () => strictJsonSchema(alternativeModelOutputSchema);
 
 function configuration() {
   const key = process.env.OPENAI_API_KEY, model = process.env.OPENAI_REFLECTION_MODEL || process.env.OPENAI_SETUP_MODEL;
@@ -33,26 +36,59 @@ function configuration() {
   return { key, model };
 }
 
-export function reflectionRequestBody(input: ReflectRequest, model: string) {
+type Call = { system: string; user: string; formatName: string; schema: Json };
+
+function requestBody(call: Call, model: string) {
   return {
     model,
     store: false,
-    input: [{ role: "system", content: REFLECTION_SYSTEM_PROMPT }, { role: "user", content: buildReflectionUserMessage(input) }],
-    text: { format: { type: "json_schema", name: REFLECTION_FORMAT_NAME, schema: reflectionJsonSchema(), strict: true } },
+    input: [{ role: "system", content: call.system }, { role: "user", content: call.user }],
+    text: { format: { type: "json_schema", name: call.formatName, schema: call.schema, strict: true } },
   };
 }
 
-// Server backstops: a support exit carries no feedback, and insufficient evidence carries no observation.
-export function enforceReflectionRules(output: Reflection): Reflection {
-  if (output.supportExit) return { ...output, observedAction: null, takeaway: null, nextStep: null };
-  if (output.evidence === "insufficient") return { ...output, observedAction: null };
-  return output;
+export function reflectionRequestBody(input: ReflectRequest, model: string) {
+  return requestBody({
+    system: reflectionSystemPrompt(input.feedbackStyle),
+    user: buildReflectionUserMessage(input),
+    formatName: REFLECTION_FORMAT_NAME,
+    schema: reflectionJsonSchema(),
+  }, model);
+}
+
+export function alternativeRequestBody(input: AlternativeRequest, model: string) {
+  return requestBody({
+    system: ALTERNATIVE_SYSTEM_PROMPT,
+    user: buildAlternativeUserMessage(input.goal),
+    formatName: ALTERNATIVE_FORMAT_NAME,
+    schema: alternativeJsonSchema(),
+  }, model);
+}
+
+// A quoted line must be text the user actually said. Transcription spacing and casing vary between
+// turns, so the comparison normalizes both sides; anything that is not inside one of the user's own
+// turns — including every counterpart line — becomes null.
+const normalize = (text: string) => text.replace(/\s+/g, " ").trim().toLocaleLowerCase();
+
+export function verifyQuotedLine(quotedLine: string | null, turns: readonly TranscriptTurn[]): string | null {
+  if (!quotedLine) return null;
+  const needle = normalize(quotedLine);
+  if (!needle) return null;
+  return turns.some((turn) => turn.speaker === "user" && normalize(turn.text).includes(needle)) ? quotedLine : null;
+}
+
+// Server backstops: a support exit carries no feedback, insufficient evidence carries no
+// observation, and a quote the user did not say is dropped rather than shown.
+export function enforceReflectionRules(output: Reflection, turns: readonly TranscriptTurn[] = []): Reflection {
+  if (output.supportExit) return { ...output, observedAction: null, quotedLine: null, takeaway: null, nextStep: null };
+  const evidence = output.evidence === "insufficient" ? { ...output, observedAction: null } : output;
+  return { ...evidence, quotedLine: evidence.observedAction ? verifyQuotedLine(evidence.quotedLine, turns) : null };
 }
 
 class Invalid extends Error {}
 const rawSchema = z.object({ status: z.string().optional(), output: z.array(z.unknown()) });
 const messageSchema = z.object({ type: z.literal("message"), content: z.array(z.object({ type: z.string(), text: z.string().optional() }).loose()) });
-function extract(raw: unknown): Reflection {
+function extract<T>(raw: unknown, schema: z.ZodType<T>): T {
   const parsed = rawSchema.safeParse(raw);
   if (!parsed.success || parsed.data.status === "incomplete" || parsed.data.status === "failed") throw new Invalid();
   const message = parsed.data.output.map((item) => messageSchema.safeParse(item)).find((item) => item.success)?.data;
@@ -61,30 +97,40 @@ function extract(raw: unknown): Reflection {
   if (text === undefined) throw new Invalid();
   let value: unknown;
   try { value = JSON.parse(text); } catch { throw new Invalid(); }
-  const output = reflectionModelOutputSchema.safeParse(value);
+  const output = schema.safeParse(value);
   if (!output.success) throw new Invalid();
   return output.data;
 }
 
-async function attempt(input: ReflectRequest, key: string, model: string): Promise<Reflection> {
+async function attempt<T>(body: unknown, key: string, schema: z.ZodType<T>): Promise<T> {
   let response: Response;
   try {
     response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify(reflectionRequestBody(input, model)),
+      body: JSON.stringify(body),
       cache: "no-store",
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch { throw new Invalid(); }
   if (!response.ok) throw new Invalid();
-  return extract(await response.json().catch(() => undefined));
+  return extract(await response.json().catch(() => undefined), schema);
+}
+
+const unavailable = () => new AppError("REFLECTION_UNAVAILABLE", "The reflection could not be generated. Try again.", 503, true);
+
+async function generate<T>(body: (model: string) => unknown, schema: z.ZodType<T>, settle: (output: T) => T): Promise<T> {
+  const { key, model } = configuration();
+  for (let i = 0; i < ATTEMPTS; i++) {
+    try { return settle(await attempt(body(model), key, schema)); } catch (error) { if (error instanceof Invalid) continue; throw error; }
+  }
+  throw unavailable();
 }
 
 export async function generateReflection(input: ReflectRequest): Promise<Reflection> {
-  const { key, model } = configuration();
-  for (let i = 0; i < ATTEMPTS; i++) {
-    try { return enforceReflectionRules(await attempt(input, key, model)); } catch (error) { if (error instanceof Invalid) continue; throw error; }
-  }
-  throw new AppError("REFLECTION_UNAVAILABLE", "The reflection could not be generated. Try again.", 503, true);
+  return generate((model) => reflectionRequestBody(input, model), reflectionModelOutputSchema, (output) => enforceReflectionRules(output, input.turns));
+}
+
+export async function generateAlternative(input: AlternativeRequest): Promise<{ alternative: string | null }> {
+  return generate((model) => alternativeRequestBody(input, model), alternativeModelOutputSchema, (output) => output);
 }
