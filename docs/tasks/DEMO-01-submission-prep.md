@@ -183,6 +183,7 @@ If "Show me first" is disabled, skip that beat and say it is unavailable. Do not
 - [ ] At the table in the Duderstadt Basement from 1:00 to 3:00 PM.
 - [ ] No keys, real emails, or private notes on screen or in the gallery.
 - [ ] Do not deploy the uncommitted host-allowlist change before judging (see STATUS).
+- [ ] Production is `f61a5ad` (deployed ~12:03) with [PR #102](https://github.com/esaba12/conversaton-practice/pull/102), the new-practice look picker, which has had no live call. Run one call on it before judges arrive. The pitch uses saved Jordan, which is unchanged.
 
 ## Superseded material
 
@@ -234,6 +235,10 @@ Planned Actually Intelligent plus two ElevenLabs categories, pending stacking co
 - Shared resources: none
 
 ## Verification evidence
+
+- Date/time/timezone: October 4, 2026, ~12:05 PM America/Detroit (pre-judging review)
+- Mode: static, unit (local on `f61a5ad`: typecheck clean, 795 tests in 50 files), and read-only HTTP against production
+- Outcome: pass. HTTP checks ran on deployment `dpl_Drotqpqj8pPQZAHnkafUYPb9BPwu` (created 10:46, `9b7bc93`), before the owner deployed `f61a5ad` at ~12:03; the new deploy was not re-checked. Both hosts return 200 with title "SpeakEasy"; the landing HTML and its 13 static assets contain no "therap", no key-shaped strings, and none of the server-only env values. Signed-out `/practice` redirects to sign-in; signed-out people, preset, portrait and session APIs return 401. Every UI label quoted in the pitch and demo script exists in `app/` or `components/`. No live call, deploy or provider change was made.
 
 - Date/time/timezone: October 4, 2026, ~11:15 AM America/Detroit
 - Mode: static, plus read-only HTTP checks
