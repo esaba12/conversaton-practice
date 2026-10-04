@@ -1,5 +1,13 @@
 # Project status
 
+## Submission morning (October 4, ~10:05 AM EDT, main `75f9c7d`)
+
+Nothing broken has been reported from a live call. Devpost paste and a two-minute demo script are in [DEMO-01](docs/tasks/DEMO-01-submission-prep.md). The demo URL is https://conversation-practice-zeta.vercel.app (the app). The static preview host is not the demo. Sign-in is email and password. The project is still unnamed (#34). Every feature is still **live not verified** until the owner reports a live call.
+
+Owner, before noon: reset the demo account with `node --env-file=.env.local scripts/demo/seed.mjs --checkin`, record from the DEMO-01 script, and submit Devpost. One useful live check, if you have a few minutes: Jordan, briefing, Show me first once, your call, End, recap, "Try that moment once." Fill "When it gets hard, I'll say" or that button will not appear.
+
+Docs for the four-starter picker (#37) and the auth/database regression (#30) are the next coordinator tasks. This cloud checkout has no `.env.local` and no Supabase CLI login, so those scripts cannot be run here until credentials are present. Do not start new features.
+
 ## Compressed finish done (October 4, ~03:00 EDT, main `9689b15`)
 
 All slices through Phase 3 in the compressed plan (docs/next/02-BUILD-PLAN.md §1a) are merged: X, Y, Z, M23 (applied) and 3E. Recipe on combined `main`: typecheck clean, 786 unit tests, production build, client-bundle check PASS (18 provider env names), Playwright 13 passed / 1 production-only skip with real Auth (hero path plus the retry path). Two-owner SQL suites for M23 pass after apply. **Live not verified** for every phase.

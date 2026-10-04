@@ -1,10 +1,10 @@
 # Conversation practice
 
-A FaceTime-style rehearsal for an everyday conversation you have been putting off. You describe a situation, review an editable fictional counterpart, and talk live on video. This is a practice tool, not therapy, and it does not predict anyone real.
+A FaceTime-style rehearsal for an everyday conversation you have been putting off. You describe a situation, review an editable fictional counterpart, and talk live on video. This is a practice tool, and it does not predict anyone real.
 
-**MHacks prototype** (October 3–4, 2026). One human builder with coding agents. Submit by **11:30 AM America/Detroit** October 4 (hard noon). Pitch, backup shot list, Devpost drafts and claims we must not make: [docs/tasks/DEMO-01-submission-prep.md](docs/tasks/DEMO-01-submission-prep.md).
+**MHacks prototype** (October 3–4, 2026). One human builder with coding agents. Submit by **11:30 AM America/Detroit** October 4 (hard noon). Devpost paste, two-minute demo script, and claims we must not make: [docs/tasks/DEMO-01-submission-prep.md](docs/tasks/DEMO-01-submission-prep.md).
 
-Public concept site (static, not the app): [conversation-practice-site.vercel.app](https://conversation-practice-site.vercel.app).
+**Demo (the app):** [conversation-practice-zeta.vercel.app](https://conversation-practice-zeta.vercel.app). Sign-in is email and password. The static concept site is separate and is not the demo: [conversation-practice-site.vercel.app](https://conversation-practice-site.vercel.app).
 
 ## What it does
 
@@ -65,13 +65,13 @@ This folder supplies the application, specifications, and the deployed static pr
 
 ## Defaults and unresolved items
 
-Current direction: Next.js App Router, TypeScript, npm, Tavus CVI with explicit ElevenLabs TTS, Supabase Auth/PostgreSQL, required sign-in, and server-side structured output for setup/reflection. Vercel is the recommended app host; the authenticated app is not deployed. See docs/18-DESIGN-AND-AWS.md. Default demo: setting a cleaning boundary with a fictional roommate.
+Current direction: Next.js App Router, TypeScript, npm, Tavus CVI with explicit ElevenLabs TTS, Supabase Auth/PostgreSQL, required sign-in, and server-side structured output for setup/reflection. The authenticated app is deployed at https://conversation-practice-zeta.vercel.app. See docs/18-DESIGN-AND-AWS.md. Default demo: Jordan, a fictional manager, asking to move one project. The roommate example remains available.
 
 Confirmed event strategy: Actually Intelligent plus both listed ElevenLabs categories, subject to organizer confirmation of category stacking. Submission is before noon Sunday, October 4, America/Detroit; judging uses a three-minute pitch. See docs/16-MHACKS-STRATEGY.md.
 
 Confirmed: one human with parallel coding agents, fresh sessions, user-described situations as the primary input, warm minimal/crisp modern design, and sign-in before all workspace actions. The user supplied a fresh Supabase project; Auth and owner isolation are automated-tested. Situation generation is core scope.
 
-On `main`: three example starts (Alex, Ellis, Sam), a 3- or 5-minute choice, collapsed captions, saved-person session attribution, and a public landing with a signed-in home and a Google sign-in button. Google sign-in is not live-checked. Still open, in [docs/29](docs/29-REMAINING-WORK.md): appearance presets, a project name, app hosting, live G3–G5 checks, and Devpost. A one-moment retry is specified in [docs/30](docs/30-ONE-MOMENT-RETRY.md) and is not part of the submission build. Photon/Relay remain deferred.
+On `main`: email-and-password sign-in, the four starters (Jordan, Alex, Ellis, Sam) with stock faces, a saved-person look-and-voice picker, Show me first, a recap, and one retry of a hard moment. Still open: a project name, a live check of this path, and the Devpost submission. Photon/Relay remain deferred.
 
 ## Evidence policy
 

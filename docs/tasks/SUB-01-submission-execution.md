@@ -32,7 +32,7 @@ Non-goals: rewriting the pitch, new features the morning of judging, checking sp
 - [ ] Record the backup from the DEMO-01 shot list. File name or folder label includes “prerecorded”. Fictional content only. Do not delete-all on the demo account.
 - [ ] Fill Devpost from the DEMO-01 drafts. Built-with list matches that section.
 - [ ] Select Actually Intelligent. Add an ElevenLabs category only with a stacking answer the human is willing to stand on. The expo questions in docs/16 were not recorded as answered.
-- [ ] Table number, solo teammate line, and a demo plan: local app plus the prerecorded backup. Leave the demo URL empty until HOST-01 says a real app URL exists.
+- [ ] Table number, solo teammate line, and the demo URL https://conversation-practice-zeta.vercel.app. Do not use the static preview host. Keep a prerecorded backup labelled prerecorded.
 - [ ] Rehearse once inside three minutes, with a 60–90 second live exchange, on a generated situation.
 - [ ] Laptop charged, headset, throwaway account signed in, `npm run dev -- --port 3000` already up before 12:30.
 - [ ] Keep the Devpost confirmation. Be at Duderstadt 12:30–2:30 PM for possible repeat judging.

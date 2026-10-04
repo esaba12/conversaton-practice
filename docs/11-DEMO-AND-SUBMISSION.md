@@ -1,7 +1,9 @@
 # Demo and submission
 
 ## Positioning
-The app lets people practice a conversation they have been putting off with an editable fictional counterpart. Lead with the founder's experience of a therapist playing the other person, without claiming to reproduce clinical judgment.
+The app lets people practice a conversation they have been putting off with an editable fictional counterpart. The other person is fictional. Do not claim to predict anyone real.
+
+The demo field is the deployed app: https://conversation-practice-zeta.vercel.app. The static preview at conversation-practice-site.vercel.app is not the demo. Paste-ready Devpost fields and a two-minute video script are in [DEMO-01](tasks/DEMO-01-submission-prep.md).
 
 Primary targets: Actually Intelligent and the two listed ElevenLabs categories. See [event strategy](16-MHACKS-STRATEGY.md) for requirements and unresolved eligibility.
 
@@ -53,7 +55,7 @@ Execution steps, including the push of local polish and the backup recording, ar
 - [ ] Figma design eligibility checked if entering.
 - [ ] Notability Pro screenshots (at least two), tools tag, and usage note included if entering.
 - [ ] Gemini contribution documented if that provider was selected and implemented.
-- [ ] Demo/source access and required fields verified against the submission form.
+- [ ] Demo URL is https://conversation-practice-zeta.vercel.app (the app), not the static preview site.
 - [ ] No keys or private user data in screenshots, logs, or demo.
 - [ ] Successful submission confirmation retained before noon.
 - [ ] Backup recording labelled prerecorded (shot list in DEMO-01).
