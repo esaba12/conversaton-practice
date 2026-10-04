@@ -1,6 +1,6 @@
 -- Expects 20261004010000_person_situations.sql either already applied, or prepended
 -- after this file's BEGIN in one transaction. For pre-apply review, concatenate:
---   this BEGIN; + the migration body + this test body without its BEGIN + this ROLLBACK;
+--   this BEGIN; + the migration without its own BEGIN/COMMIT + this test body without its BEGIN + this ROLLBACK;
 -- Fictional fixtures only. Nothing in this file calls a provider or remote service.
 begin;
 set local statement_timeout = '20s';
@@ -258,6 +258,7 @@ declare
   v_person jsonb;
   v_person_id uuid;
   v_version integer;
+  v_bad text;
 begin
   v_person := public.person_create(
     'Cascade',
@@ -272,7 +273,16 @@ begin
     'A saved background.'
   );
   v_person_id := (v_person ->> 'id')::uuid;
-  perform public.person_situation_create(v_person_id, 'Cascade situation', '{}'::jsonb);
+  -- Stored situations are shape-checked like situationSchema: unknown keys and long chips are rejected.
+  foreach v_bad in array array['{"goal":"private"}', '{"wants":"this stance chip is far longer than forty characters"}', '{"pace":"fast"}'] loop
+    begin
+      perform public.person_situation_create(v_person_id, 'bad', v_bad::jsonb);
+      raise exception 'Invalid situation was stored: %', v_bad;
+    exception when sqlstate 'P0001' then
+      if sqlerrm <> 'INVALID_INPUT' then raise; end if;
+    end;
+  end loop;
+  perform public.person_situation_create(v_person_id, 'Cascade situation', '{"wants":"Keep the launch on track","pace":"patient"}'::jsonb);
   v_version := (v_person ->> 'version')::integer;
   perform public.person_delete(v_person_id);
   if exists (

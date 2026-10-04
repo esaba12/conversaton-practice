@@ -1,6 +1,7 @@
 -- M1. Saved-person backgrounds and reusable situations; session kind/preset metadata.
--- This migration intentionally has no transaction wrapper so it can be prepended inside
--- the rolled-back transaction described by supabase/tests/person_situations.sql.
+-- One transaction: a mid-file failure must not leave the temporary grants below in place.
+-- For pre-apply review, strip this file's BEGIN/COMMIT (see supabase/tests/person_situations.sql).
+begin;
 
 -- Ownership transfers require temporary membership and CREATE. Both are removed below.
 grant people_executor to postgres;
@@ -10,7 +11,7 @@ grant create on schema public to practice_session_executor;
 
 alter table public.people
   add column background text
-  check (pg_catalog.char_length(background) between 1 and 600);
+  check (pg_catalog.char_length(pg_catalog.btrim(background)) between 1 and 600);
 
 update public.people
 set background = pg_catalog.left(public_context, 600);
@@ -142,19 +143,48 @@ grant execute on function public.person_update(
   uuid, integer, text, text, jsonb, text, text, text, jsonb, text, text, text
 ) to authenticated;
 
+-- Saved situations reach counterpart context, so the stored shape mirrors situationSchema (all keys optional).
+create function practice_private.valid_stance_chip(p jsonb)
+returns boolean language sql immutable set search_path = '' as $$
+  select pg_catalog.jsonb_typeof(p) = 'string'
+    and pg_catalog.char_length(pg_catalog.btrim(p #>> '{}')) between 1 and 40
+$$;
+create function practice_private.valid_situation(p jsonb)
+returns boolean language sql immutable set search_path = '' as $$
+  select p is not null and pg_catalog.jsonb_typeof(p) = 'object' and not exists (
+    select 1 from pg_catalog.jsonb_each(p) as e(key, value)
+    where not (case e.key
+      when 'publicContext' then pg_catalog.jsonb_typeof(e.value) = 'string'
+        and pg_catalog.char_length(pg_catalog.btrim(e.value #>> '{}')) between 1 and 1500
+      when 'opening' then pg_catalog.jsonb_typeof(e.value) = 'string'
+        and pg_catalog.char_length(pg_catalog.btrim(e.value #>> '{}')) between 1 and 300
+      when 'constraints' then practice_private.valid_constraints(e.value)
+      when 'challenge' then pg_catalog.jsonb_typeof(e.value) = 'string'
+        and (e.value #>> '{}') in ('supportive', 'neutral', 'mild_pushback')
+      when 'pace' then pg_catalog.jsonb_typeof(e.value) = 'string'
+        and (e.value #>> '{}') in ('patient', 'conversational')
+      when 'wants' then practice_private.valid_stance_chip(e.value)
+      when 'holdsBackBecause' then practice_private.valid_stance_chip(e.value)
+      when 'softensWhen' then practice_private.valid_stance_chip(e.value)
+      else false end))
+$$;
+revoke all on function practice_private.valid_stance_chip(jsonb), practice_private.valid_situation(jsonb) from public, anon, authenticated;
+grant execute on function practice_private.valid_stance_chip(jsonb), practice_private.valid_situation(jsonb) to people_executor;
+
 create table public.person_situations (
   id uuid primary key default pg_catalog.gen_random_uuid(),
   owner_id uuid not null references auth.users(id) on delete cascade,
-  person_id uuid not null references public.people(id) on delete cascade,
+  person_id uuid not null,
   label text not null
     check (pg_catalog.char_length(pg_catalog.btrim(label)) between 1 and 60),
   situation jsonb not null
     check (
-      pg_catalog.jsonb_typeof(situation) = 'object'
+      practice_private.valid_situation(situation)
       and pg_catalog.octet_length(situation::text) <= 8192
     ),
   created_at timestamptz not null default pg_catalog.clock_timestamp(),
-  updated_at timestamptz not null default pg_catalog.clock_timestamp()
+  updated_at timestamptz not null default pg_catalog.clock_timestamp(),
+  foreign key (person_id, owner_id) references public.people(id, owner_id) on delete cascade
 );
 
 create index person_situations_person_newest
@@ -503,3 +533,5 @@ revoke create on schema public from people_executor;
 revoke people_executor from postgres;
 revoke create on schema public from practice_session_executor;
 revoke practice_session_executor from postgres;
+
+commit;
