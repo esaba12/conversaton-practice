@@ -1,5 +1,9 @@
 # Project status
 
+## Name (October 4, ~10:10 EDT)
+
+The product name is **SpeakEasy** (owner decision). Wordmark, document title, README, static preview, and the Devpost draft title use it. The GitHub repository and `package.json` name are unchanged. The owner also said they have a domain; the hostname was not in that message, so it is not attached yet.
+
 ## Submission morning (October 4, ~10:05 AM EDT, main `91ba25e`)
 
 Nothing broken has been reported from a live call. Every feature is still **live not verified** until the owner reports one.
@@ -9,7 +13,7 @@ Merged this morning, docs only, CI `verify` success on each:
 - [PR #94](https://github.com/esaba12/conversaton-practice/pull/94) (`d1e0c21`): Devpost paste and a two-minute demo script in [DEMO-01](docs/tasks/DEMO-01-submission-prep.md). The demo URL is https://conversation-practice-zeta.vercel.app. The static preview host is not the demo. CI: typecheck, 786 unit tests, build, client-bundle check, Playwright 11 passed / 3 skipped (the hero path skips without the service-role key). [Run](https://github.com/esaba12/conversaton-practice/actions/runs/37207371897).
 - [PR #95](https://github.com/esaba12/conversaton-practice/pull/95) (`91ba25e`): docs/00, 02, 06, and 26 now describe the four-starter look-and-voice picker. Same CI shape. [Run](https://github.com/esaba12/conversaton-practice/actions/runs/37207440488).
 
-Sign-in is email and password. The project is still unnamed (#34). Do not invent a name.
+Sign-in is email and password. (Superseded at ~10:10: the name is SpeakEasy; see above.)
 
 **Owner, before noon:** reset the demo account with `node --env-file=.env.local scripts/demo/seed.mjs --checkin`, record from the DEMO-01 script, and submit Devpost (#36). One useful live check (#35): Jordan, briefing, Show me first once, your call, End, recap, "Try that moment once." Fill "When it gets hard, I'll say" or that button will not appear. For #37, one extra call with a saved person set to Alex, Ellis, or Sam (not Default).
 

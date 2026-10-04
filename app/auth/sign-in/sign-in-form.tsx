@@ -34,7 +34,7 @@ export function SignInForm({ configured, notice = "" }: { configured: boolean; n
         setMessage("Check your email to confirm your account, then sign in here.");
         return;
       }
-      router.push("/practice");
+      router.push("/");
       router.refresh();
     } catch {
       setMessage("Could not reach sign-in. Please try again.");

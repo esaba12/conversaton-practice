@@ -335,7 +335,7 @@ export function PracticeWorkspace() {
     setSavedPerson(null); setSetupMessage("");
     returnToBriefing();
     setMoveFocus(true);
-    if (searchParams.get("person")) router.replace("/practice", { scroll: false });
+    if (searchParams.get("person") || searchParams.get("preset") || searchParams.get("new")) router.replace("/practice", { scroll: false });
   }
 
   function handleAuthLoss() {
@@ -699,7 +699,10 @@ export function PracticeWorkspace() {
 
   useEffect(() => {
     const personId = searchParams.get("person");
+    const preset = searchParams.get("preset");
     if (personId) void openPerson(personId);
+    else if (preset && Object.hasOwn(examples, preset)) openBriefing({ kind: "starter", preset: preset as SessionPreset });
+    else if (searchParams.get("new") === "1") openBriefing({ kind: "new" });
     // Read once on arrival from a person page; later selections happen in state.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

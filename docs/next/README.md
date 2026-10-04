@@ -127,7 +127,7 @@ Human, before the deployed app can sign anyone in:
 | [#35](https://github.com/esaba12/conversaton-practice/issues/35) LIVE-01 | Saved-person live call, reflection on a real transcript, and the rest of the live matrix. | Human |
 | [#32](https://github.com/esaba12/conversaton-practice/issues/32) OPS-01 | Local Google sign-in passed once. Hosted Google is blocked on the redirect URL above. Provider stays in Testing. | Human |
 | [#33](https://github.com/esaba12/conversaton-practice/issues/33) HOST-01 | Deploy exists. Close this only after the human confirms sign-in on the deployed URL. | Human |
-| [#34](https://github.com/esaba12/conversaton-practice/issues/34) NAME-01 | Still "Conversation practice". Do not invent a name. | Human |
+| [#34](https://github.com/esaba12/conversaton-practice/issues/34) NAME-01 | Owner chose SpeakEasy (October 4). Applied to the wordmark, title, README, and Devpost draft. | Done |
 | [#36](https://github.com/esaba12/conversaton-practice/issues/36) SUB-01 | Devpost, backup recording, three-minute rehearsal. Drafts: [DEMO-01](../tasks/DEMO-01-submission-prep.md). | Human |
 | [#37](https://github.com/esaba12/conversaton-practice/issues/37) APPEAR-01 | Per-person stock face and premade voice. Same work as B4. | In the product plan |
 

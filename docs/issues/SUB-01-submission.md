@@ -11,7 +11,8 @@ Existing record: [docs/tasks/SUB-01-submission-execution.md](../tasks/SUB-01-sub
 
 ## Human checklist
 
-- [ ] Decide HOST-01, OPS-01, and NAME-01 first, or explicitly skip them.
+- [x] NAME-01: the product name is SpeakEasy (October 4).
+- [ ] Decide HOST-01 and OPS-01, or explicitly skip them.
 - [ ] Record the backup demo from the DEMO-01 shot list. Put "prerecorded" in the file name. Use fictional content and do not use Delete all on the demo account.
 - [ ] Fill Devpost from the DEMO-01 drafts. The built-with list matches what was actually used.
 - [ ] Choose categories: Actually Intelligent; add ElevenLabs only with a stacking answer you will stand on (docs/16).

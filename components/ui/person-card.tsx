@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { Ellipsis, Plus } from "lucide-react";
+import { ArrowRight, Ellipsis, Plus, Sparkles, Video } from "lucide-react";
 import { motionTransition } from "@/lib/ui/motion";
 import { Portrait } from "./portrait";
 import styles from "./person-card.module.css";
@@ -49,7 +49,6 @@ export function PersonCard({
   const menuRef = useRef<HTMLUListElement>(null);
   const reasonId = `${baseId}-reason`;
   const isNew = variant === "new";
-  const cta = isNew ? "Start" : `Practice with ${name}`;
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -72,6 +71,7 @@ export function PersonCard({
       className={styles.card}
       data-variant={variant}
       data-highlight={highlight || undefined}
+      data-disabled={disabled || undefined}
       whileHover={disabled || reduced ? undefined : { y: -4 }}
       transition={motionTransition("lift", reduced)}
     >
@@ -87,12 +87,12 @@ export function PersonCard({
       >
         <span className={styles.face} aria-hidden="true">
           {isNew
-            ? <span className={styles.plus}><Plus size={40} strokeWidth={1.75} /></span>
+            ? <span className={styles.plus}><span className={styles.plusRing}><Plus size={32} strokeWidth={1.75} /></span></span>
             : <PortraitTransition active={morphing}><Portrait name={name} size={240} src={portraitSrc} className={styles.portrait} /></PortraitTransition>}
+          {highlight ? <span className={styles.ribbon}><Sparkles size={14} strokeWidth={2} />Start here</span> : null}
+          {variant === "starter" && !disabled ? <span className={styles.presence}><span className={styles.presenceDot} />Starter · ready now</span> : null}
         </span>
         <span className={styles.body}>
-          {highlight ? <span className={styles.badge} data-tone="accent">Start here</span>
-            : variant === "starter" ? <span className={styles.badge}>Starter</span> : null}
           <span className={styles.name}>{isNew ? "Someone new" : name}</span>
           {relationship ? <span className={styles.relationship}>{relationship}</span> : null}
           {traits.length > 0 ? (
@@ -101,7 +101,13 @@ export function PersonCard({
             </span>
           ) : null}
           {meta ? <span className={styles.meta}>{meta}</span> : null}
-          <span className={styles.cta}>{cta}</span>
+          <span className={styles.footer}>
+            <span className={styles.cta}>
+              <span className={styles.ctaIcon}>{isNew ? <Plus size={16} strokeWidth={2} /> : <Video size={16} strokeWidth={2} />}</span>
+              <span className={styles.ctaText}>{isNew ? "Start" : <>Practice<span className={styles.ctaName}> with {name}</span></>}</span>
+            </span>
+            <ArrowRight className={styles.go} size={18} strokeWidth={1.75} />
+          </span>
         </span>
       </button>
       {disabled ? <span id={reasonId} className={styles.reason}>{disabledReason?.trim() || "This isn't available right now."}</span> : null}
@@ -151,6 +157,7 @@ export function PersonCardSkeleton() {
       <span className={styles.skeletonFace} />
       <span className={styles.skeletonLine} />
       <span className={styles.skeletonLineShort} />
+      <span className={styles.skeletonPill} />
     </div>
   );
 }

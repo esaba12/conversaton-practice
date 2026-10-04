@@ -1,4 +1,4 @@
-# Conversation practice
+# SpeakEasy
 
 A FaceTime-style rehearsal for an everyday conversation you have been putting off. You describe a situation, review an editable fictional counterpart, and talk live on video. This is a practice tool, and it does not predict anyone real.
 

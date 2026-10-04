@@ -113,7 +113,7 @@ try {
         await page.getByLabel("Email", { exact: true }).fill(email);
         await page.getByLabel("Password", { exact: true }).fill(password);
         await page.getByRole("button", { name: "Sign in", exact: true }).click();
-        await page.waitForURL("**/practice", { timeout: 20_000 });
+        await page.waitForURL((url) => !url.pathname.startsWith("/auth"), { timeout: 20_000 }); await page.goto(new URL("/practice", page.url()).href);
         return { context, page, api: context.request };
       };
       const a = await signIn(credentials[0]), b = await signIn(credentials[1]);
@@ -223,7 +223,7 @@ try {
       await page.getByLabel("Email", { exact: true }).fill(credentials[0].email);
       await page.getByLabel("Password", { exact: true }).fill(credentials[0].password);
       await page.getByRole("button", { name: "Sign in", exact: true }).click();
-      await page.waitForURL("**/practice", { timeout: 20_000 });
+      await page.waitForURL((url) => !url.pathname.startsWith("/auth"), { timeout: 20_000 }); await page.goto(new URL("/practice", page.url()).href);
       // G2 setup flow with draft and start intercepted in the browser: no model or call-provider requests.
       const marker = "purple umbrella private marker";
       const draftRole = { name: "Jordan", role: "Your fictional shift lead", style: "Brisk but fair.", publicContext: "You schedule weekend shifts at a cafe.", opening: "Hey, got a minute? I'm finishing the schedule.", constraints: ["Has five minutes."], challenge: "neutral", pace: "conversational" };

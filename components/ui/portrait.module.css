@@ -21,16 +21,21 @@
 }
 
 .fallback {
-  background: linear-gradient(145deg, var(--clay) 0%, var(--sage) 100%);
+  background:
+    radial-gradient(120% 90% at 18% 8%, rgb(255 255 255 / .16) 0%, transparent 55%),
+    radial-gradient(90% 80% at 100% 100%, rgb(20 23 21 / .22) 0%, transparent 60%),
+    linear-gradient(145deg, var(--tone-a, var(--clay)) 0%, var(--tone-b, var(--sage)) 100%);
   color: var(--night-ink);
 }
 
 .monogram {
+  position: relative;
   font-family: var(--font-serif);
   font-weight: 500;
   line-height: 1;
   letter-spacing: var(--tracking-display);
   font-variation-settings: "opsz" 72;
+  text-shadow: 0 1px 12px rgb(20 23 21 / .18);
 }
 
 .size40 .monogram { font-size: var(--text-16); }

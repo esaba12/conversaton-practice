@@ -130,7 +130,7 @@ Still photos if video fails: the 390 px screenshots in ignored `artifacts/local/
 
 Superseded for submission by **Devpost paste (October 4, morning)** at the top of this file. The paragraphs below were written October 3, before the app was deployed and before the current flow shipped. Do not paste them into Devpost.
 
-**What it does.** Conversation practice is a FaceTime-style rehearsal for an everyday conversation you have been putting off. You describe the situation, review an editable fictional counterpart, and talk live on video. Private preparation notes stay off the call. After End you can optionally reflect, and you can explicitly save the person and choose what they know about you. Each practice starts fresh.
+**What it does.** SpeakEasy is a FaceTime-style rehearsal for an everyday conversation you have been putting off. You describe the situation, review an editable fictional counterpart, and talk live on video. Private preparation notes stay off the call. After End you can optionally reflect, and you can explicitly save the person and choose what they know about you. Each practice starts fresh.
 
 **How we built it.** Next.js 16 App Router and TypeScript. Sign-in and owner-scoped PostgreSQL through Supabase. Live video through Tavus CVI (Daily room + meeting token) with ElevenLabs TTS configured on the PAL. Setup drafts and optional reflection use OpenAI Responses with `store: false`. Zod-validated routes; no service-role key in the client.
 
