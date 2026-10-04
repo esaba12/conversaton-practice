@@ -20,12 +20,15 @@ async function request(path: string, method: string, body?: unknown, timeoutMs =
   if (!response.ok) throw new AppError("PROVIDER_UNAVAILABLE", "The call provider could not complete the request.", 503, true);
   return response;
 }
-export function conversationBody(role: RoleContext, durationSeconds: 180 | 300, extras?: RoleExtras, media?: { palId: string; faceId: string }) {
+// `context` and `greeting` replace the counterpart context for W10's stand-in, which plays the
+// user rather than the counterpart and is built by lib/session/stand-in-context.ts.
+export type ConversationMedia = { palId: string; faceId: string; context?: string; greeting?: string };
+export function conversationBody(role: RoleContext, durationSeconds: 180 | 300, extras?: RoleExtras, media?: ConversationMedia) {
   const { pal, face } = configuration();
-  return { pal_id: media?.palId ?? pal, face_id: media?.faceId ?? face, audio_only: false, require_auth: true, max_participants: 2, participant_tags: [], conversational_context: buildRoleContext(role, extras), custom_greeting: role.opening,
+  return { pal_id: media?.palId ?? pal, face_id: media?.faceId ?? face, audio_only: false, require_auth: true, max_participants: 2, participant_tags: [], conversational_context: media?.context ?? buildRoleContext(role, extras), custom_greeting: media?.greeting ?? role.opening,
     properties: { max_call_duration: durationSeconds, participant_left_timeout: 10, participant_absent_timeout: 120, enable_recording: false, auto_start_recording: false, enable_closed_captions: false, languages: ["en"] } };
 }
-export async function createConversation(role: RoleContext, durationSeconds: 180 | 300, extras?: RoleExtras, media?: { palId: string; faceId: string }) {
+export async function createConversation(role: RoleContext, durationSeconds: 180 | 300, extras?: RoleExtras, media?: ConversationMedia) {
   // No automatic POST retry: a timeout can have created a billable remote call.
   const requestedAt = Date.now();
   const response = await request("conversations", "POST", conversationBody(role, durationSeconds, extras, media));
