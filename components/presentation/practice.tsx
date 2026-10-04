@@ -105,7 +105,7 @@ export function PracticeCall({ counterpartName, goal, phase, muted, cameraEnable
         {showRemoteMedia && <div className={styles.remoteMedia}>{remoteMedia}</div>}
         <div className={styles.stageTop}><span className={styles.stageTag}>Fictional AI counterpart</span><span className={styles.phase} data-phase={phase} role="status"><span className={styles.phaseDot} aria-hidden="true" />{label}</span></div>
         {(!showRemoteMedia || phase !== "live") && <div className={styles.stagePlaceholder} data-overlay={showRemoteMedia || undefined}><span className={styles.placeholderIcon}><Icon name={ended ? "check" : "videoOff"} /></span><h2>{placeholderTitle}</h2><p>{placeholderBody}</p></div>}
-        <div className={styles.stageName}><strong>{counterpartName}</strong><span>Conversation practice</span></div>
+        <div className={styles.stageName}><strong>{counterpartName}</strong><span>SpeakEasy</span></div>
         {!ended && <aside className={styles.selfView} aria-label="Your local camera preview">{cameraEnabled && hasLocalPreview ? <div className={styles.localMedia}>{localPreview}</div> : <div className={styles.cameraPlaceholder}><Icon name="videoOff" /><span>{cameraEnabled ? "Preview unavailable" : "Camera off"}</span></div>}<span className={styles.selfLabel}>You · only visible to you</span></aside>}
       </div>
       <div className={styles.callBottom}>

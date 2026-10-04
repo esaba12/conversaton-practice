@@ -1,5 +1,7 @@
 # NAME-01: Apply a project name
 
+**Applied October 4, 2026.** The owner chose **SpeakEasy**. Wordmark, document title, README, static preview, and the Devpost draft title use it. `package.json` `name` and the GitHub repository stay `conversation-practice` / `conversaton-practice`.
+
 GitHub issue: [#34](https://github.com/esaba12/conversaton-practice/issues/34)
 
 Who: **the human picks the name.** Then one agent applies it. Agents do not invent a name. Priority: low. Skip it if the name arrives after the pitch rehearsal.

@@ -21,7 +21,7 @@ The user returned to Supabase because AWS credits will not arrive in time and su
 ## Before the build window
 The handbook requires all coding and building during the hackathon. The live schedule starts hacking at noon Saturday, October 3; submission is before noon Sunday, October 4, America/Detroit. This pack is a planning artifact; confirm advance planning/tool-setup allowances with organizers.
 At the 11:30 AM-1 PM Sponsor Expo in Pierpont Connector Hall, ask about ElevenLabs credits and eligibility for both listed awards. Read docs/16-MHACKS-STRATEGY.md. Confirm team members and create the submission draft early during the build window.
-Choose repository, account owners, and selected deployment path. Keep the project unnamed for now. Never put keys in a shared chat or committed file.
+Choose repository, account owners, and selected deployment path. The product name is SpeakEasy. Never put keys in a shared chat or committed file.
 
 ## 0-2 hours target: sign-in and prove the video call
 - [ ] Scaffold Next.js/TypeScript with lockfile.

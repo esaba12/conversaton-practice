@@ -25,7 +25,7 @@ export function WorkspaceHeader({ page, onSignOut, signingOut = false, quiet = f
 
   return (
     <header className="site-header">
-      <Link className="wordmark" href="/">Conversation practice<span className="mark" aria-hidden="true">↗</span></Link>
+      <Link className="wordmark" href="/">SpeakEasy<span className="mark" aria-hidden="true">↗</span></Link>
       {quiet
         ? <button type="button" className="button secondary" disabled={busy} onClick={() => void signOut()}>{busy ? "Signing out…" : "Sign out"}</button>
         : <nav className={styles.nav} aria-label="Practice">

@@ -2,7 +2,7 @@
 
 Live: https://conversation-practice-site.vercel.app
 
-A small static landing page requested for the AWS credits application. It describes the planned voice rehearsal product and clearly labels it in development. “Conversation Practice” is a descriptive label, not a newly settled product name. No account, microphone, model, or database integration is exposed.
+A small static landing page requested for the AWS credits application. It describes SpeakEasy, the voice rehearsal product, and clearly labels it in development. No account, microphone, model, or database integration is exposed.
 
 The future app follows Next.js/TypeScript, required sign-in, ElevenLabs, and Supabase Auth/PostgreSQL. The user subsequently abandoned AWS credits as a build dependency. This standalone marketing page remains useful and does not pass G1.
 

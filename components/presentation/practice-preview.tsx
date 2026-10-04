@@ -17,7 +17,7 @@ export function PracticePreview() {
 
   return (
     <div className={styles.preview}>
-      <header className={styles.header}><span className={styles.wordmark}>Conversation practice<span aria-hidden="true"> ↗</span></span><span className={styles.previewBadge}>Design preview</span></header>
+      <header className={styles.header}><span className={styles.wordmark}>SpeakEasy<span aria-hidden="true"> ↗</span></span><span className={styles.previewBadge}>Design preview</span></header>
       <main id="main">
         <div className={styles.previewNotice}><strong>UI preview — no live call</strong><span>Synthetic examples only. These controls change the display; they do not start a call or access your microphone or camera.</span></div>
         <div className={styles.toolbar} role="group" aria-label="Preview controls">

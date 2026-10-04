@@ -1,5 +1,9 @@
 # Project status
 
+## Name (October 4, ~10:10 EDT)
+
+The product name is **SpeakEasy** (owner decision). Wordmark, document title, README, static preview, and the Devpost draft title use it. The GitHub repository and `package.json` name are unchanged. The owner also said they have a domain; the hostname was not in that message, so it is not attached yet.
+
 ## Compressed finish done (October 4, ~03:00 EDT, main `9689b15`)
 
 All slices through Phase 3 in the compressed plan (docs/next/02-BUILD-PLAN.md §1a) are merged: X, Y, Z, M23 (applied) and 3E. Recipe on combined `main`: typecheck clean, 786 unit tests, production build, client-bundle check PASS (18 provider env names), Playwright 13 passed / 1 production-only skip with real Auth (hero path plus the retry path). Two-owner SQL suites for M23 pass after apply. **Live not verified** for every phase.

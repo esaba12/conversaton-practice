@@ -13,7 +13,7 @@ Agent-ready briefs for every open item are in [docs/issues](issues/README.md). T
 | When | Task | State |
 | --- | --- | --- |
 | Human | [LIVE-01](tasks/LIVE-01-human-checks.md), [SUB-01](tasks/SUB-01-submission-execution.md) | Not run. Pitch copy is [DEMO-01](tasks/DEMO-01-submission-prep.md) |
-| Human decision | [NAME-01](tasks/NAME-01-project-name.md), [HOST-01](tasks/HOST-01-hosting.md) | Blocked on a name and a host |
+| Human decision | [HOST-01](tasks/HOST-01-hosting.md) | Hosting decision. [NAME-01](tasks/NAME-01-project-name.md) is SpeakEasy |
 | After submission, if wanted | [APPEAR-01](tasks/APPEAR-01-appearance.md) | Decided, not built. One face and voice for every call |
 | Done | [REV-01](tasks/REV-01-g5-privacy-review.md), [UX-01](tasks/UX-01-presets.md), [UX-02](tasks/UX-02-duration.md), [UX-03](tasks/UX-03-captions.md), [DATA-01](tasks/DATA-01-session-attribution.md), landing in [UI-01](tasks/UI-01-landing-oauth.md) | Merged |
 | No commit | [POST-01](tasks/POST-01-workspace-polish.md) | The polish is in `8f61d09`, which is an ancestor of `main`. A separate browser pass was not recorded |
@@ -28,7 +28,7 @@ Sign-in by email, plus a Google button that returns through `/auth/callback`. Si
 | --- | --- |
 | Stock face and premade voice per person | One configured face and voice. [APPEAR-01](tasks/APPEAR-01-appearance.md) |
 | App host | The authenticated app runs locally. The Vercel site is the static preview in `website/` |
-| Project name | Unnamed. The wordmark is “Conversation practice” |
+| Project name | SpeakEasy. Wordmark, document title, and Devpost title match |
 | Google provider | The button is in the app. The Supabase Google provider and redirect allow list are still a dashboard step |
 
 ## Workflows not run

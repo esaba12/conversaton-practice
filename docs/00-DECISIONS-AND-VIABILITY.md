@@ -12,7 +12,7 @@ The founder's experience is specific: a therapist played the other person so he 
 - Fresh sessions are desired. Approved settings can persist without carrying fictional events into later sessions.
 - The user confirmed live roleplay: generate the counterpart, context, and opening from a user-described situation, then respond live to the user's speech. Written dialogue generation is outside the current scope.
 - Keep situation generation in core scope. Defer Photon until all core gates pass; simplify automated reflection and extra voices first.
-- The project remains unnamed.
+- The product name is SpeakEasy (owner decision, October 4, 2026).
 - Latest infrastructure direction: return to Supabase Auth/PostgreSQL because AWS credits will not arrive in time. This explicitly supersedes the earlier AWS/Cognito/Aurora plan. Keep required sign-in; no anonymous workspace. The user supplied the fresh project configuration; Auth health passed, while sign-in/database integration remains unverified. No unrelated project is being reused.
 - Sign-in is required before all persona/conversation design and practice. This supersedes anonymous sign-in and guest-first entry.
 - Visual direction: warm and minimal, with crisp, modern typography, spacing, and controls.

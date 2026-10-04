@@ -40,7 +40,7 @@ Times are America/Detroit. Speak to a judge who has not used the app. Use a **ne
 
 | Time | Say / do |
 | --- | --- |
-| 0:00–0:20 | “I wanted to practice conversations I’ve been putting off. A therapist once played the other person for me. This is a rehearsal tool, not therapy, and it does not predict anyone real.” Sign in if needed (already signed in for speed). |
+| 0:00–0:20 | “I wanted to practice conversations I’ve been putting off. A therapist once played the other person for me. SpeakEasy is a rehearsal tool, not therapy, and it does not predict anyone real.” Sign in if needed (already signed in for speed). |
 | 0:20–0:40 | Describe a **new** everyday situation (e.g. asking a fictional coworker to stop booking over lunch). Leave private notes filled with something the counterpart must not know. Generate → **edit one field** (name or style) so judges see the review step. Point at About me / sharing only if time: “Each saved person knows only what I share.” |
 | 0:40–1:55 | Start. Wait for talking video. Three to five turns. **Interrupt once** mid-reply. Restate the request. Counterpart should stay in character. If video fails, End and say the backup recording is labelled prerecorded — do not pretend it is live. |
 | 1:55–2:15 | End. Optional one-line self-note → Get a short reflection **or Skip** if the model is slow. Show “nothing here is saved.” Dismiss or skip Save unless you want a named person for Q&A. |
@@ -67,7 +67,9 @@ Still photos if video fails: the 390 px screenshots in ignored `artifacts/local/
 
 ## Devpost drafts
 
-**What it does.** Conversation practice is a FaceTime-style rehearsal for an everyday conversation you have been putting off. You describe the situation, review an editable fictional counterpart, and talk live on video. Private preparation notes stay off the call. After End you can optionally reflect, and you can explicitly save the person and choose what they know about you. Each practice starts fresh.
+**Title.** SpeakEasy
+
+**What it does.** SpeakEasy is a FaceTime-style rehearsal for an everyday conversation you have been putting off. You describe the situation, review an editable fictional counterpart, and talk live on video. Private preparation notes stay off the call. After End you can optionally reflect, and you can explicitly save the person and choose what they know about you. Each practice starts fresh.
 
 **How we built it.** Next.js 16 App Router and TypeScript. Sign-in and owner-scoped PostgreSQL through Supabase. Live video through Tavus CVI (Daily room + meeting token) with ElevenLabs TTS configured on the PAL. Setup drafts and optional reflection use OpenAI Responses with `store: false`. Zod-validated routes; no service-role key in the client.
 

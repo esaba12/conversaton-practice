@@ -16,7 +16,7 @@ Submission target: **11:30 AM America/Detroit, October 4**. Dependencies are fro
 | [OPS-01](OPS-01-google-sign-in.md) | [#32](https://github.com/esaba12/conversaton-practice/issues/32) | Google button is visible but the provider is not enabled | Human decision, then agent or human | High (demo risk) | Needs a decision |
 | [GH-01](GH-01-close-issue-6.md) | closes [#6](https://github.com/esaba12/conversaton-practice/issues/6) | GitHub issue #6 is open although its last item is done | Agent | Low | Now |
 | [HOST-01](HOST-01-hosting.md) | [#33](https://github.com/esaba12/conversaton-practice/issues/33) | App runs only locally | Human decision, then agent | Medium | Needs a decision |
-| [NAME-01](NAME-01-project-name.md) | [#34](https://github.com/esaba12/conversaton-practice/issues/34) | Project has no name | Human decision, then agent | Low | Needs a name |
+| [NAME-01](NAME-01-project-name.md) | [#34](https://github.com/esaba12/conversaton-practice/issues/34) | Product name is SpeakEasy | Applied in the app | Low | Done |
 | [LIVE-01](LIVE-01-live-checks.md) | [#35](https://github.com/esaba12/conversaton-practice/issues/35) | G3–G5 not verified on a live call | Human (agent corroborates) | High for the pitch | When the human chooses |
 | [SUB-01](SUB-01-submission.md) | [#36](https://github.com/esaba12/conversaton-practice/issues/36) | Devpost, backup recording, rehearsal not done | Human | Required | When the human says the product is ready |
 | [APPEAR-01](APPEAR-01-appearance.md) | [#37](https://github.com/esaba12/conversaton-practice/issues/37) | Per-person face and voice catalog not built | Agent, after submission | Deferred | Not before submission |
