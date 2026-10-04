@@ -7,7 +7,7 @@ Coordinator: wow-pass coordinator (main checkout)
 Gate: Wow pass Phase 0
 Requirements/tests: docs/next/05-UI-UPGRADE.md §2, §6
 GitHub issue: https://github.com/esaba12/conversaton-practice/issues/46
-Pull request: (filled after push)
+Pull request: https://github.com/esaba12/conversaton-practice/pull/55 (draft)
 CI run: pending on PR
 
 ## Assignment and isolation
@@ -59,7 +59,7 @@ Live not verified.
 
 ## Handoff
 
-- Changed paths and commit(s): see PR on `agent/0e-ui-gate` (worker commit SHA recorded after push).
+- Changed paths and commit(s): `ab4c794` on `agent/0e-ui-gate` — `tests/unit/ui-rules.test.ts`, `app/design-preview/**`, `app/globals.css`, `components/ui/{chip,primary-button}.module.css`, this record.
 - Remaining failures/risks:
   - Presentation CSS and inline SVG remain on the allow-list until 0C or Phase 1 UI slices.
   - §4 screen states (lobby, briefing, meet, call, recap) not in the gallery yet; only 0A primitives + night portrait.
