@@ -1,91 +1,40 @@
 "use client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { MyPeople } from "@/components/presentation/people-list";
+import { BriefingStage } from "@/components/practice/briefing-stage";
+import { CallStage } from "@/components/practice/call-stage";
+import { MeetStage } from "@/components/practice/meet-stage";
+import { RecapStage } from "@/components/practice/recap-stage";
 import { WorkspaceHeader } from "@/components/presentation/workspace-header";
-import { SaveAfterEnd } from "@/components/presentation/people-save";
-import { SavedPersonStart } from "@/components/presentation/people-start";
-import { PracticeCall, type PracticeCallProps } from "@/components/presentation/practice";
-import { ReflectionPanel } from "@/components/presentation/reflection-panel";
-import { SetupDescribe, type SetupDescribeError } from "@/components/presentation/setup-describe";
-import { DurationChoice, type PracticeDuration } from "@/components/presentation/duration-choice";
-import { SetupReview, emptyRole, parseReviewedRole, type SetupMode } from "@/components/presentation/setup-review";
+import type { PracticeDuration } from "@/components/presentation/duration-choice";
+import type { SetupDescribeError } from "@/components/presentation/setup-describe";
+import { emptyRole, parseReviewedRole, type SetupMode } from "@/components/presentation/setup-review";
 import { examples } from "@/fixtures/examples";
 import { createBrowserAuthClient } from "@/lib/auth/browser";
 import { selectMediaController } from "@/lib/media/controller-factory";
 import { createPerson, getPerson, listPeople, updatePerson } from "@/lib/people/api-client";
+import { callPhase, createFlowState, reduceFlow, type FlowEvent, type FlowState, type Teardown } from "@/lib/practice/flow";
+import { cleanupMessage, failureMessages, reflectionError, FALLBACK_GOAL, GENERATION_FAILED } from "@/lib/practice/messages";
+import { clearPrivateState } from "@/lib/practice/private-state";
+import { closedOffer, closedReflect, sameName, type CallOrigin, type Cleanup, type CleanupTarget, type ReflectState, type SaveOffer } from "@/lib/practice/types";
 import { requestReflection } from "@/lib/reflection/api-client";
 import type { DraftRequest } from "@/lib/schemas/draft";
 import type { MediaController, MediaEvent } from "@/lib/schemas/media";
 import { roleToPersonFields, type Person } from "@/lib/schemas/people";
-import { appendTurn, type Reflection, type TranscriptTurn } from "@/lib/schemas/reflection";
+import { appendTurn, type TranscriptTurn } from "@/lib/schemas/reflection";
 import { roleContextSchema, type RoleContext } from "@/lib/schemas/role-context";
-import type { EndReason, PracticeSession, SessionPreset, StartResponse } from "@/lib/schemas/session";
+import type { EndReason, SessionPreset, StartResponse } from "@/lib/schemas/session";
 import { SessionClientError, endSession, generateDraft, markConnected, startPresetSession, startSavedPersonSession, startSession } from "@/lib/session/api-client";
 
-const EXAMPLE_GOAL = "Make a clear request about sharing kitchen chores.";
-const FALLBACK_GOAL = "Say what matters to you.";
-const GENERATION_FAILED = "We couldn’t generate a setup right now.";
-
-type Phase = PracticeCallProps["phase"];
-type Cleanup = { state: "closing" } | { state: "closed"; cleanup: PracticeSession["cleanup"] } | { state: "unreachable" };
-type CleanupTarget = { id: string; reason: EndReason };
-// What the call started from, so End can offer an explicit save. Never includes goal or private notes.
-type CallOrigin = { kind: "role"; role: RoleContext } | { kind: "person"; person: Person };
-type SaveOffer = { open: boolean; saving: boolean; saved: { id: string; name: string; updated: boolean } | null; error: string };
-const closedOffer: SaveOffer = { open: false, saving: false, saved: null, error: "" };
-const sameName = (a: string, b: string) => a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase();
-// Reflection is per attempt and in memory only. goal is the user's reviewed goal; saved-person calls have none.
-type ReflectState = { sessionId: string | null; goal: string; selfReflection: string; pending: boolean; reflection: Reflection | null; error: { message: string; retry: boolean } | null };
-const closedReflect: ReflectState = { sessionId: null, goal: "", selfReflection: "", pending: false, reflection: null, error: null };
-const REFLECTION_FAILED = "The reflection couldn’t be generated. Your own notes still count.";
-
-function reflectionError(error: unknown, closeFailed: boolean): { message: string; retry: boolean } {
-  const code = error instanceof SessionClientError ? error.code : null;
-  if (code === "USAGE_LIMIT") return { message: "You’ve reached the reflection limit for this practice. Your own notes still count.", retry: false };
-  if (code === "SESSION_ACTIVE") return closeFailed
-    ? { message: "The practice session isn’t closed yet. Use Retry closing session, then try again.", retry: true }
-    : { message: "The call is still closing. Try again in a moment.", retry: true };
-  if (code === "NOT_FOUND") return { message: "This practice is no longer available to reflect on.", retry: false };
-  if (code === "NOT_CONFIGURED" || code === "VALIDATION_ERROR") return { message: REFLECTION_FAILED, retry: false };
-  return { message: REFLECTION_FAILED, retry: true };
-}
-
-const failureMessages: Record<Extract<MediaEvent, { type: "failed" }>["reason"], string> = {
-  join: "We couldn’t join the call.",
-  credential_expired: "The call link expired before it connected.",
-  video_lost: "The counterpart’s video stopped, so the call was ended.",
-  provider_error: "The call provider had a problem, so the call was ended.",
-  microphone_denied: "Microphone access is needed to practice. Allow it in your browser settings, then start again.",
-};
-
-function cleanupMessage(cleanup: Cleanup | null) {
-  if (!cleanup) return "";
-  if (cleanup.state === "closing") return "Closing the practice session…";
-  if (cleanup.state === "unreachable") return "We couldn’t reach the server to close the practice session.";
-  if (cleanup.cleanup === "confirmed") return "The call provider confirmed the session is closed.";
-  if (cleanup.cleanup === "pending") return "Closing the remote call session is still pending.";
-  if (cleanup.cleanup === "unresolved") return "We couldn’t confirm the remote call session closed.";
-  return "Remote call cleanup has not started yet.";
-}
-
-function StreamVideo({ stream, muted = false }: { stream: MediaStream; muted?: boolean }) {
-  const ref = useRef<HTMLVideoElement>(null);
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    element.srcObject = stream;
-    return () => { element.srcObject = null; };
-  }, [stream]);
-  return <video ref={ref} autoPlay playsInline muted={muted} />;
-}
-
+// The stages live in lib/practice/flow.ts and the screens in components/practice/*; this shell
+// owns the requests, the media controller and the teardown the reducer asks for.
 export function PracticeWorkspace() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [view, setView] = useState<"setup" | "call">("setup");
+  // Today's first screen is the description form, which is the briefing stage. The lobby and the
+  // green room have no screen yet, so the shell never rests on them.
+  const [flow, setFlow] = useState<FlowState>(() => createFlowState("briefing"));
   const [durationSeconds, setDurationSeconds] = useState<PracticeDuration>(180);
-  const [phase, setPhaseState] = useState<Phase>("connecting");
   const [starting, setStarting] = useState(false);
   const [setupMessage, setSetupMessage] = useState("");
   const [previousSessionId, setPreviousSessionId] = useState<string | null>(null);
@@ -102,7 +51,6 @@ export function PracticeWorkspace() {
   const [signingOut, setSigningOut] = useState(false);
   const [headerMessage, setHeaderMessage] = useState("");
   // Setup content is transient: never persisted, and private notes go only to generateDraft.
-  const [step, setStep] = useState<"describe" | "review" | "person">("describe");
   const [moveFocus, setMoveFocus] = useState(false);
   const [situation, setSituation] = useState("");
   const [intent, setIntent] = useState("");
@@ -128,12 +76,11 @@ export function PracticeWorkspace() {
   const generationRef = useRef(0);
 
   // Refs carry the authoritative call state so media/auth callbacks never act on stale renders.
+  const flowRef = useRef(flow);
   const controllerRef = useRef<MediaController | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const attemptRef = useRef(0);
   const startingRef = useRef(false);
-  const phaseRef = useRef<Phase | null>(null);
-  const connectedRef = useRef(false);
   const startedAtRef = useRef(0);
   const plannedDurationRef = useRef<PracticeDuration>(180);
   const authLostRef = useRef(false);
@@ -142,9 +89,26 @@ export function PracticeWorkspace() {
   const [testMedia, setTestMedia] = useState(false);
   const backToSetupRef = useRef<HTMLButtonElement>(null);
 
-  function setPhase(next: Phase | null) {
-    phaseRef.current = next;
-    if (next) setPhaseState(next);
+  // One flow event. The reducer decides the stage and what leaving it must release; the shell
+  // performs the release, because a tracked close and a keepalive abandon are different requests.
+  function apply(event: FlowEvent) {
+    const transition = reduceFlow(flowRef.current, event);
+    flowRef.current = transition.state;
+    setFlow(transition.state);
+    if (transition.clearPrivate) clearPrivateState();
+    return transition;
+  }
+
+  // A stage change the user asked for: move focus to the new heading and drop the old notice.
+  function showStage(event: FlowEvent) {
+    apply(event);
+    setMoveFocus(true);
+    setSetupMessage("");
+  }
+
+  // Back to the description screen. Idempotent, because the lobby and the briefing share it today.
+  function returnToBriefing() {
+    if (flowRef.current.stage === "meet") apply({ type: "back" });
   }
 
   // Releases local media without waiting on any network request; later events from this attempt are ignored.
@@ -173,32 +137,32 @@ export function PracticeWorkspace() {
     );
   }
 
-  function finish(reason: "user" | "time_limit") {
-    const current = phaseRef.current;
-    if (!current || current === "ended") return;
-    releaseMedia();
-    setPhase("ended");
-    if (reason === "time_limit") setCallMessage("Time’s up. The practice reached its planned length.");
-    else setCallMessage(current === "interrupted" ? "The call was interrupted before it ended." : "");
+  // Ends the practice session when the flow says this transition owns it. The id is set in the
+  // same step as the flag, and is checked too, so leaving a stage can never leak a session.
+  function endForTeardown(teardown: Teardown, reason: EndReason, mode: "close" | "abandon") {
+    if (!teardown.endSession && !sessionIdRef.current) return;
     const id = takeSessionId();
-    if (id) closeRemote(id, reason);
+    if (!id) return;
+    if (mode === "close") closeRemote(id, reason);
+    else void endSession(id, reason, { keepalive: true }).catch(() => undefined);
+  }
+
+  function finish(reason: "user" | "time_limit") {
+    const before = flowRef.current;
+    const { teardown, changed } = apply({ type: "ended" });
+    if (!changed) return;
+    if (teardown.releaseMic) releaseMedia();
+    if (reason === "time_limit") setCallMessage("Time’s up. The practice reached its planned length.");
+    else setCallMessage(before.outcome === "interrupted" ? "The call was interrupted before it ended." : "");
+    endForTeardown(teardown, reason, "close");
   }
 
   function interrupt(message: string) {
-    const current = phaseRef.current;
-    if (!current || current === "ended" || current === "interrupted") return;
-    releaseMedia();
-    setPhase("interrupted");
+    const { teardown, changed } = apply({ type: "ended", interrupted: true });
+    if (!changed) return;
+    if (teardown.releaseMic) releaseMedia();
     setCallMessage(`${message} You can end practice and start again.`);
-    const id = takeSessionId();
-    if (id) closeRemote(id, "connection_failure");
-  }
-
-  // Unmount, page hide, and auth loss: release media first, then fire-and-forget the server end.
-  function abandon(reason: EndReason) {
-    releaseMedia();
-    const id = takeSessionId();
-    if (id) void endSession(id, reason, { keepalive: true }).catch(() => undefined);
+    endForTeardown(teardown, "connection_failure", "close");
   }
 
   function handleMediaEvent(attempt: number, event: MediaEvent) {
@@ -210,10 +174,8 @@ export function PracticeWorkspace() {
       case "failed": interrupt(failureMessages[event.reason]); return;
       case "utterance": setTurns((current) => appendTurn(current, event.speaker, event.text)); return;
       case "ready": {
-        if (connectedRef.current || phaseRef.current !== "connecting") return;
-        connectedRef.current = true;
+        if (!apply({ type: "videoPlaying" }).changed) return;
         startedAtRef.current = Date.now();
-        setPhase("live");
         const id = sessionIdRef.current;
         if (id) markConnected(id).catch((error) => {
           if (attempt === attemptRef.current && error instanceof SessionClientError && error.code === "SESSION_EXPIRED") interrupt("This practice session expired.");
@@ -235,8 +197,9 @@ export function PracticeWorkspace() {
 
   function clearPrivateSetup() {
     clearReflection();
+    clearPrivateState();
     generationRef.current++;
-    setStep("describe"); setSituation(""); setIntent(""); setPrivateNotes("");
+    setSituation(""); setIntent(""); setPrivateNotes("");
     setReviewRole(emptyRole); setReviewGoal(""); setAssumptions([]); setSetupMode("manual");
     setGenerating(false); setGenerateError(null); setCallInfo({ name: "", goal: "" });
     setSavedPerson(null); setCallOrigin(null); setSaveOffer(closedOffer);
@@ -257,9 +220,12 @@ export function PracticeWorkspace() {
     }
   }
 
+  // A saved person is a new setup: the briefing is skipped until slice 1B gives it a screen.
   function choosePerson(person: Person, notice = "") {
+    apply({ type: "pickPerson" });
+    apply({ type: "draftReady" });
     setSavedPerson(person);
-    setStep("person"); setMoveFocus(true);
+    setMoveFocus(true);
     setSetupMessage(notice); setPreviousSessionId(null); setHeaderMessage("");
   }
 
@@ -268,7 +234,7 @@ export function PracticeWorkspace() {
       choosePerson(await getPerson(personId), notice);
     } catch (error) {
       if (isAuthError(error)) { handleAuthLoss(); return; }
-      setSavedPerson(null); setStep("describe");
+      setSavedPerson(null); returnToBriefing();
       setHeaderMessage(error instanceof SessionClientError && error.code === "NOT_FOUND" ? "That saved person wasn’t found." : "We couldn’t load that person. Please try again.");
       void loadPeople();
     }
@@ -276,26 +242,22 @@ export function PracticeWorkspace() {
 
   function leavePerson() {
     setSavedPerson(null); setSetupMessage("");
-    showStep("describe");
+    returnToBriefing();
+    setMoveFocus(true);
     if (searchParams.get("person")) router.replace("/practice", { scroll: false });
   }
 
   function handleAuthLoss() {
     if (authLostRef.current) return;
     authLostRef.current = true;
-    abandon("auth_loss");
+    const { teardown } = apply({ type: "authLost" });
+    // Unconditional: this also invalidates a start request that is still in flight.
+    releaseMedia();
+    endForTeardown(teardown, "auth_loss", "abandon");
     clearPrivateSetup();
     setPeople([]);
-    setPhase(null);
-    setView("setup");
     setCallMessage(""); setSetupMessage(""); setCleanup(null); setCleanupTarget(null); setPreviousSessionId(null);
     routeToSignIn();
-  }
-
-  function showStep(next: "describe" | "review" | "person") {
-    setStep(next);
-    setMoveFocus(true);
-    setSetupMessage("");
   }
 
   async function generate() {
@@ -309,7 +271,7 @@ export function PracticeWorkspace() {
       const draft = await generateDraft(request);
       if (generation !== generationRef.current) return;
       setReviewRole(draft.role); setReviewGoal(draft.goal); setAssumptions(draft.assumptions); setSetupMode("generated"); setExamplePreset(null);
-      showStep("review");
+      showStage({ type: "draftReady" });
     } catch (error) {
       if (generation !== generationRef.current) return;
       if (error instanceof SessionClientError && error.code === "UNAUTHENTICATED") { handleAuthLoss(); return; }
@@ -324,20 +286,21 @@ export function PracticeWorkspace() {
   function setUpManually() {
     if (generating) return;
     setReviewRole(emptyRole); setReviewGoal(intent.trim()); setAssumptions([]); setSetupMode("manual"); setExamplePreset(null); setGenerateError(null);
-    showStep("review");
+    showStage({ type: "draftReady" });
   }
 
   function applyExample(preset: SessionPreset) {
     if (generating) return;
     const example = examples[preset];
     setReviewRole(example.role); setReviewGoal(example.goal); setAssumptions([]); setSetupMode("example"); setExamplePreset(preset); setGenerateError(null);
-    showStep("review");
+    showStage({ type: "draftReady" });
   }
 
   function backToDescribe() {
     if (generating) return;
     setGenerateError(null);
-    showStep("describe");
+    returnToBriefing();
+    setMoveFocus(true); setSetupMessage("");
   }
 
   function start() {
@@ -372,13 +335,15 @@ export function PracticeWorkspace() {
         return;
       }
       sessionIdRef.current = session.id;
-      connectedRef.current = false;
       setCallInfo({ name: origin.kind === "role" ? origin.role.name : origin.person.name, goal });
       setCallOrigin(origin); setSaveOffer({ ...closedOffer, open: true });
       setReflect({ ...closedReflect, sessionId: session.id, goal: reflectGoal });
       setMutedState(false); setCameraEnabled(false); setCameraNote(""); setElapsedSeconds(0); setCallMessage(""); setCleanup(null); setCleanupTarget(null);
-      setPhase("connecting");
-      setView("call");
+      // The green room and the ring have no screen of their own yet, so the call opens on the
+      // accepted session exactly as it does today.
+      apply({ type: "toGreenRoom" });
+      apply({ type: "ready" });
+      apply({ type: "sessionAccepted" });
       const media = mediaRef.current ??= selectMediaController();
       setTestMedia(media.testMode);
       const controller = media.create((event) => handleMediaEvent(attempt, event));
@@ -442,13 +407,14 @@ export function PracticeWorkspace() {
 
   function backToSetup() {
     const origin = callOrigin;
-    setPhase(null);
-    setView("setup");
+    const { teardown } = apply({ type: "back" });
+    if (teardown.releaseMic) releaseMedia();
+    endForTeardown(teardown, "user", "close");
     setCallMessage(""); setCleanup(null); setCleanupTarget(null); setSetupMessage("");
     setCallOrigin(null); setSaveOffer(closedOffer);
     clearReflection();
     if (origin?.kind === "person") { void openPerson(origin.person.id); return; }
-    setStep("review"); setMoveFocus(true);
+    setMoveFocus(true);
   }
 
   // One request at a time; a newer attempt or a clear drops a late result.
@@ -506,21 +472,31 @@ export function PracticeWorkspace() {
   async function signOut() {
     setSigningOut(true); setHeaderMessage("");
     authLostRef.current = true;
+    // The transition is read now for its teardown but committed after the requests, so the screen
+    // only changes once sign-out resolves, exactly as it does today.
+    const transition = reduceFlow(flowRef.current, { type: "signOut" });
+    const commit = () => { flowRef.current = transition.state; setFlow(transition.state); };
+    // Unconditional: this also invalidates a start request that is still in flight.
     releaseMedia();
     clearPrivateSetup();
-    const id = takeSessionId();
-    if (id) await endSession(id, "auth_loss").catch(() => undefined);
+    if (transition.teardown.endSession || sessionIdRef.current) {
+      const id = takeSessionId();
+      if (id) await endSession(id, "auth_loss").catch(() => undefined);
+    }
     try {
       const { error } = await createBrowserAuthClient().auth.signOut();
-      if (error) { authLostRef.current = false; setPhase(null); setView("setup"); setHeaderMessage("Could not sign out. Please try again."); return; }
+      if (error) { authLostRef.current = false; commit(); setHeaderMessage("Could not sign out. Please try again."); return; }
+      commit();
       routeToSignIn();
     } catch {
-      authLostRef.current = false; setPhase(null); setView("setup"); setHeaderMessage("Could not sign out. Please try again.");
+      authLostRef.current = false; commit(); setHeaderMessage("Could not sign out. Please try again.");
     } finally { setSigningOut(false); }
   }
 
+  const phase = callPhase(flow);
+  const live = flow.stage === "call" || flow.stage === "retry-call";
   useEffect(() => {
-    if (phase !== "live") return;
+    if (!live) return;
     const timer = window.setInterval(() => {
       const elapsed = Math.floor((Date.now() - startedAtRef.current) / 1000);
       const planned = plannedDurationRef.current;
@@ -530,16 +506,16 @@ export function PracticeWorkspace() {
     return () => window.clearInterval(timer);
     // finish only touches refs and state setters, so the first-render closure is safe.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase]);
+  }, [live]);
 
   // The people list backs both the home cards and the same-name check after End.
+  const peopleWanted = flow.stage === "lobby" || flow.stage === "briefing" || ((flow.stage === "recap" || flow.stage === "retry-recap") && flow.outcome === "ended");
   useEffect(() => {
-    if (view === "setup" && step !== "describe") return;
-    if (view === "call" && phase !== "ended") return;
+    if (!peopleWanted) return;
     void loadPeople();
     // loadPeople only touches refs and state setters.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, step, phase]);
+  }, [peopleWanted]);
 
   useEffect(() => {
     mediaRef.current ??= selectMediaController();
@@ -556,12 +532,22 @@ export function PracticeWorkspace() {
   useEffect(() => {
     const onPageHide = () => {
       clearReflection();
+      const { teardown } = apply({ type: "pageHide" });
       if (!controllerRef.current && !sessionIdRef.current) return;
-      abandon("navigation");
-      if (phaseRef.current && phaseRef.current !== "ended") setPhase("ended");
+      releaseMedia();
+      endForTeardown(teardown, "navigation", "abandon");
     };
     // A back/forward-cache restore may follow a sign-out elsewhere; never resurface private setup text.
-    const onPageShow = (event: PageTransitionEvent) => { if (event.persisted) clearPrivateSetup(); };
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (!event.persisted) return;
+      clearPrivateSetup();
+      // Only the setup screens start over, as they do today; a finished call screen stays put.
+      if (!callPhase(flowRef.current)) {
+        const state = createFlowState("briefing");
+        flowRef.current = state;
+        setFlow(state);
+      }
+    };
     window.addEventListener("pagehide", onPageHide);
     window.addEventListener("pageshow", onPageShow);
     const { data } = createBrowserAuthClient().auth.onAuthStateChange((event) => { if (event === "SIGNED_OUT") handleAuthLoss(); });
@@ -569,50 +555,41 @@ export function PracticeWorkspace() {
       window.removeEventListener("pagehide", onPageHide);
       window.removeEventListener("pageshow", onPageShow);
       data.subscription.unsubscribe();
-      abandon("navigation");
+      releaseMedia();
+      const id = takeSessionId();
+      if (id) void endSession(id, "navigation", { keepalive: true }).catch(() => undefined);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const statusMessage = [callMessage, cameraNote, phase === "ended" || phase === "interrupted" ? cleanupMessage(cleanup) : ""].filter(Boolean).join(" ");
   const canRetryCleanup = !!cleanupTarget && !!cleanup && cleanup.state !== "closing" && !(cleanup.state === "closed" && cleanup.cleanup === "confirmed");
+  const meetCommon = {
+    starting, disabled: starting || signingOut, startDisabled: endingPrevious || !!previousSessionId, focusHeading: moveFocus, statusMessage: setupMessage,
+    durationSeconds, onDurationChange: setDurationSeconds, previousSessionId, endingPrevious, onEndPrevious: () => void endPrevious(),
+  };
 
-  return <><WorkspaceHeader page="practice" signingOut={signingOut} onSignOut={() => void signOut()} quiet={view === "call"} />
+  return <><WorkspaceHeader page="practice" signingOut={signingOut} onSignOut={() => void signOut()} quiet={phase !== null} />
     <main id="main">
       {headerMessage && <p role="status" className="notice">{headerMessage}</p>}
-      {view === "setup" ? (step === "describe"
-        ? <SetupDescribe situation={situation} goal={intent} privateNotes={privateNotes} onSituationChange={setSituation} onGoalChange={setIntent} onPrivateNotesChange={setPrivateNotes}
+      {phase === null ? (flow.stage === "meet"
+        ? (savedPerson
+          ? <MeetStage kind="person" person={savedPerson} onStart={startPerson} onBack={leavePerson} durationDisabled={starting || signingOut} {...meetCommon} />
+          : <MeetStage kind="review" mode={setupMode} role={reviewRole} goal={reviewGoal} assumptions={assumptions} onRoleChange={setReviewRole} onGoalChange={setReviewGoal}
+              onBack={backToDescribe} onRegenerate={situation.trim() ? () => void generate() : undefined} onStart={() => void start()} regenerating={generating}
+              error={generateError} durationDisabled={starting || signingOut || generating} {...meetCommon} />)
+        // The lobby and the green room share today's description screen until slices 1B and 1D.
+        : <BriefingStage situation={situation} goal={intent} privateNotes={privateNotes} onSituationChange={setSituation} onGoalChange={setIntent} onPrivateNotesChange={setPrivateNotes}
             onGenerate={() => void generate()} onManual={setUpManually} onUseExample={applyExample} generating={generating} disabled={signingOut} error={generateError} focusHeading={moveFocus}
-            people={<MyPeople people={people} status={peopleStatus} onPractice={(person) => choosePerson(person)} onRetry={() => void loadPeople()} disabled={signingOut || generating} />} />
-        : step === "person" && savedPerson
-        ? <SavedPersonStart person={savedPerson} onStart={startPerson} onBack={leavePerson} disabled={starting || signingOut} startDisabled={endingPrevious || !!previousSessionId} focusHeading={moveFocus}
-            statusMessage={starting ? "Starting your practice…" : setupMessage || undefined}
-            actions={<><DurationChoice value={durationSeconds} onChange={setDurationSeconds} disabled={starting || signingOut} />{previousSessionId ? <div className="actions"><button type="button" className="button secondary" disabled={endingPrevious} onClick={() => void endPrevious()}>{endingPrevious ? "Ending previous practice…" : "End previous practice"}</button></div> : null}</>} />
-        : <SetupReview mode={setupMode} role={reviewRole} goal={reviewGoal} assumptions={assumptions} onRoleChange={setReviewRole} onGoalChange={setReviewGoal}
-            onBack={backToDescribe} onRegenerate={situation.trim() ? () => void generate() : undefined} onStart={() => void start()} regenerating={generating}
-            disabled={starting || signingOut} startDisabled={endingPrevious || !!previousSessionId} focusHeading={moveFocus}
-            statusMessage={starting ? "Starting your practice…" : setupMessage || undefined}
-            errorMessage={generateError ? (generateError.outOfScope ? `${generateError.message} Try describing an everyday conversation instead.` : `${generateError.message} Your current setup is unchanged.`) : undefined}
-            actions={<><DurationChoice value={durationSeconds} onChange={setDurationSeconds} disabled={starting || signingOut || generating} />{previousSessionId ? <div className="actions"><button type="button" className="button secondary" disabled={endingPrevious} onClick={() => void endPrevious()}>{endingPrevious ? "Ending previous practice…" : "End previous practice"}</button></div> : null}</>} />
+            people={people} peopleStatus={peopleStatus} peopleDisabled={signingOut || generating} onPickPerson={(person) => choosePerson(person)} onRetryPeople={() => void loadPeople()} />
       ) : <>
-        <PracticeCall counterpartName={callInfo.name} goal={callInfo.goal} phase={phase} muted={muted} cameraEnabled={cameraEnabled} elapsedSeconds={elapsedSeconds} durationSeconds={plannedDurationRef.current}
-          remoteMedia={remoteStream ? <StreamVideo stream={remoteStream} /> : null}
-          localPreview={localStream ? <StreamVideo stream={localStream} muted /> : undefined}
-          onMuteToggle={toggleMute} onCameraToggle={() => void toggleCamera()} onEnd={() => finish("user")} statusMessage={statusMessage || undefined} testMedia={testMedia} turns={turns} />
-        {phase === "ended" && callOrigin && saveOffer.open && (() => {
-          const match = callOrigin.kind === "role" ? people.find((person) => sameName(person.name, callOrigin.role.name)) : undefined;
-          return callOrigin.kind === "person"
-            ? <SaveAfterEnd mode="saved" name={callOrigin.person.name} personId={callOrigin.person.id} onSave={() => undefined} onDismiss={dismissSave} />
-            : <SaveAfterEnd mode={match && !saveOffer.saved ? "update" : "new"} name={match && !saveOffer.saved ? match.name : callOrigin.role.name} onSave={() => void saveFromCall()} onDismiss={dismissSave}
-                saving={saveOffer.saving} ready={peopleStatus !== "loading"} saved={saveOffer.saved} errorMessage={saveOffer.error || undefined} />;
-        })()}
-        {(phase === "ended" || phase === "interrupted") && reflect.sessionId && <ReflectionPanel selfReflection={reflect.selfReflection}
-          onSelfReflectionChange={(selfReflection) => setReflect((state) => ({ ...state, selfReflection }))} onReflect={() => void requestReflectionNow()} onDone={clearReflection}
-          pending={reflect.pending} reflection={reflect.reflection} error={reflect.error} noSpeech={!turns.some((turn) => turn.speaker === "user")} />}
-        {(phase === "ended" || phase === "interrupted") && <div className="actions">
-          {canRetryCleanup && <button type="button" className="button secondary" onClick={() => cleanupTarget && closeRemote(cleanupTarget.id, cleanupTarget.reason)}>Retry closing session</button>}
-          {phase === "ended" && <button ref={backToSetupRef} type="button" className="button" onClick={backToSetup}>Back to setup</button>}
-        </div>}
+        <CallStage counterpartName={callInfo.name} goal={callInfo.goal} phase={phase} muted={muted} cameraEnabled={cameraEnabled} elapsedSeconds={elapsedSeconds} durationSeconds={plannedDurationRef.current}
+          remoteStream={remoteStream} localStream={localStream}
+          onMuteToggle={toggleMute} onCameraToggle={() => void toggleCamera()} onEnd={() => finish("user")} statusMessage={statusMessage} testMedia={testMedia} turns={turns} />
+        {(phase === "ended" || phase === "interrupted") && <RecapStage ended={phase === "ended"} origin={callOrigin} saveOffer={saveOffer} people={people} peopleStatus={peopleStatus}
+          onSave={() => void saveFromCall()} onDismissSave={dismissSave} reflect={reflect} turns={turns}
+          onSelfReflectionChange={(selfReflection) => setReflect((state) => ({ ...state, selfReflection }))} onReflect={() => void requestReflectionNow()} onReflectionDone={clearReflection}
+          canRetryCleanup={canRetryCleanup} onRetryCleanup={() => cleanupTarget && closeRemote(cleanupTarget.id, cleanupTarget.reason)} onBackToSetup={backToSetup} backToSetupRef={backToSetupRef} />}
       </>}
     </main></>;
 }
