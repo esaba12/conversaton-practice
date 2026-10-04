@@ -140,9 +140,11 @@ describe("POST /api/sessions/[id]/reflect", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("rejects cross-origin requests and strict-body violations before storage or the model", async () => {
+  it("rejects cross-origin requests and a bad id before storage, and strict-body violations after the ended-session check", async () => {
     const fetchMock = provider();
     expect((await errorOf(await POST(post(body, id, { origin: "https://evil.example" }), ctx()), 403)).code).toBe("FORBIDDEN");
+    expect((await errorOf(await POST(post(body, "nope"), ctx("nope")), 400)).code).toBe("VALIDATION_ERROR");
+    expect(from).not.toHaveBeenCalled();
     const rejected = [
       { ...body, privateNotes: "I am scared" },
       { ...body, role: { name: "Jordan" } },
@@ -155,8 +157,7 @@ describe("POST /api/sessions/[id]/reflect", () => {
     for (const value of rejected) expect((await errorOf(await reflect(value), 400)).code).toBe("VALIDATION_ERROR");
     expect((await errorOf(await reflect(JSON.stringify(body) + " ".repeat(96000)), 400)).code).toBe("VALIDATION_ERROR");
     expect((await errorOf(await reflect("not json"), 400)).code).toBe("VALIDATION_ERROR");
-    expect((await errorOf(await POST(post(body, "nope"), ctx("nope")), 400)).code).toBe("VALIDATION_ERROR");
-    expect(from).not.toHaveBeenCalled();
+    expect(from).toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
