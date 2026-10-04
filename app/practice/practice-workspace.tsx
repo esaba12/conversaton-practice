@@ -12,6 +12,7 @@ import { emptyRole, parseReviewedRole, type SetupMode } from "@/components/prese
 import { examples } from "@/fixtures/examples";
 import { createBrowserAuthClient } from "@/lib/auth/browser";
 import { selectMediaController } from "@/lib/media/controller-factory";
+import { initialLiveCallState, reduceLiveCall, type Interaction, type LiveCallState } from "@/lib/media/interactions";
 import { createPerson, deletePerson, getPerson, getPracticeHistory, listPeople, listPersonSituations, updatePerson } from "@/lib/people/api-client";
 import { callPhase, createFlowState, reduceFlow, type FlowEvent, type FlowState, type Teardown } from "@/lib/practice/flow";
 import { cleanupMessage, failureMessages, reflectionError, FALLBACK_GOAL, GENERATION_FAILED } from "@/lib/practice/messages";
@@ -77,6 +78,8 @@ export function PracticeWorkspace() {
   const [saveOffer, setSaveOffer] = useState<SaveOffer>(closedOffer);
   // The provider transcript for the current attempt only; never logged or persisted.
   const [turns, setTurns] = useState<TranscriptTurn[]>([]);
+  // Captions, speaking glow and network quality for the call screen only; never stored.
+  const [liveCall, setLiveCall] = useState<LiveCallState>(initialLiveCallState);
   const [reflect, setReflect] = useState<ReflectState>(closedReflect);
   const reflectGenerationRef = useRef(0);
   const reflectingRef = useRef(false);
@@ -133,6 +136,12 @@ export function PracticeWorkspace() {
     setRemoteStream(null);
     setLocalStream(null);
     setCameraEnabled(false);
+    setLiveCall(initialLiveCallState);
+  }
+
+  // Wrap-up, ask-to-wait and typed turns: fixed templates plus the reviewed name, or the user's typed turn.
+  function sendInteraction(interaction: Interaction) {
+    return controllerRef.current?.send?.(interaction) ?? false;
   }
 
   function takeSessionId() {
@@ -385,7 +394,10 @@ export function PracticeWorkspace() {
       apply({ type: "sessionAccepted" });
       const media = mediaRef.current ??= selectMediaController();
       setTestMedia(media.testMode);
-      const controller = media.create((event) => handleMediaEvent(attempt, event));
+      setLiveCall(initialLiveCallState);
+      const controller = media.create((event) => handleMediaEvent(attempt, event), (event) => {
+        if (attempt === attemptRef.current) setLiveCall((state) => reduceLiveCall(state, event));
+      });
       controllerRef.current = controller;
       joined = true;
       await controller.connect(credential);
@@ -633,7 +645,8 @@ export function PracticeWorkspace() {
       ) : <>
         <CallStage counterpartName={callInfo.name} goal={callInfo.goal} phase={phase} muted={muted} cameraEnabled={cameraEnabled} elapsedSeconds={elapsedSeconds} durationSeconds={plannedDurationRef.current}
           remoteStream={remoteStream} localStream={localStream}
-          onMuteToggle={toggleMute} onCameraToggle={() => void toggleCamera()} onEnd={() => finish("user")} statusMessage={statusMessage} testMedia={testMedia} turns={turns} />
+          onMuteToggle={toggleMute} onCameraToggle={() => void toggleCamera()} onEnd={() => finish("user")} statusMessage={statusMessage} testMedia={testMedia} turns={turns}
+          live={liveCall} onInteraction={sendInteraction} onCancel={backToSetup} />
         {(phase === "ended" || phase === "interrupted") && <RecapStage ended={phase === "ended"} origin={callOrigin} saveOffer={saveOffer} people={people} peopleStatus={peopleStatus}
           onSave={() => void saveFromCall()} onDismissSave={dismissSave} reflect={reflect} turns={turns}
           onSelfReflectionChange={(selfReflection) => setReflect((state) => ({ ...state, selfReflection }))} onReflect={() => void requestReflectionNow()} onReflectionDone={clearReflection}
