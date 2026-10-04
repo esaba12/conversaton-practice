@@ -44,8 +44,8 @@ describe("session contract", () => {
   it("rejects client owner/provider overrides and unsupported duration", () => {
     const request = { idempotencyKey: crypto.randomUUID(), preset: "roommate", durationSeconds: 180 };
     expect(startRequestSchema.safeParse(request).success).toBe(true);
-    for (const preset of ["professor", "decline"] as const) expect(startRequestSchema.safeParse({ ...request, preset }).success).toBe(true);
-    expect(startRequestSchema.safeParse({ ...request, preset: "manager" }).success).toBe(false);
+    for (const preset of ["professor", "decline", "manager"] as const) expect(startRequestSchema.safeParse({ ...request, preset }).success).toBe(true);
+    expect(startRequestSchema.safeParse({ ...request, preset: "boss" }).success).toBe(false);
     for (const addition of [{ ownerId: crypto.randomUUID() }, { providerId: "arbitrary" }, { durationSeconds: 999 }]) expect(startRequestSchema.safeParse({ ...request, ...addition }).success).toBe(false);
   });
   it("accepts a reviewed role but rejects private fields, mixed preset/role and extra fields", () => {

@@ -16,6 +16,14 @@ Rules carried into every contract: Zod `.strict()` on all bodies and model outpu
 
 ## 2. Phase 1 (C1)
 
+**Frozen October 4, ~00:30 EDT (coordinator).** Shapes below are in `lib/schemas/**`. To keep `main` green until the owning slice lands, these are staged:
+- `draftResponseSchema.stanceOptions` is optional, and `draftModelOutputSchema` still omits stance fields. **1C** makes `stanceOptions` required and adds stance to the model output with the prompt version bump.
+- `personFieldsSchema.background` is optional on writes; M1 stores `left(publicContext, 600)` when absent. **1C** returns it on every read (and may make it required in `personSchema`). Stance chips are not person fields (`baseRoleContextSchema`).
+- `personSchema.hasPracticed` is optional. **1G** derives it.
+- `lib/session/server.ts` rejects `standIn`, `situation` and `openingOverride` bodies with 400 until **1C** (situation, openingOverride) and **1G** (stand-in) remove that guard.
+- `sessionPresetSchema` and `situationSchema` live in `lib/schemas/situation.ts` (re-exported from `session.ts`) to avoid a people ↔ session import cycle.
+- New files: `lib/schemas/goal-check.ts` (1E), `lib/schemas/voice-preview.ts` (1E), `fixtures/manager.ts` (W2, with default stance chips). Tests: `tests/unit/contracts-c1.test.ts`.
+
 ### 2.1 Role context (`lib/schemas/role-context.ts`)
 
 ```ts
@@ -129,6 +137,16 @@ Event parsing additions: `conversation.utterance.streaming` (captions), `convers
 - Preset starts use the mapped PAL and face; role, person and stand-in starts are unchanged (the stand-in keeps its reserved face).
 - `GET /api/portraits/[presetId]` (signed-in): the server fetches that face's `thumbnail_image_url` and streams the image with `Cache-Control: private, max-age=86400`. Unknown id → 404. No provider id or CDN URL reaches the browser. Committing copies of the stills waits on confirmed Tavus terms (SPIKE-01).
 - Phase 3 (C3, B4) extends the same module to the ~8-face catalog and `people.preset_id`.
+- **Provisioned October 4, ~00:10 EDT** by `scripts/preflight/starter-faces.mjs` (ids only in `.env.local`; Vercel unchanged). Each starter has its own voice, so each has its own PAL with the quality layers. Readback is verified for all four; no live audiovisual check yet.
+
+  | Starter | Face (phoenix-4.5 stock) | Premade voice |
+  |---|---|---|
+  | Jordan, manager | Victor - Office | Eric |
+  | Alex, roommate | Lucas - Studio | Will |
+  | Ellis, professor | Daniel - Library | George |
+  | Sam, decline | Priya - Office | Jessica |
+
+  Implemented: `starterMedia(preset)` returns `{ palId, faceId, voiceId }` (the env-name mapping above) and `starterPortrait(presetId)` backs the route. **1C** wires `starterMedia` into preset starts.
 
 ## 3. Phase 2 (C2)
 

@@ -66,7 +66,7 @@ describe("session API client", () => {
     await expect(endSession(sessionId, "user")).rejects.toMatchObject({ code: "NETWORK", retryable: true });
   });
   it("starts each preset with only the key, preset id, and duration", async () => {
-    for (const preset of ["roommate", "professor", "decline"] as const) {
+    for (const preset of ["roommate", "professor", "decline", "manager"] as const) {
       const fetchMock = stubFetch(Response.json({ session, credential }, { status: 201 }));
       await expect(startPresetSession({ preset, durationSeconds: 180, idempotencyKey: key })).resolves.toEqual({ session, credential });
       const raw = fetchMock.mock.calls[0][1].body as string;
@@ -78,7 +78,7 @@ describe("session API client", () => {
       expect(raw).not.toContain("role");
       expect(startRequestSchema.safeParse(body).success).toBe(true);
     }
-    expect(startRequestSchema.safeParse({ idempotencyKey: key, preset: "manager", durationSeconds: 180 }).success).toBe(false);
+    expect(startRequestSchema.safeParse({ idempotencyKey: key, preset: "boss", durationSeconds: 180 }).success).toBe(false);
   });
   it("starts a saved person with only the key, person ID, version, and duration", async () => {
     const fetchMock = stubFetch(Response.json({ session, credential }, { status: 201 }));
