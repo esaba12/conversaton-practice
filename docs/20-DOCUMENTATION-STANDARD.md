@@ -21,6 +21,10 @@ specification before implementing against a competing interpretation.
 | Privacy and safety requirements | `08-SAFETY-AND-PRIVACY.md` |
 | Test definitions and gate order | `09-EVALUATION.md`, `10-BUILD-PLAN.md` |
 | Work still open after G5 | `29-REMAINING-WORK.md` and `tasks/POST-01` through `tasks/HOST-01` |
+| Snapshot for the next planning agent | `next/README.md` |
+| One-moment retry (decided, not built) | `00-DECISIONS-AND-VIABILITY.md`, `30-ONE-MOMENT-RETRY.md` |
+| Post-submission plan (decided items not built) | `00-DECISIONS-AND-VIABILITY.md`, `31-PRODUCT-VISION.md`, `32-FEATURE-SPECS.md`, `33-DESIGN-SYSTEM-AND-SCREENS.md` |
+| Wow pass: experience target, build plan, proposed contracts, new specs, UI upgrade (planned) | `next/01-THE-WOW.md` through `next/06-KICKOFF-PROMPT.md`; research `research/R07-UI-CRAFT.md` |
 | Submission and event strategy | `11-DEMO-AND-SUBMISSION.md`, `16-MHACKS-STRATEGY.md` |
 | Tool setup and external evidence | `12-CODEX-SETUP.md`, `13-TOOL-RESEARCH.md`, `14-SOURCES.md`, `../tooling/README.md` |
 | Restart instructions | `15-HANDOFF.md`, with live progress in `../STATUS.md` |

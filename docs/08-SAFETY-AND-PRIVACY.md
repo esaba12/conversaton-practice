@@ -9,13 +9,13 @@ NICE and CCI identify self-focused attention, safety behaviors, and excessive pr
 - Start with a concrete action goal.
 - Use a bounded session and one short reflection.
 - Do not add social grades, perfection streaks, leaderboards, or sentence-by-sentence criticism.
-- No replay tree in MVP.
+- No replay tree in MVP. A later one-moment retry ([docs/30](30-ONE-MOMENT-RETRY.md)) is a new short call from a line the user already chose. It is a fresh start at that moment, with no recording, no grade, and no tree of alternate lines.
 - Do not increase challenge automatically.
 - Repeated reassurance requests receive acknowledgment of uncertainty and an offer to close or choose an action, not stronger guarantees.
 - Let the user end without completing a goal.
 - Do not require anxiety to disappear before finishing.
 - Progress is the user's chosen action, not engagement time.
-- Do not reveal fictional hidden thoughts as if they explain real people's behavior.
+- Do not reveal fictional hidden thoughts as if they explain real people's behavior. Decided, not built (docs/00, docs/32 Q2): the recap may list the three stance chips the user already reviewed, in a collapsed dropdown labeled as fiction set before the call. That list is chips only.
 
 ## Content scope
 Support everyday requests, disagreement, introductions, boundaries, and asking for help.
@@ -38,7 +38,13 @@ If explicit imminent self-harm, violence, or immediate danger emerges, stop the 
 Mitigations: typed allowlists, owner checks + RLS, separate prompts, no live mutation tools, deletion tombstones, server secrets, verified retention settings, provenance checks.
 
 ## Data path disclosure
-Tavus CVI, ElevenLabs TTS and the configured model providers process conversation data. Tavus receives the server-held ElevenLabs key for the selected speech integration. Optional camera stays local and off until opt-in: no publication, recording, analysis or claim that the counterpart sees it. Recording-off does not disable Tavus transcripts; Tavus hard deletion does not establish ElevenLabs erasure. Track provider-specific deletion status. See docs/22-LIVE-VIDEO.md. The separate setup/reflection provider may receive text. Supabase stores identity and approved app data. No-app-save does not mean anonymous processing, zero provider retention or account deletion.
+Tavus CVI, ElevenLabs TTS and the configured model providers process conversation data. Tavus receives the server-held ElevenLabs key for the selected speech integration. Optional camera stays local and off until opt-in: no publication, recording, analysis or claim that the counterpart sees it. Recording-off does not disable Tavus transcripts; Tavus hard deletion does not establish ElevenLabs erasure. Track provider-specific deletion status. See docs/22-LIVE-VIDEO.md. The separate setup/reflection provider may receive text. Supabase stores identity and approved app data.
+
+Decided, not built (docs/00):
+
+- A later PAL may use Tavus Raven-1 audio perception with emotion recognition set to full, so the counterpart can react to vocal tone during the call (docs/32 T1). The character card and the green room say that. Tone is not saved or shown. There are no visual perception queries, and the camera rule is unchanged.
+- Reflection is requested after End unless the user presses Skip during a short grace period, and the green room says so before the call (docs/32 L1).
+- If the user turns on the goal light, that same text provider may receive the goal and recent user lines during the call to answer whether the line was said. The counterpart does not receive them. The check is off unless the user opts in (docs/32 G1). No-app-save does not mean anonymous processing, zero provider retention or account deletion.
 Do not use therapy transcripts or actual third-party voice samples for the demo.
 Default application policy: temporary transcript in memory, approved memories only in database; no raw camera/video recordings. The small session/cleanup records required for authorization are documented separately.
 Provider policy: set minimum supported transcript/audio retention, review audio recording and training-use settings, and document actual choices.

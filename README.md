@@ -44,6 +44,8 @@ On restart, begin with [STATUS.md](STATUS.md) and [AGENTS.md](AGENTS.md). Work s
 22. [Final startup checklist and reset prompt](docs/21-START-BUILD.md)
 23. [Live video experience and integration](docs/22-LIVE-VIDEO.md)
 24. [Remaining work after G5](docs/29-REMAINING-WORK.md)
+25. [One-moment retry](docs/30-ONE-MOMENT-RETRY.md) (decided, not built)
+26. [Product vision](docs/31-PRODUCT-VISION.md), [feature specs](docs/32-FEATURE-SPECS.md), and [design system and screens](docs/33-DESIGN-SYSTEM-AND-SCREENS.md) (planning, not built)
 
 ## Build with agents
 
@@ -69,7 +71,7 @@ Confirmed event strategy: Actually Intelligent plus both listed ElevenLabs categ
 
 Confirmed: one human with parallel coding agents, fresh sessions, user-described situations as the primary input, warm minimal/crisp modern design, and sign-in before all workspace actions. The user supplied a fresh Supabase project; Auth and owner isolation are automated-tested. Situation generation is core scope.
 
-On `main`: three example starts (Alex, Ellis, Sam), a 3- or 5-minute choice, collapsed captions, saved-person session attribution, and a public landing with a signed-in home and a Google sign-in button. Google sign-in is not live-checked. Still open, in [docs/29](docs/29-REMAINING-WORK.md): appearance presets, a project name, app hosting, live G3–G5 checks, and Devpost. Photon/Relay remain deferred.
+On `main`: three example starts (Alex, Ellis, Sam), a 3- or 5-minute choice, collapsed captions, saved-person session attribution, and a public landing with a signed-in home and a Google sign-in button. Google sign-in is not live-checked. Still open, in [docs/29](docs/29-REMAINING-WORK.md): appearance presets, a project name, app hosting, live G3–G5 checks, and Devpost. A one-moment retry is specified in [docs/30](docs/30-ONE-MOMENT-RETRY.md) and is not part of the submission build. Photon/Relay remain deferred.
 
 ## Evidence policy
 
