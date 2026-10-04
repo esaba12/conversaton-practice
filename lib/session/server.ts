@@ -72,8 +72,11 @@ export async function startSession(db: Db, input: z.output<typeof startRequestSc
     person = { id: input.personId, version: loaded.version };
     // B4: a preset change bumps the version, so the version check above also covers the face and PAL.
     const { presetId } = await getPersonPreset(db, input.personId);
-    const starter = presetId ? starterMedia(presetId) : null;
-    if (starter) media = { palId: starter.palId, faceId: starter.faceId };
+    if (presetId) {
+      const starter = starterMedia(presetId);
+      if (!starter) throw new AppError("NOT_CONFIGURED", "Live practice is not configured yet.", 503);
+      media = { palId: starter.palId, faceId: starter.faceId };
+    }
     fingerprint = startFingerprint(role, input.durationSeconds, secret, { extras, personId: input.personId, version: loaded.version });
   } else {
     // Only the allowlisted role reaches the provider; a preset id is resolved here and no other client field is forwarded.

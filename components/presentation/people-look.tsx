@@ -10,7 +10,7 @@ import styles from "./people-look.module.css";
 import setup from "./setup.module.css";
 
 // Only preset names cross the API; the server maps each one to a stock face and premade voice.
-const presetResponseSchema = z.object({ preset: z.object({ id: z.uuid(), version: z.number().int().positive(), presetId: sessionPresetSchema.nullable() }) });
+const presetResponseSchema = z.strictObject({ preset: z.strictObject({ id: z.uuid(), version: z.number().int().positive(), presetId: sessionPresetSchema.nullable() }) });
 export const LOOKS: { id: SessionPreset; name: string; label: string }[] = [
   { id: "roommate", name: "Alex", label: "Alex’s look and voice" },
   { id: "professor", name: "Ellis", label: "Ellis’s look and voice" },
@@ -30,7 +30,7 @@ export type PeopleLookProps = {
 
 export function PeopleLook({ personId, personName, version, onSaved, onAuthLost, disabled = false }: PeopleLookProps) {
   const id = useId();
-  const [current, setCurrent] = useState<SessionPreset | null | undefined>(undefined);
+  const [current, setCurrent] = useState<SessionPreset | null | "error" | undefined>(undefined);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ status?: string; error?: string }>({});
 
@@ -41,7 +41,7 @@ export function PeopleLook({ personId, personName, version, onSaved, onAuthLost,
       (error) => {
         if (!live) return;
         if (error instanceof SessionClientError && error.code === "UNAUTHENTICATED") onAuthLost();
-        else { setCurrent(null); setMessage({ error: "We couldn’t load this person’s look." }); }
+        else { setCurrent("error"); setMessage({ error: "We couldn’t load this person’s look." }); }
       },
     );
     return () => { live = false; };

@@ -416,6 +416,14 @@ describe("session routes", () => {
         expect((await errorOf(await start(post("/api/sessions", personBody)), 404)).code).toBe("NOT_FOUND");
         expect(calls("practice_acquire")).toHaveLength(0); expect(fetchMock).not.toHaveBeenCalled();
       });
+
+      it("refuses when the chosen starter has no face or PAL configured at all", async () => {
+        live(); const fetchMock = tavus();
+        vi.stubEnv("TAVUS_PAL_ID", ""); vi.stubEnv("TAVUS_FACE_ID", "");
+        peopleRead = (pid) => ({ data: { id: pid, version: 2, preset_id: "decline" }, error: null });
+        expect((await errorOf(await start(post("/api/sessions", personBody)), 503)).code).toBe("NOT_CONFIGURED");
+        expect(calls("practice_acquire")).toHaveLength(0); expect(fetchMock).not.toHaveBeenCalled();
+      });
     });
   });
 

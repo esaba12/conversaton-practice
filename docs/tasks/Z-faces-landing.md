@@ -64,3 +64,8 @@ export const presetResponseSchema = z.strictObject({ preset: z.strictObject({ id
 3. `app/practice/practice-workspace.tsx` — no change required: it loads the person fresh, so it sends the bumped version. Optional: show `/api/portraits/${presetId}` in the Meet card once diff 1 exposes `presetId`.
 
 4. Playwright: the committed config is pinned to 3100; workers used an uncommitted `playwright.z.config.ts` (baseURL 3108, no webServer). Browsers needed `PLAYWRIGHT_BROWSERS_PATH=$HOME/Library/Caches/ms-playwright` inside the sandbox.
+
+## Coordinator integration (02:55)
+- Rebased on `main` `c4d88a2` (after X and 3E). The bundle check on main already covers the 18 default, stand-in and starter env names (from 1E), so handoff diff 2 is done.
+- Privacy review (opus-thinking): approve, no must-fix. Applied should-fixes: the client preset schema is strict; a failed load shows an error state instead of marking "Default" as chosen; a saved-person start with a preset but no configured face/PAL (starter or default) now returns 503 NOT_CONFIGURED before the lease, with a unit test. Handoff diff 1 (moving preset schemas into `lib/schemas/people.ts`) is deferred; it is a tidy-up, not a behaviour change.
+- Evidence: typecheck clean; 786 unit tests; production build; `scripts/check-standin-bundle.mjs` with real values loaded: PASS (55 files, 18 names); Playwright 13 passed / 1 skipped with real Auth (landing, public, hero path incl. retry). The picker has no signed-in browser test yet. Live not verified.
