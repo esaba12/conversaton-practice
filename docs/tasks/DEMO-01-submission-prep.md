@@ -52,7 +52,7 @@ SpeakEasy is a FaceTime-style rehearsal for an everyday conversation.
 4. **Recap and one retry.** After End there is a short recap you can skip. It asks whether you said your line. If not, you can try just that moment once more.
 5. **People who grow with you.** Save the character as a person. Give them a starter's face and voice. Drag the About-me facts you choose into what that person knows about you. They know only what you share, and nothing else.
 
-Each practice starts fresh. Private notes never reach the call. There is no score, and no recording or transcript is kept.
+Each practice starts fresh. Private notes never reach the call. There is no score, and SpeakEasy keeps no recording or transcript.
 
 ### How we built it
 

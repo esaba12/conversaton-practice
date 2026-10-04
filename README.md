@@ -16,7 +16,7 @@ The static concept site at conversation-practice-site.vercel.app is older and is
 4. **Recap and one retry.** A short recap you can skip. If you didn't say your line, try just that moment once.
 5. **People who grow with you.** Save the person, give them one of the four starter faces and voices, and drag in only the About-me facts you want them to know.
 
-Each practice starts fresh. No recording or transcript is kept by default, and there is no score.
+Each practice starts fresh. SpeakEasy keeps no recording or transcript by default, and there is no score.
 
 ## How it's built
 
